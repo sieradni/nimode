@@ -21,7 +21,7 @@
 - [x] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
 
 ## Phase 4: Settings & $0 Persistence
-- [ ] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
+- [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
 - [ ] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
 - [ ] **T-4.3:** Build UI settings modal.
 
