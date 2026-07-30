@@ -3,6 +3,7 @@ import { EngineCore } from './engine/EngineCore';
 import { sevenBagRandomizer } from './engine/systems/SevenBagRandomizer';
 import { srsPlusRotationSystem } from './engine/systems/SrsPlusRotationSystem';
 import { EngineState } from './engine/interfaces/IEngineCore';
+import { SettingsModal } from './components/SettingsModal';
 
 function App() {
   const [engine] = useState(
@@ -14,6 +15,7 @@ function App() {
   );
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -35,8 +37,18 @@ function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-mono">
       <header className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80">
         <h1 className="text-xl font-bold text-sky-400">nimode</h1>
-        <div className="text-xs text-slate-400">Modern Tetris Engine Active</div>
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-slate-400">Modern Tetris Engine Active</div>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="text-slate-400 hover:text-sky-400 transition-colors"
+            aria-label="Settings"
+          >
+            ⚙
+          </button>
+        </div>
       </header>
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <main className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
         <div className="flex gap-8 items-start">
           <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   exportSettingsAsJson,
   validateSettingsJson,
@@ -79,6 +79,12 @@ describe('exportSettingsAsJson', () => {
 });
 
 describe('downloadSettingsBlob', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:mock-url'),
+    });
+  });
+
   it('should create a Blob and return an object URL', () => {
     const json = '{"test":true}';
     const result = downloadSettingsBlob(json);

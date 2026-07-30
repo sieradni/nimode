@@ -23,7 +23,7 @@
 ## Phase 4: Settings & $0 Persistence
 - [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
 - [x] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
-- [ ] **T-4.3:** Build UI settings modal.
+- [x] **T-4.3:** Build UI settings modal.
 
 ## Phase 5: Statistics & Analytics Engine
 - [ ] **T-5.1:** Implement real-time stats tracker (PPS, APM, KPP, Finesse, Lines, Quads, T-Spins).
