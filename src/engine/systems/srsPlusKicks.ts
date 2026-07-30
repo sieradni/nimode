@@ -1,0 +1,97 @@
+import { PieceType, RotationState } from '../types';
+
+export const PIECE_SPAWNS: Record<PieceType, { x: number; y: number; rotation: RotationState }> = {
+  0: { x: 0, y: 0, rotation: 0 },
+  1: { x: 3, y: 19, rotation: 0 },
+  2: { x: 3, y: 19, rotation: 0 },
+  3: { x: 3, y: 19, rotation: 0 },
+  4: { x: 4, y: 19, rotation: 0 },
+  5: { x: 3, y: 19, rotation: 0 },
+  6: { x: 3, y: 19, rotation: 0 },
+  7: { x: 3, y: 19, rotation: 0 },
+};
+
+export const PIECE_SHAPES: Record<PieceType, number[][]> = {
+  0: [],
+  1: [
+    [0, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ],
+  2: [
+    [2, 0, 0],
+    [2, 2, 2],
+    [0, 0, 0],
+  ],
+  3: [
+    [0, 0, 3],
+    [3, 3, 3],
+    [0, 0, 0],
+  ],
+  4: [
+    [4, 4],
+    [4, 4],
+  ],
+  5: [
+    [0, 5, 5],
+    [5, 5, 0],
+    [0, 0, 0],
+  ],
+  6: [
+    [0, 6, 0],
+    [6, 6, 6],
+    [0, 0, 0],
+  ],
+  7: [
+    [7, 7, 0],
+    [0, 7, 7],
+    [0, 0, 0],
+  ],
+};
+
+export type KickOffset = { x: number; y: number };
+
+const JLSTZ_KICKS: Record<string, KickOffset[]> = {
+  '0->1': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: 1 }, { x: 0, y: -2 }, { x: -1, y: -2 }],
+  '1->0': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: 2 }, { x: 1, y: 2 }],
+  '1->2': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: 2 }, { x: 1, y: 2 }],
+  '2->1': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: 1 }, { x: 0, y: -2 }, { x: -1, y: -2 }],
+  '2->3': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: -2 }, { x: 1, y: -2 }],
+  '3->2': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: -1 }, { x: 0, y: 2 }, { x: -1, y: 2 }],
+  '3->0': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: -1 }, { x: 0, y: 2 }, { x: -1, y: 2 }],
+  '0->3': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: -2 }, { x: 1, y: -2 }],
+  '0->2': [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: -1, y: 1 }, { x: 1, y: 0 }, { x: -1, y: 0 }],
+  '2->0': [{ x: 0, y: 0 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 0 }, { x: 1, y: 0 }],
+  '1->3': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 2 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: 0, y: 2 }],
+  '3->1': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: -1, y: 2 }, { x: -1, y: 1 }, { x: 0, y: 1 }, { x: 0, y: 2 }],
+};
+
+const I_KICKS: Record<string, KickOffset[]> = {
+  '0->1': [{ x: 0, y: 0 }, { x: -2, y: 0 }, { x: 1, y: 0 }, { x: -2, y: -1 }, { x: 1, y: 2 }],
+  '1->0': [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: -1, y: 0 }, { x: 2, y: 1 }, { x: -1, y: -2 }],
+  '1->2': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: 2, y: 0 }, { x: -1, y: 2 }, { x: 2, y: -1 }],
+  '2->1': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: -2, y: 0 }, { x: 1, y: -2 }, { x: -2, y: 1 }],
+  '2->3': [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: -1, y: 0 }, { x: 2, y: 1 }, { x: -1, y: -2 }],
+  '3->2': [{ x: 0, y: 0 }, { x: -2, y: 0 }, { x: 1, y: 0 }, { x: -2, y: -1 }, { x: 1, y: 2 }],
+  '3->0': [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: -2, y: 0 }, { x: 1, y: -2 }, { x: -2, y: 1 }],
+  '0->3': [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: 2, y: 0 }, { x: -1, y: 2 }, { x: 2, y: -1 }],
+  '0->2': [{ x: 0, y: 0 }, { x: 0, y: 1 }],
+  '2->0': [{ x: 0, y: 0 }, { x: 0, y: -1 }],
+  '1->3': [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+  '3->1': [{ x: 0, y: 0 }, { x: -1, y: 0 }],
+};
+
+const DEFAULT_KICK: KickOffset[] = [{ x: 0, y: 0 }];
+
+export function getSrsPlusKicks(
+  pieceType: PieceType,
+  fromRotation: RotationState,
+  toRotation: RotationState
+): ReadonlyArray<KickOffset> {
+  if (pieceType === 4) return DEFAULT_KICK; // O piece
+
+  const key = `${fromRotation}->${toRotation}`;
+  const table = pieceType === 1 ? I_KICKS : JLSTZ_KICKS;
+  return table[key] ?? DEFAULT_KICK;
+}

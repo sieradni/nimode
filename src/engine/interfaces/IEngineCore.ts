@@ -1,0 +1,46 @@
+import { IRotationSystem } from './IRotationSystem';
+import { IBagRandomizer } from './IBagRandomizer';
+import { PieceType, BoardMatrix, ActivePiece, GameConfig } from '../types';
+
+export interface EngineStats {
+  piecesPlaced: number;
+  linesCleared: number;
+  pps: number;
+  apm: number;
+  kpp: number;
+}
+
+export interface EngineState {
+  board: BoardMatrix;
+  activePiece: ActivePiece | null;
+  queue: PieceType[];
+  hold: PieceType | null;
+  canHold: boolean;
+  stats: EngineStats;
+  gameOver: boolean;
+  paused: boolean;
+}
+
+export type InputEvent =
+  | { type: 'MOVE_LEFT'; pressed: boolean }
+  | { type: 'MOVE_RIGHT'; pressed: boolean }
+  | { type: 'SOFT_DROP'; pressed: boolean }
+  | { type: 'HARD_DROP' }
+  | { type: 'ROTATE_CW' }
+  | { type: 'ROTATE_CCW' }
+  | { type: 'ROTATE_180' }
+  | { type: 'HOLD' }
+  | { type: 'RESET' };
+
+export interface EngineDependencies {
+  rotationSystem: IRotationSystem;
+  bagRandomizer: IBagRandomizer;
+}
+
+export interface IEngineCore {
+  initialize(config: GameConfig): void;
+  tick(deltaTime: number): void;
+  handleInput(input: InputEvent): void;
+  getState(): EngineState;
+  reset(): void;
+}

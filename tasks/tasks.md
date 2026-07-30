@@ -1,17 +1,17 @@
 # Work Breakdown Checklist: nimode
 
 ## Phase 1: Foundation & Scaffold
-- [ ] **T-1.1:** Initialize Vite React TypeScript project with Tailwind CSS.
-- [ ] **T-1.2:** Configure `package.json`, ESLint strict rules, Vitest, and `npm run verify`.
+- [x] **T-1.1:** Initialize Vite React TypeScript project with Tailwind CSS.
+- [x] **T-1.2:** Configure `package.json`, ESLint strict rules, Vitest, and `npm run verify`.
 - [ ] **T-1.3:** Setup Discord Embedded App SDK initialization wrapper (`/src/discord/`).
 - [ ] **T-1.4:** Build GitHub Actions deployment pipeline to GitHub Pages (`.github/workflows/deploy.yml`).
 
 ## Phase 2: Core Tetris Engine
-- [ ] **T-2.1:** Implement Board Matrix data structure (10x40 grid, pure functions).
-- [ ] **T-2.2:** Implement `IBagRandomizer` interface and `SevenBagRandomizer`.
-- [ ] **T-2.3:** Implement `IRotationSystem` interface and `SrsPlusRotationSystem` with full kick tables.
-- [ ] **T-2.4:** Implement DAS (Delayed Auto Shift), ARR (Auto Repeat Rate), and SDF (Soft Drop Factor) input tick handler.
-- [ ] **T-2.5:** Implement hold system, including clear hold / force hold setter.
+- [x] **T-2.1:** Implement Board Matrix data structure (10x40 grid, pure functions).
+- [x] **T-2.2:** Implement `IBagRandomizer` interface and `SevenBagRandomizer`.
+- [x] **T-2.3:** Implement `IRotationSystem` interface and `SrsPlusRotationSystem` with full kick tables.
+- [x] **T-2.4:** Implement DAS (Delayed Auto Shift), ARR (Auto Repeat Rate), and SDF (Soft Drop Factor) input tick handler.
+- [x] **T-2.5:** Implement hold system, including clear hold / force hold setter.
 - [ ] **T-2.6:** Implement upcoming queue manipulation setter API.
 
 ## Phase 3: Canvas Rendering & Annotation Tool
