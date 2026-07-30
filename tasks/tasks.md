@@ -18,7 +18,7 @@
 - [x] **T-3.1:** Build modular Canvas 2D Board Renderer (<150 lines).
 - [x] **T-3.2:** Build Canvas Queue & Hold Preview Renderers.
 - [x] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
-- [ ] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
+- [x] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
 
 ## Phase 4: Settings & $0 Persistence
 - [ ] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
@@ -39,5 +39,5 @@
 ## Phase 7: Verification & Testing
 - [ ] **T-7.1:** Write Vitest unit tests for SRS+ kick tables and 180 spins.
 - [ ] **T-7.2:** Write Vitest unit tests for 7-Bag randomizer distribution.
-- [ ] **T-7.3:** Write Vitest unit tests for annotation auto-coloring matrix parser.
+- [x] **T-7.3:** Write Vitest unit tests for annotation auto-coloring matrix parser.
 - [ ] **T-7.4:** Run `npm run verify` and fix all lint, type, and test issues.
