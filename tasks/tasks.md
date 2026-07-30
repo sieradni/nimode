@@ -32,7 +32,7 @@
 ## Phase 6: P2P Spectating & Presence Engine
 - [x] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.
 - [x] **T-6.2:** Build Host state delta broadcaster (20 Hz loop) — must respect `InstanceConfig.isPrivate` guard.
-- [ ] **T-6.3:** Build Spectator state interpolation & render view.
+- [x] **T-6.3:** Build Spectator state interpolation & render view.
 - [ ] **T-6.4:** Build Presence Roster UI component displaying active Discord participants and live PPS, with private-instance badge.
 - [ ] **T-6.5:** Implement View Controller Switcher (toggle between Local Canvas Renderer and Remote Spectator Renderer with state preservation) — must check `target.isPrivate` before transition.
 - [ ] **T-6.6:** Build Private Instance toggle UI in Settings (with `localStorage` persistence) and guard the 20 Hz broadcaster.
