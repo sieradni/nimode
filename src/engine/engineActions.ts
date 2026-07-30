@@ -50,8 +50,8 @@ export function lockPiece(
   state: GameState,
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem
-): void {
-  if (!state.activePiece) return;
+): number {
+  if (!state.activePiece) return 0;
 
   state.board = lockPieceToBoard(state.board, state.activePiece);
   const { newBoard, linesCleared } = clearBoardLines(state.board);
@@ -61,6 +61,7 @@ export function lockPiece(
 
   spawnNextPiece(state, randomizer, rotationSystem);
   state.queue.canHold = true;
+  return linesCleared;
 }
 
 export function holdPiece(
@@ -93,12 +94,12 @@ export function hardDrop(
   state: GameState,
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem
-): void {
-  if (!state.activePiece) return;
+): number {
+  if (!state.activePiece) return 0;
 
   let canDrop = true;
   while (canDrop) {
     canDrop = movePiece(state, 0, -1);
   }
-  lockPiece(state, randomizer, rotationSystem);
+  return lockPiece(state, randomizer, rotationSystem);
 }
