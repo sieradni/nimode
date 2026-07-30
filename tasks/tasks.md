@@ -22,7 +22,7 @@
 
 ## Phase 4: Settings & $0 Persistence
 - [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
-- [ ] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
+- [x] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
 - [ ] **T-4.3:** Build UI settings modal.
 
 ## Phase 5: Statistics & Analytics Engine
