@@ -4,7 +4,7 @@
 - [x] **T-1.1:** Initialize Vite React TypeScript project with Tailwind CSS.
 - [x] **T-1.2:** Configure `package.json`, ESLint strict rules, Vitest, and `npm run verify`.
 - [x] **T-1.3:** Setup Discord Embedded App SDK initialization wrapper (`/src/discord/`).
-- [ ] **T-1.4:** Build GitHub Actions deployment pipeline to GitHub Pages (`.github/workflows/deploy.yml`).
+- [x] **T-1.4:** Build GitHub Actions deployment pipeline to GitHub Pages (`.github/workflows/deploy.yml`).
 
 ## Phase 2: Core Tetris Engine
 - [x] **T-2.1:** Implement Board Matrix data structure (10x40 grid, pure functions).
