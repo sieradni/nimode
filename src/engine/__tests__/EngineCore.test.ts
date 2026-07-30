@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EngineCore } from '../EngineCore';
 import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
 import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
+import type { PieceType } from '../types';
 
 describe('EngineCore', () => {
   function createEngine() {
@@ -43,5 +44,28 @@ describe('EngineCore', () => {
     const state = engine.getState();
     expect(state.hold).toBe(initialPieceType);
     expect(state.canHold).toBe(false);
+  });
+
+  it('setQueue should replace the upcoming queue', () => {
+    const engine = createEngine();
+    const customQueue: PieceType[] = [1, 2, 3, 4, 5];
+
+    engine.setQueue(customQueue);
+    const state = engine.getState();
+
+    expect(state.queue).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('should use custom queue for spawning after hard drop', () => {
+    const engine = createEngine();
+    const customQueue: PieceType[] = [1, 2, 3];
+
+    engine.setQueue(customQueue);
+
+    engine.handleInput({ type: 'HARD_DROP' });
+    engine.tick(16.67);
+
+    const state = engine.getState();
+    expect(state.activePiece?.type).toBe(1);
   });
 });

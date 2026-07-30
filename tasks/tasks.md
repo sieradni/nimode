@@ -12,7 +12,7 @@
 - [x] **T-2.3:** Implement `IRotationSystem` interface and `SrsPlusRotationSystem` with full kick tables.
 - [x] **T-2.4:** Implement DAS (Delayed Auto Shift), ARR (Auto Repeat Rate), and SDF (Soft Drop Factor) input tick handler.
 - [x] **T-2.5:** Implement hold system, including clear hold / force hold setter.
-- [ ] **T-2.6:** Implement upcoming queue manipulation setter API.
+- [x] **T-2.6:** Implement upcoming queue manipulation setter API.
 
 ## Phase 3: Canvas Rendering & Annotation Tool
 - [ ] **T-3.1:** Build modular Canvas 2D Board Renderer (<150 lines).

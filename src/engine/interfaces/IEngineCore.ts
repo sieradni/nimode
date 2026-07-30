@@ -43,4 +43,5 @@ export interface IEngineCore {
   handleInput(input: InputEvent): void;
   getState(): EngineState;
   reset(): void;
+  setQueue(pieces: PieceType[]): void;
 }

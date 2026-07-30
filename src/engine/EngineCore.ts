@@ -1,4 +1,4 @@
-import { GameConfig, GameState, DEFAULT_CONFIG } from './types';
+import { GameConfig, GameState, DEFAULT_CONFIG, PieceType } from './types';
 import {
   IEngineCore,
   EngineState,
@@ -130,5 +130,9 @@ export class EngineCore implements IEngineCore {
     this.gravityTimer = 0;
     this.accumulator = 0;
     spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
+  }
+
+  setQueue(pieces: PieceType[]): void {
+    this.state.queue.queue = [...pieces];
   }
 }
