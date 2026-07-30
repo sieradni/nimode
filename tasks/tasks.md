@@ -17,7 +17,7 @@
 ## Phase 3: Canvas Rendering & Annotation Tool
 - [x] **T-3.1:** Build modular Canvas 2D Board Renderer (<150 lines).
 - [x] **T-3.2:** Build Canvas Queue & Hold Preview Renderers.
-- [ ] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
+- [x] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
 - [ ] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
 
 ## Phase 4: Settings & $0 Persistence
