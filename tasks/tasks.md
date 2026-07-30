@@ -38,7 +38,7 @@
 - [ ] **T-6.6:** Build Private Instance toggle UI in Settings (with `localStorage` persistence) and guard the 20 Hz broadcaster.
 
 ## Phase 7: Verification & Testing
-- [ ] **T-7.1:** Write Vitest unit tests for SRS+ kick tables and 180 spins.
+- [x] **T-7.1:** Write Vitest unit tests for SRS+ kick tables and 180 spins.
 - [ ] **T-7.2:** Write Vitest unit tests for 7-Bag randomizer distribution.
 - [x] **T-7.3:** Write Vitest unit tests for annotation auto-coloring matrix parser.
 - [ ] **T-7.4:** Run `npm run verify` and fix all lint, type, and test issues.
