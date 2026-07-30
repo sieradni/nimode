@@ -27,7 +27,7 @@
 
 ## Phase 5: Statistics & Analytics Engine
 - [x] **T-5.1:** Implement real-time stats tracker (PPS, APM, KPP, Finesse, Lines, Quads, T-Spins).
-- [ ] **T-5.2:** Build HUD stats renderer overlay.
+- [x] **T-5.2:** Build HUD stats renderer overlay.
 
 ## Phase 6: P2P Spectating & Presence Engine
 - [ ] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.

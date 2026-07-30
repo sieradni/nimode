@@ -5,5 +5,4 @@ export type {
   EngineDependencies,
   EngineState,
   InputEvent,
-  EngineStats,
 } from './IEngineCore';

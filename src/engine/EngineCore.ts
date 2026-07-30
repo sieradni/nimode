@@ -110,20 +110,13 @@ export class EngineCore implements IEngineCore {
   }
 
   getState(): EngineState {
-    const s = this.statsTracker.getStats();
     return {
       board: this.state.board.map(row => [...row]),
       activePiece: this.state.activePiece ? { ...this.state.activePiece } : null,
       queue: [...this.state.queue.queue],
       hold: this.state.queue.hold,
       canHold: this.state.queue.canHold,
-      stats: {
-        piecesPlaced: s.piecesPlaced,
-        linesCleared: s.linesCleared,
-        pps: s.pps,
-        apm: s.apm,
-        kpp: s.kpp,
-      },
+      stats: this.statsTracker.getStats(),
       gameOver: this.state.gameOver,
       paused: this.state.paused,
     };

@@ -1,14 +1,6 @@
 import { IRotationSystem } from './IRotationSystem';
 import { IBagRandomizer } from './IBagRandomizer';
-import { PieceType, BoardMatrix, ActivePiece, GameConfig } from '../types';
-
-export interface EngineStats {
-  piecesPlaced: number;
-  linesCleared: number;
-  pps: number;
-  apm: number;
-  kpp: number;
-}
+import { PieceType, BoardMatrix, ActivePiece, GameConfig, GameStats } from '../types';
 
 export interface EngineState {
   board: BoardMatrix;
@@ -16,7 +8,7 @@ export interface EngineState {
   queue: PieceType[];
   hold: PieceType | null;
   canHold: boolean;
-  stats: EngineStats;
+  stats: GameStats;
   gameOver: boolean;
   paused: boolean;
 }

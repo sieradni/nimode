@@ -4,6 +4,7 @@ import { sevenBagRandomizer } from './engine/systems/SevenBagRandomizer';
 import { srsPlusRotationSystem } from './engine/systems/SrsPlusRotationSystem';
 import { EngineState } from './engine/interfaces/IEngineCore';
 import { SettingsModal } from './components/SettingsModal';
+import { StatsHud } from './components/StatsHud';
 
 function App() {
   const [engine] = useState(
@@ -72,6 +73,7 @@ function App() {
               ))}
             </div>
           </div>
+          <StatsHud stats={gameState.stats} />
         </div>
       </main>
     </div>
