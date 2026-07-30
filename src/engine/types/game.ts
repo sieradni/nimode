@@ -114,6 +114,14 @@ export interface GameState {
   paused: boolean;
 }
 
+export interface InstanceConfig {
+  isPrivate: boolean;
+}
+
+export const DEFAULT_INSTANCE_CONFIG: InstanceConfig = {
+  isPrivate: false,
+};
+
 export interface SpectatorPayload {
   userId: string;
   matrix: number[][];

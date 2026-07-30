@@ -28,6 +28,11 @@
 - **US-4.2:** As a spectator, I want to view a roster of active participants in the Discord Activity, select any user to spectate their game live at low latency (<50ms), and see their board, active piece, queue, hold, annotations, and live statistics.
 - **US-4.3:** As a player, I want to click "Return to My Board" at any time to instantly return to my own local singleplayer game with zero state loss.
 
+### Instance Privacy & Access Control
+- **US-4.4:** As a player, I want to toggle my instance between Public and Private so that I can choose whether other participants in the Discord Activity can spectate my game.
+- **US-4.5:** As a spectator, I want to see which participants have made their instance Private so that I know who is unavailable for spectating.
+- **US-4.6:** As a player with a Private instance, I want a visual indicator in the Presence Roster showing my instance is Private, and my game state must never be broadcast over WebRTC.
+
 ### Extensibility & Future Readiness
 - **US-5.1:** As a developer, I want the rotation system to be modular so that ARS, Standard SRS, or Custom Rotation Systems can be selected in future updates.
 - **US-5.2:** As a developer, I want the bag system to be modular so that 14-Bag, Memoryless, or Custom Bag generators can be swapped cleanly.

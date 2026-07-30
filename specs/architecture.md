@@ -100,8 +100,25 @@ export interface IBagRandomizer {
 
 ---
 
+## Instance Privacy Model
+Each participant in a Discord Activity session has an `InstanceConfig` that controls visibility:
+
+```typescript
+export interface InstanceConfig {
+  isPrivate: boolean;
+}
+```
+
+- **Public (default):** The host broadcaster actively sends state deltas (20 Hz) to all spectators. The participant appears selectable in the Presence Roster.
+- **Private:** The host broadcaster is **silent** — no `SpectatorPayload` is transmitted. The participant appears in the Presence Roster with a "Private" badge and cannot be selected for spectating.
+
+Privacy state is stored locally via `localStorage` and is **not** gossiped via WebRTC (it is part of the presence metadata distributed through the signaling channel).
+
+### Active View Controller State Machine (Updated)
+The machine gains a guard condition: selecting a target from the roster must check `target.isPrivate`; if `true`, the transition is blocked and the roster shows a disabled/private indicator.
+
 ## Spectating Data Serialization Protocol
-The host serializes game state at 20 Hz over WebRTC:
+The host serializes game state at 20 Hz over WebRTC (only when `isPrivate === false`):
 ```typescript
 export interface SpectatorPayload {
   userId: string;

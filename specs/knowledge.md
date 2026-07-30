@@ -29,6 +29,12 @@ When the user draws blocks in Annotation mode:
 
 ---
 
+## Instance Privacy Design Rules
+1. **Privacy ≠ Auth:** The `isPrivate` flag is a local preference, not an authentication mechanism. It does not prevent network-level snooping; it simply stops the host broadcaster from sending state.
+2. **Presence Without State:** Even when private, the participant still appears in the Discord Activity Presence Roster so the session knows who is online. Only the select-for-spectate action is blocked.
+3. **Persistence:** `isPrivate` is persisted in `localStorage` and restored on session join. It is not synced to other peers.
+4. **Default:** New instances default to `isPrivate: false` (Public) to match the existing behavior of full visibility.
+
 ## Discord Embedded App SDK Gotchas
 1. **Frame Proxying:** Discord proxies all external requests through `.discordsays.com`. All asset paths in Vite must be relative (`base: "./"`).
 2. **WebRTC STUN:** Public Google STUN (`stun.l.google.com:19302`) passes through Discord's WebSocket proxies without requiring TURN credentials for >95% of client environments.
