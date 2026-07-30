@@ -30,7 +30,7 @@
 - [x] **T-5.2:** Build HUD stats renderer overlay.
 
 ## Phase 6: P2P Spectating & Presence Engine
-- [ ] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.
+- [x] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.
 - [ ] **T-6.2:** Build Host state delta broadcaster (20 Hz loop) — must respect `InstanceConfig.isPrivate` guard.
 - [ ] **T-6.3:** Build Spectator state interpolation & render view.
 - [ ] **T-6.4:** Build Presence Roster UI component displaying active Discord participants and live PPS, with private-instance badge.
