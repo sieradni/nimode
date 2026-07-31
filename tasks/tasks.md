@@ -19,15 +19,20 @@
 - [x] **T-3.2:** Build Canvas Queue & Hold Preview Renderers.
 - [x] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
 - [x] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
+- [x] **T-3.5:** Build Annotation Toolbar UI (pen, eraser, rect fill, clear all, auto-color toggle).
+- [ ] **T-3.6:** Wire mouse/touch handlers on GameBoardCanvas for annotation drawing.
+- [ ] **T-3.7:** Integrate autoColorEngine with annotation drawing (trigger on stroke end).
 
 ## Phase 4: Settings & $0 Persistence
 - [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
 - [x] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
 - [x] **T-4.3:** Build UI settings modal.
+- [ ] **T-4.4:** Add gravity (0G-20G), 0G float, subzero toggles to GameConfig and SettingsModal.
 
 ## Phase 5: Statistics & Analytics Engine
 - [x] **T-5.1:** Implement real-time stats tracker (PPS, APM, KPP, Finesse, Lines, Quads, T-Spins).
 - [x] **T-5.2:** Build HUD stats renderer overlay.
+- [ ] **T-5.3:** Add Attack and Efficiency to stats tracker (event-driven).
 
 ## Phase 6: P2P Spectating & Presence Engine
 - [x] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.
@@ -48,8 +53,21 @@
 - [x] **T-8.2:** Wire Canvas renderers (BoardRenderer, QueueHoldRenderer, StatsOverlayRenderer) into App.tsx, replacing text-based display.
 - [x] **T-8.3:** Wire keyboard input handler into App.tsx (bind keydown/keyup to EngineCore.handleInput).
 - [x] **T-8.4:** Wire P2P components (HostBroadcaster, PeerJSManager, SpectatorBuffer) into App.tsx lifecycle.
+- [ ] **T-8.5:** Wire annotation toolbar and mouse handlers into App.tsx.
 
 ## Phase 9: Deployment & Discord Activity
 - [x] **T-9.1:** Add `.nojekyll` file for GitHub Pages compatibility.
 - [x] **T-9.2:** Document Discord Activity registration process in README.
 - [x] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).
+
+## Phase 10: Gravity Modes & Subzero (from architecture.md lines 140-144)
+- [ ] **T-10.1:** Extend GameConfig with `gravity` (number, guideline G level 0-20, default 1) and `subzero` (boolean, default false).
+- [ ] **T-10.2:** Refactor EngineCore.applyGravity to consume config.gravity (0G = no auto-fall, 20G = instant drop).
+- [ ] **T-10.3:** Implement subzero mode: disable lock-on-contact, only lock on hard drop.
+- [ ] **T-10.4:** Add gravity/subzero controls to SettingsModal with persistence.
+
+## Phase 11: Alternate Rotation Systems & Bag Randomizers
+- [ ] **T-11.1:** Implement ARSRotationSystem (ARS - Arika Rotation System).
+- [ ] **T-11.2:** Implement FourteenBagRandomizer (14-Bag).
+- [ ] **T-11.3:** Implement MemorylessBagRandomizer.
+- [ ] **T-11.4:** Add rotation system / bag randomizer selectors to SettingsModal.
