@@ -42,3 +42,14 @@
 - [ ] **T-7.2:** Write Vitest unit tests for 7-Bag randomizer distribution.
 - [x] **T-7.3:** Write Vitest unit tests for annotation auto-coloring matrix parser.
 - [ ] **T-7.4:** Run `npm run verify` and fix all lint, type, and test issues.
+
+## Phase 8: App Integration & Wiring
+- [ ] **T-8.1:** Wire Discord SDK initialization into App.tsx (authenticate, get userId/instanceId).
+- [ ] **T-8.2:** Wire Canvas renderers (BoardRenderer, QueueHoldRenderer, StatsOverlayRenderer) into App.tsx, replacing text-based display.
+- [ ] **T-8.3:** Wire keyboard input handler into App.tsx (bind keydown/keyup to EngineCore.handleInput).
+- [ ] **T-8.4:** Wire P2P components (HostBroadcaster, PeerJSManager, SpectatorBuffer) into App.tsx lifecycle.
+
+## Phase 9: Deployment & Discord Activity
+- [x] **T-9.1:** Add `.nojekyll` file for GitHub Pages compatibility.
+- [ ] **T-9.2:** Document Discord Activity registration process in README.
+- [ ] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).
