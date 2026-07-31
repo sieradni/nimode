@@ -72,13 +72,14 @@ export class PeerJSManager {
     const metadata: PeerMetadata = {
       userId: typeof raw?.userId === 'string' ? raw.userId : peerId,
       displayName: typeof raw?.displayName === 'string' ? raw.displayName : peerId,
+      isPrivate: raw?.isPrivate === true,
     };
     this.connections.set(peerId, { peerId, metadata, connection: conn });
     this.emit('peerJoined', metadata);
 
     this.wireDataConnection(conn, () => {
       this.connections.delete(peerId);
-      this.emit('peerLeft', peerId);
+      this.emit('peerLeft', metadata.userId);
     });
   }
 

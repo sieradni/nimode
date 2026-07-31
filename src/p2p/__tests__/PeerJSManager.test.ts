@@ -128,6 +128,7 @@ describe('PeerJSManager', () => {
       const metadata: PeerMetadata = joinedHandler.mock.calls[0][0] as PeerMetadata;
       expect(metadata.userId).toBe('remote-spectator-1');
       expect(metadata.displayName).toBe('remote-spectator-1');
+      expect(metadata.isPrivate).toBe(false);
     });
 
     it('uses metadata from the connection when present', async () => {
@@ -149,7 +150,34 @@ describe('PeerJSManager', () => {
       await manager.init();
       peer._emit('connection', connWithMeta);
 
-      expect(joinedHandler).toHaveBeenCalledWith({ userId: 'discord-99', displayName: 'Alice' });
+      expect(joinedHandler).toHaveBeenCalledWith({ userId: 'discord-99', displayName: 'Alice', isPrivate: false });
+    });
+
+    it('reads isPrivate from connection metadata', async () => {
+      const connWithMeta = createMockDataConnection('remote-2', {
+        userId: 'discord-99',
+        displayName: 'Alice',
+        isPrivate: true,
+      });
+      const peer = createMockPeer('host-id', connWithMeta);
+      const createPeer = vi.fn(() => peer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const joinedHandler = vi.fn();
+      manager.on('peerJoined', joinedHandler);
+
+      await manager.init();
+      peer._emit('connection', connWithMeta);
+
+      expect(joinedHandler).toHaveBeenCalledWith({
+        userId: 'discord-99',
+        displayName: 'Alice',
+        isPrivate: true,
+      });
     });
 
     it('broadcast sends payload to every connected spectator', async () => {
@@ -192,6 +220,29 @@ describe('PeerJSManager', () => {
       mockConn._emit('close');
 
       expect(leftHandler).toHaveBeenCalledWith('remote-spectator-1');
+    });
+
+    it('emits peerLeft with userId (not peerId) when metadata has custom userId', async () => {
+      const connWithMeta = createMockDataConnection('remote-peer-id', {
+        userId: 'custom-user-id',
+        displayName: 'Bob',
+      });
+      const peer = createMockPeer('host-id', connWithMeta);
+      const createPeer = vi.fn(() => peer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const leftHandler = vi.fn();
+      manager.on('peerLeft', leftHandler);
+
+      await manager.init();
+      peer._emit('connection', connWithMeta);
+      connWithMeta._emit('close');
+
+      expect(leftHandler).toHaveBeenCalledWith('custom-user-id');
     });
 
     it('emits data when a spectator sends a payload to the host', async () => {

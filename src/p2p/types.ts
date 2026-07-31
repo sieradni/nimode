@@ -6,13 +6,14 @@ export type PeerRole = 'host' | 'spectator';
 export interface PeerMetadata {
   userId: string;
   displayName: string;
+  isPrivate: boolean;
 }
 
 export interface PeerConnectionEvents {
   open: (id: string) => void;
   data: (payload: SpectatorPayload) => void;
   peerJoined: (metadata: PeerMetadata) => void;
-  peerLeft: (peerId: string) => void;
+  peerLeft: (userId: string) => void;
   error: (error: Error) => void;
   closed: () => void;
 }
