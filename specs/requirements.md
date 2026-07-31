@@ -13,6 +13,9 @@
 - **US-1.3:** As a player, I want a 7-Bag randomizer by default to ensure fair piece distribution.
 - **US-1.4:** As a player, I want the ability to clear or clear/lock the hold piece during practice sessions.
 - **US-1.5:** As a player, I want to set or override the upcoming queue pieces so I can practice specific stacking scenarios or openers.
+- **US-1.6:** As a player, I want to adjust gravity using guideline G levels (0G to 20G) so I can train speed and timing.
+- **US-1.7:** As a player, I want a 0G float mode where pieces never fall under gravity — only soft drop moves them — so I can stack without time pressure.
+- **US-1.8:** As a player, I want a subzero mode where pieces never lock on contact and only lock when I hard drop, so I can freely reposition pieces.
 
 ### Cursor Annotation & Tooling
 - **US-2.1:** As a player, I want to use my mouse cursor to draw blocks directly onto the board matrix like a whiteboard tool.
@@ -33,6 +36,10 @@
 - **US-4.5:** As a spectator, I want to see which participants have made their instance Private so that I know who is unavailable for spectating.
 - **US-4.6:** As a player with a Private instance, I want a visual indicator in the Presence Roster showing my instance is Private, and my game state must never be broadcast over WebRTC.
 
+### UI & Presentation
+- **US-6.1:** As a player, I want a minimal, purely functional interface so that no decorative element competes with the game board for attention.
+- **US-6.2:** As a player, I want a monochrome interface so that chromatic color is reserved exclusively for tetromino representation and never used for UI chrome.
+
 ### Extensibility & Future Readiness
 - **US-5.1:** As a developer, I want the rotation system to be modular so that ARS, Standard SRS, or Custom Rotation Systems can be selected in future updates.
 - **US-5.2:** As a developer, I want the bag system to be modular so that 14-Bag, Memoryless, or Custom Bag generators can be swapped cleanly.
@@ -45,3 +52,4 @@
 2. **Performance:** Solid 60 FPS rendering on Canvas 2D with engine tick isolated from React re-render cycles.
 3. **Modularity Constraint:** No source code file shall exceed 150 lines of code.
 4. **Type Safety:** 100% strict TypeScript compliance with zero explicit or implicit `any` types.
+5. **UI Aesthetic:** The interface must be minimal, purely functional, and monochrome — no decorative elements, and chromatic color is reserved exclusively for tetromino representation.
