@@ -5,6 +5,9 @@ import { srsPlusRotationSystem } from './engine/systems/SrsPlusRotationSystem';
 import { EngineState } from './engine/interfaces/IEngineCore';
 import { SettingsModal } from './components/SettingsModal';
 import { StatsHud } from './components/StatsHud';
+import { createDiscordSdk } from './discord/sdk';
+import { getDiscordClientId } from './discord/config';
+import { useDiscordAuth } from './discord/useDiscordAuth';
 
 function App() {
   const [engine] = useState(
@@ -14,6 +17,9 @@ function App() {
         bagRandomizer: sevenBagRandomizer,
       })
   );
+
+  const [sdk] = useState(() => createDiscordSdk(getDiscordClientId()));
+  const discordAuth = useDiscordAuth(sdk);
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -40,6 +46,15 @@ function App() {
         <h1 className="text-xl font-bold text-sky-400">nimode</h1>
         <div className="flex items-center gap-3">
           <div className="text-xs text-slate-400">Modern Tetris Engine Active</div>
+          {discordAuth.status === 'connecting' && (
+            <div className="text-xs text-slate-400">Connecting to Discord...</div>
+          )}
+          {discordAuth.status === 'authenticated' && (
+            <div className="text-xs text-emerald-400">Connected: {discordAuth.auth.userId}</div>
+          )}
+          {discordAuth.status === 'unavailable' && (
+            <div className="text-xs text-slate-400">Standalone mode</div>
+          )}
           <button
             onClick={() => setSettingsOpen(true)}
             className="text-slate-400 hover:text-sky-400 transition-colors"
