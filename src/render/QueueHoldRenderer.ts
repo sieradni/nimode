@@ -1,8 +1,8 @@
 import { PieceType, PIECE_COLORS } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
 
-const PREVIEW_SIZE = 4;
-const GAP = 4;
+export const QUEUE_PREVIEW_SIZE = 4;
+export const QUEUE_GAP = 4;
 
 export interface QueueHoldOptions {
   cellSize?: number;
@@ -18,12 +18,12 @@ export function renderQueue(
   const cellSize = options?.cellSize ?? 20;
   const startX = options?.startX ?? 0;
   const startY = options?.startY ?? 0;
-  const slotHeight = PREVIEW_SIZE * cellSize;
+  const slotHeight = QUEUE_PREVIEW_SIZE * cellSize;
   const totalHeight =
     queue.length > 0
-      ? queue.length * slotHeight + (queue.length - 1) * GAP
+      ? queue.length * slotHeight + (queue.length - 1) * QUEUE_GAP
       : slotHeight;
-  const width = PREVIEW_SIZE * cellSize;
+  const width = QUEUE_PREVIEW_SIZE * cellSize;
 
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(startX, startY, width, totalHeight);
@@ -33,9 +33,9 @@ export function renderQueue(
     if (pieceType === 0) continue;
     const matrix = getPieceMatrix(pieceType, 0);
     const size = matrix.length;
-    const offsetX = Math.floor((PREVIEW_SIZE - size) / 2) * cellSize;
-    const offsetY = Math.floor((PREVIEW_SIZE - size) / 2) * cellSize;
-    const pieceY = startY + i * (slotHeight + GAP);
+    const offsetX = Math.floor((QUEUE_PREVIEW_SIZE - size) / 2) * cellSize;
+    const offsetY = Math.floor((QUEUE_PREVIEW_SIZE - size) / 2) * cellSize;
+    const pieceY = startY + i * (slotHeight + QUEUE_GAP);
 
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -60,7 +60,7 @@ export function renderHold(
   const cellSize = options?.cellSize ?? 20;
   const startX = options?.startX ?? 0;
   const startY = options?.startY ?? 0;
-  const size = PREVIEW_SIZE * cellSize;
+  const size = QUEUE_PREVIEW_SIZE * cellSize;
 
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(startX, startY, size, size);
@@ -73,8 +73,8 @@ export function renderHold(
 
   const matrix = getPieceMatrix(hold, 0);
   const mSize = matrix.length;
-  const offsetX = Math.floor((PREVIEW_SIZE - mSize) / 2) * cellSize;
-  const offsetY = Math.floor((PREVIEW_SIZE - mSize) / 2) * cellSize;
+  const offsetX = Math.floor((QUEUE_PREVIEW_SIZE - mSize) / 2) * cellSize;
+  const offsetY = Math.floor((QUEUE_PREVIEW_SIZE - mSize) / 2) * cellSize;
 
   for (let y = 0; y < mSize; y++) {
     for (let x = 0; x < mSize; x++) {

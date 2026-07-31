@@ -45,7 +45,7 @@
 
 ## Phase 8: App Integration & Wiring
 - [x] **T-8.1:** Wire Discord SDK initialization into App.tsx (authenticate, get userId/instanceId).
-- [ ] **T-8.2:** Wire Canvas renderers (BoardRenderer, QueueHoldRenderer, StatsOverlayRenderer) into App.tsx, replacing text-based display.
+- [x] **T-8.2:** Wire Canvas renderers (BoardRenderer, QueueHoldRenderer, StatsOverlayRenderer) into App.tsx, replacing text-based display.
 - [ ] **T-8.3:** Wire keyboard input handler into App.tsx (bind keydown/keyup to EngineCore.handleInput).
 - [ ] **T-8.4:** Wire P2P components (HostBroadcaster, PeerJSManager, SpectatorBuffer) into App.tsx lifecycle.
 
