@@ -22,7 +22,7 @@ export interface SpectatorRenderOptions {
 
 const DEFAULT_BOARD_CELL_SIZE = 30;
 const DEFAULT_PREVIEW_CELL_SIZE = 20;
-const PREVIEW_SLOT = 4;
+export const PREVIEW_SLOT = 4;
 const PREVIEW_GAP = 4;
 
 export function renderAnnotations(

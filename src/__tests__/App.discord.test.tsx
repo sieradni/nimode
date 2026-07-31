@@ -2,13 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { DiscordAuth } from '../discord/types';
 
-const { mockInit } = vi.hoisted(() => ({ mockInit: vi.fn() }));
+const { mockInit, mockCreatePeer } = vi.hoisted(() => ({
+  mockInit: vi.fn(),
+  mockCreatePeer: vi.fn(),
+}));
 
 vi.mock('../discord/sdk', () => ({
   createDiscordSdk: vi.fn(() => ({
     clientId: 'test-client-id',
     init: mockInit,
   })),
+}));
+
+vi.mock('../p2p/peerFactory', () => ({
+  createPeerJSInstance: mockCreatePeer,
 }));
 
 import App from '../App';
@@ -24,6 +31,8 @@ describe('App Discord integration', () => {
   beforeEach(() => {
     import.meta.env.VITE_DISCORD_CLIENT_ID = 'test-client-id';
     mockInit.mockReset();
+    mockCreatePeer.mockReset();
+    mockCreatePeer.mockReturnValue({ on: vi.fn(), connect: vi.fn(), destroy: vi.fn() });
   });
 
   afterEach(() => {

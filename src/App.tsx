@@ -9,6 +9,10 @@ import { KeyboardInputAdapter } from './engine/keyboardInput';
 import { createDiscordSdk } from './discord/sdk';
 import { getDiscordClientId } from './discord/config';
 import { useDiscordAuth } from './discord/useDiscordAuth';
+import { usePeerSession } from './p2p/usePeerSession';
+import { instanceConfigStore } from './p2p/InstanceConfigStore';
+import { PresenceRoster } from './components/PresenceRoster';
+import { SpectatorBoardCanvas } from './components/canvas/SpectatorBoardCanvas';
 
 function App() {
   const [engine] = useState(
@@ -22,6 +26,15 @@ function App() {
   const [sdk] = useState(() => createDiscordSdk(getDiscordClientId()));
   const discordAuth = useDiscordAuth(sdk);
 
+  const instanceId = discordAuth.status === 'authenticated' ? discordAuth.auth.instanceId : null;
+  const userId = discordAuth.status === 'authenticated' ? discordAuth.auth.userId : 'local-player';
+  const peerSession = usePeerSession({
+    instanceId,
+    userId,
+    engine,
+    configStore: instanceConfigStore,
+  });
+
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsOpenRef = useRef(false);
@@ -31,6 +44,7 @@ function App() {
     let lastTime = performance.now();
 
     const loop = (time: number) => {
+      if (peerSession.view !== 'LOCAL_ACTIVE') return;
       const dt = time - lastTime;
       lastTime = time;
       engine.tick(dt);
@@ -40,7 +54,7 @@ function App() {
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [engine]);
+  }, [engine, peerSession.view]);
 
   useEffect(() => {
     settingsOpenRef.current = settingsOpen;
@@ -81,7 +95,36 @@ function App() {
       </header>
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <main className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
-        <GameCanvas state={gameState} />
+        {peerSession.connectionError && (
+          <div className="text-xs text-red-400">P2P error: {peerSession.connectionError}</div>
+        )}
+        <div className="flex gap-8 items-start">
+          {peerSession.view === 'LOCAL_ACTIVE' ? (
+            <GameCanvas state={gameState} />
+          ) : (
+            peerSession.spectatorBuffer && (
+              <div className="flex gap-8 items-start">
+                <SpectatorBoardCanvas buffer={peerSession.spectatorBuffer} />
+                <button
+                  onClick={peerSession.returnToLocal}
+                  className="px-3 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-200"
+                >
+                  Return to My Board
+                </button>
+              </div>
+            )
+          )}
+          {peerSession.peerManager && (
+            <PresenceRoster
+              peerManager={peerSession.peerManager}
+              instanceConfigStore={instanceConfigStore}
+              localUserId={userId}
+              localDisplayName={userId}
+              localPps={gameState.stats.pps}
+              onSelectParticipant={peerSession.selectTarget}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
