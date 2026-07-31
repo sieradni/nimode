@@ -2,8 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { IEngineCore, EngineState } from '../../engine/interfaces/IEngineCore';
 import { HostBroadcaster } from '../HostBroadcaster';
 import type { SpectatorPayload } from '../../engine/types/game';
-import type { InstanceConfig } from '../../engine/types/game';
 import type { PeerJSManager } from '../PeerJSManager';
+import { InstanceConfigStore } from '../InstanceConfigStore';
+
+function createMockStorage(): Storage {
+  const store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { for (const k of Object.keys(store)) delete store[k]; },
+    get length() { return Object.keys(store).length; },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+  };
+}
 
 function makeEngineState(overrides: Partial<EngineState> = {}): EngineState {
   return {
@@ -65,26 +77,28 @@ function makeMockPeerManager(): {
   return { peerManager, broadcast };
 }
 
-const DEFAULT_INSTANCE_CONFIG: InstanceConfig = { isPrivate: false };
 const USER_ID = 'test-user';
 
 describe('HostBroadcaster', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.stubGlobal('localStorage', createMockStorage());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('does not broadcast when instance is private', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
-    const privateConfig: InstanceConfig = { isPrivate: true };
+    const configStore = new InstanceConfigStore();
+    configStore.setPrivate(true);
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: privateConfig,
+      configStore,
       userId: USER_ID,
     });
 
@@ -98,10 +112,11 @@ describe('HostBroadcaster', () => {
   it('broadcasts at 20 Hz when instance is public', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -115,10 +130,11 @@ describe('HostBroadcaster', () => {
   it('broadcasts multiple times at 20 Hz intervals', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -132,10 +148,11 @@ describe('HostBroadcaster', () => {
   it('stops broadcasting when stop is called', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -151,10 +168,11 @@ describe('HostBroadcaster', () => {
   it('does not create duplicate intervals when started twice', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -169,10 +187,11 @@ describe('HostBroadcaster', () => {
   it('broadcasts payload with correct structure and userId', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -192,10 +211,11 @@ describe('HostBroadcaster', () => {
   it('payload has null activePiece when no piece is active', () => {
     const engine = makeMockEngine(makeEngineState({ activePiece: null }));
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -214,10 +234,11 @@ describe('HostBroadcaster', () => {
       })
     );
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -251,10 +272,11 @@ describe('HostBroadcaster', () => {
       })
     );
     const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
     const broadcaster = new HostBroadcaster({
       engine,
       peerManager,
-      instanceConfig: DEFAULT_INSTANCE_CONFIG,
+      configStore,
       userId: USER_ID,
     });
 
@@ -267,6 +289,32 @@ describe('HostBroadcaster', () => {
     expect(call.stats.kpp).toBe(1.2);
     expect(call.stats.piecesPlaced).toBe(42);
     expect(call.stats.linesCleared).toBe(7);
+    broadcaster.stop();
+  });
+
+  it('dynamically stops broadcasting when privacy toggled mid-run', () => {
+    const engine = makeMockEngine();
+    const { peerManager, broadcast } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
+    const broadcaster = new HostBroadcaster({
+      engine,
+      peerManager,
+      configStore,
+      userId: USER_ID,
+    });
+
+    broadcaster.start();
+    vi.advanceTimersByTime(50);
+    expect(broadcast).toHaveBeenCalledTimes(1);
+
+    configStore.setPrivate(true);
+    vi.advanceTimersByTime(100);
+    expect(broadcast).toHaveBeenCalledTimes(1);
+
+    configStore.setPrivate(false);
+    vi.advanceTimersByTime(50);
+    expect(broadcast).toHaveBeenCalledTimes(2);
+
     broadcaster.stop();
   });
 });

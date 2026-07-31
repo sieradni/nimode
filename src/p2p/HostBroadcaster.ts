@@ -1,26 +1,26 @@
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
 import type { PeerJSManager } from './PeerJSManager';
-import type { InstanceConfig } from '../engine/types/game';
 import type { SpectatorPayload } from '../engine/types/game';
+import type { InstanceConfigStore } from './InstanceConfigStore';
 
 const BROADCAST_INTERVAL_MS = 50;
 
 export class HostBroadcaster {
   private readonly engine: IEngineCore;
   private readonly peerManager: PeerJSManager;
-  private readonly instanceConfig: InstanceConfig;
+  private readonly configStore: InstanceConfigStore;
   private readonly userId: string;
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: {
     engine: IEngineCore;
     peerManager: PeerJSManager;
-    instanceConfig: InstanceConfig;
+    configStore: InstanceConfigStore;
     userId: string;
   }) {
     this.engine = options.engine;
     this.peerManager = options.peerManager;
-    this.instanceConfig = options.instanceConfig;
+    this.configStore = options.configStore;
     this.userId = options.userId;
   }
 
@@ -37,7 +37,7 @@ export class HostBroadcaster {
   }
 
   private tick(): void {
-    if (this.instanceConfig.isPrivate) return;
+    if (this.configStore.getConfig().isPrivate) return;
     const state = this.engine.getState();
     const payload = this.toSpectatorPayload(state);
     this.peerManager.broadcast(payload);

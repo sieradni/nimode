@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SettingsModal } from './SettingsModal';
+import { InstanceConfigStore } from '../p2p/InstanceConfigStore';
 import { keybindingsStore } from '../engine/keybindingsStore';
 import { DEFAULT_KEYBINDINGS } from '../engine/types';
 import { ACTION_LABELS } from '../engine/settingsConstants';
@@ -105,5 +106,46 @@ describe('SettingsModal', () => {
     render(<SettingsModal isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /reset all/i }));
     expect(keybindingsStore.getBinding('MOVE_LEFT')).toBe(DEFAULT_KEYBINDINGS.MOVE_LEFT);
+  });
+
+  it('should render a private instance toggle when open', () => {
+    const store = new InstanceConfigStore();
+    render(<SettingsModal isOpen={true} onClose={() => {}} instanceConfigStore={store} />);
+    expect(screen.getByRole('checkbox', { name: /private/i })).toBeInTheDocument();
+  });
+
+  it('should render private toggle unchecked when config is public', () => {
+    const store = new InstanceConfigStore();
+    render(<SettingsModal isOpen={true} onClose={() => {}} instanceConfigStore={store} />);
+    expect(screen.getByRole('checkbox', { name: /private/i })).not.toBeChecked();
+  });
+
+  it('should persist private toggle to localStorage when clicked', () => {
+    const store = new InstanceConfigStore();
+    render(<SettingsModal isOpen={true} onClose={() => {}} instanceConfigStore={store} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: /private/i }));
+
+    expect(store.getConfig().isPrivate).toBe(true);
+    expect(localStorage.getItem('nimode_instance_config')).toContain('"isPrivate":true');
+  });
+
+  it('should reflect a pre-privatized store', () => {
+    const store = new InstanceConfigStore();
+    store.setPrivate(true);
+    render(<SettingsModal isOpen={true} onClose={() => {}} instanceConfigStore={store} />);
+    expect(screen.getByRole('checkbox', { name: /private/i })).toBeChecked();
+  });
+
+  it('should update checkbox when store privacy changes externally after mount', () => {
+    const store = new InstanceConfigStore();
+    render(<SettingsModal isOpen={true} onClose={() => {}} instanceConfigStore={store} />);
+    const checkbox = screen.getByRole('checkbox', { name: /private/i });
+    expect(checkbox).not.toBeChecked();
+
+    act(() => store.setPrivate(true));
+    expect(checkbox).toBeChecked();
+
+    act(() => store.setPrivate(false));
+    expect(checkbox).not.toBeChecked();
   });
 });

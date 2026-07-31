@@ -35,7 +35,7 @@
 - [x] **T-6.3:** Build Spectator state interpolation & render view.
 - [x] **T-6.4:** Build Presence Roster UI component displaying active Discord participants and live PPS, with private-instance badge.
 - [x] **T-6.5:** Implement View Controller Switcher (toggle between Local Canvas Renderer and Remote Spectator Renderer with state preservation) — must check `target.isPrivate` before transition.
-- [ ] **T-6.6:** Build Private Instance toggle UI in Settings (with `localStorage` persistence) and guard the 20 Hz broadcaster.
+- [x] **T-6.6:** Build Private Instance toggle UI in Settings (with `localStorage` persistence) and guard the 20 Hz broadcaster.
 
 ## Phase 7: Verification & Testing
 - [x] **T-7.1:** Write Vitest unit tests for SRS+ kick tables and 180 spins.
