@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+const base = process.env.VITE_BASE_PATH ?? './';
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -9,7 +11,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: '/nimode/',
+  base,
   build: {
     outDir: 'dist',
     sourcemap: true,

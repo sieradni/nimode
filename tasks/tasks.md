@@ -51,5 +51,5 @@
 
 ## Phase 9: Deployment & Discord Activity
 - [x] **T-9.1:** Add `.nojekyll` file for GitHub Pages compatibility.
-- [ ] **T-9.2:** Document Discord Activity registration process in README.
-- [ ] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).
+- [x] **T-9.2:** Document Discord Activity registration process in README.
+- [x] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).

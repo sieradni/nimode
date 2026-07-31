@@ -20,9 +20,10 @@ describe('build configuration', () => {
     expect(pkg.devDependencies).toHaveProperty('gh-pages');
   });
 
-  it('should have correct base path in vite config', () => {
+  it('should use environment variable for base path in vite config', () => {
     const content = fs.readFileSync(vitePath, 'utf-8');
-    expect(content).toContain("base: '/nimode/'");
+    expect(content).toContain("process.env.VITE_BASE_PATH");
+    expect(content).toContain("'./'");
   });
 
   it('should have correct outDir in vite config', () => {
