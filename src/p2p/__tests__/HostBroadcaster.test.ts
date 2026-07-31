@@ -42,6 +42,7 @@ function makeEngineState(overrides: Partial<EngineState> = {}): EngineState {
     },
     gameOver: false,
     paused: false,
+    annotations: Array.from({ length: 40 }, () => Array(10).fill(0)),
     ...overrides,
   };
 }

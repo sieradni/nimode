@@ -1,4 +1,4 @@
-import { BoardMatrix, ActivePiece, PIECE_COLORS, BOARD_WIDTH, VISIBLE_HEIGHT, VISIBLE_Y_OFFSET, BOARD_HEIGHT } from '../engine/types';
+import { BoardMatrix, ActivePiece, PIECE_COLORS, BOARD_WIDTH, VISIBLE_HEIGHT, VISIBLE_Y_OFFSET, BOARD_HEIGHT, AnnotationMatrix } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
 import { checkCollision } from '../engine/boardUtils';
 
@@ -51,6 +51,7 @@ export function renderBoard(
   ctx: CanvasRenderingContext2D,
   board: BoardMatrix,
   activePiece: ActivePiece | null,
+  annotations: AnnotationMatrix,
   options: RenderOptions = {}
 ): void {
   const cellSize = options.cellSize ?? 30;
@@ -60,6 +61,7 @@ export function renderBoard(
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, width, height);
 
+  // Render board cells
   for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
     const row = board[by];
     if (!row) continue;
@@ -71,6 +73,25 @@ export function renderBoard(
       ctx.fillStyle = PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888';
       ctx.fillRect(sx, sy, cellSize, cellSize);
       ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.strokeRect(sx, sy, cellSize, cellSize);
+    }
+  }
+
+  // Render annotations (visible portion only)
+  for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
+    const row = annotations[by];
+    if (!row) continue;
+    for (let bx = 0; bx < BOARD_WIDTH; bx++) {
+      const cell = row[bx];
+      if (!cell || cell === 0) continue;
+      const sx = bx * cellSize;
+      const sy = (by - VISIBLE_Y_OFFSET) * cellSize;
+      ctx.fillStyle = PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888';
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(sx, sy, cellSize, cellSize);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 2;
       ctx.strokeRect(sx, sy, cellSize, cellSize);
     }
   }

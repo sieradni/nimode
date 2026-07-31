@@ -6,6 +6,7 @@ import { renderBoard } from '../render/BoardRenderer';
 import { renderStatsOverlay } from '../render/StatsOverlayRenderer';
 import { renderQueue, renderHold } from '../render/QueueHoldRenderer';
 import { GameCanvas } from './GameCanvas';
+import { IEngineCore } from '../engine/interfaces/IEngineCore';
 
 vi.mock('../render/BoardRenderer', () => ({
   renderBoard: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('../render/QueueHoldRenderer', () => ({
 
 function createState(): EngineState {
   const board = Array.from({ length: 40 }, () => Array(10).fill(0));
+  const annotations = Array.from({ length: 40 }, () => Array(10).fill(0));
   return {
     board,
     activePiece: { type: 6, x: 3, y: 36, rotation: 0 },
@@ -46,11 +48,29 @@ function createState(): EngineState {
     },
     gameOver: false,
     paused: false,
+    annotations,
+  };
+}
+
+function createMockEngine(): IEngineCore {
+  return {
+    initialize: vi.fn(),
+    tick: vi.fn(),
+    handleInput: vi.fn(),
+    getState: vi.fn(),
+    reset: vi.fn(),
+    setQueue: vi.fn(),
+    applyAnnotationPen: vi.fn(),
+    applyAnnotationErase: vi.fn(),
+    applyAnnotationRectFill: vi.fn(),
+    clearAllAnnotations: vi.fn(),
+    autoColorAnnotations: vi.fn(),
   };
 }
 
 describe('GameCanvas', () => {
   let mockCtx: CanvasRenderingContext2D;
+  const mockEngine = createMockEngine();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,28 +81,60 @@ describe('GameCanvas', () => {
   });
 
   it('renders board, hold, and queue canvases', () => {
-    render(<GameCanvas state={createState()} />);
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(screen.getByTestId('board-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('hold-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('queue-canvas')).toBeInTheDocument();
   });
 
   it('sizes the board canvas to the visible playfield', () => {
-    render(<GameCanvas state={createState()} />);
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     const canvas = screen.getByTestId('board-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(BOARD_WIDTH * 30);
     expect(canvas.height).toBe(VISIBLE_HEIGHT * 30);
   });
 
   it('sizes the hold canvas to one 4x4 preview slot', () => {
-    render(<GameCanvas state={createState()} />);
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     const canvas = screen.getByTestId('hold-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
     expect(canvas.height).toBe(4 * 20);
   });
 
   it('sizes the queue canvas to five preview slots plus gaps', () => {
-    render(<GameCanvas state={createState()} />);
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     const canvas = screen.getByTestId('queue-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
     expect(canvas.height).toBe(5 * 4 * 20 + 4 * 4);
@@ -90,15 +142,31 @@ describe('GameCanvas', () => {
 
   it('renders the board and active piece on mount', () => {
     const state = createState();
-    render(<GameCanvas state={state} />);
-    expect(vi.mocked(renderBoard)).toHaveBeenCalledWith(mockCtx, state.board, state.activePiece, {
+    render(
+      <GameCanvas
+        state={state}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
+    expect(vi.mocked(renderBoard)).toHaveBeenCalledWith(mockCtx, state.board, state.activePiece, state.annotations, {
       cellSize: 30,
     });
   });
 
   it('renders the stats overlay on mount', () => {
     const state = createState();
-    render(<GameCanvas state={state} />);
+    render(
+      <GameCanvas
+        state={state}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(vi.mocked(renderStatsOverlay)).toHaveBeenCalledWith(
       mockCtx,
       state.stats,
@@ -109,22 +177,54 @@ describe('GameCanvas', () => {
 
   it('renders the hold piece on mount', () => {
     const state = createState();
-    render(<GameCanvas state={state} />);
+    render(
+      <GameCanvas
+        state={state}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(vi.mocked(renderHold)).toHaveBeenCalledWith(mockCtx, state.hold, { cellSize: 20 });
   });
 
   it('renders the queue sliced to 5 previews', () => {
     const state = createState();
-    render(<GameCanvas state={state} />);
+    render(
+      <GameCanvas
+        state={state}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
       cellSize: 20,
     });
   });
 
   it('redraws when a new state object is provided', () => {
-    const { rerender } = render(<GameCanvas state={createState()} />);
+    const { rerender } = render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledTimes(1);
-    rerender(<GameCanvas state={createState()} />);
+    rerender(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationPieceType={1}
+        autoColor={false}
+      />
+    );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledTimes(2);
   });
 });

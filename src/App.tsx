@@ -13,6 +13,8 @@ import { usePeerSession } from './p2p/usePeerSession';
 import { instanceConfigStore } from './p2p/InstanceConfigStore';
 import { PresenceRoster } from './components/PresenceRoster';
 import { SpectatorBoardCanvas } from './components/canvas/SpectatorBoardCanvas';
+import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
+import { PieceType } from './engine/types/piece';
 
 function App() {
   const [engine] = useState(
@@ -37,6 +39,10 @@ function App() {
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('pen');
+  const [annotationPieceType, setAnnotationPieceType] = useState<PieceType>(1);
+  const [autoColor, setAutoColor] = useState(false);
+  const [annotationToolbarOpen, setAnnotationToolbarOpen] = useState(false);
   const settingsOpenRef = useRef(false);
 
   useEffect(() => {
@@ -85,6 +91,13 @@ function App() {
             <div className="text-xs text-slate-400">Standalone mode</div>
           )}
           <button
+            onClick={() => setAnnotationToolbarOpen(true)}
+            className="text-slate-400 hover:text-sky-400 transition-colors"
+            aria-label="Annotation Toolbar"
+          >
+            ✏
+          </button>
+          <button
             onClick={() => setSettingsOpen(true)}
             className="text-slate-400 hover:text-sky-400 transition-colors"
             aria-label="Settings"
@@ -94,13 +107,30 @@ function App() {
         </div>
       </header>
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <AnnotationToolbar
+        isOpen={annotationToolbarOpen}
+        onClose={() => setAnnotationToolbarOpen(false)}
+        tool={annotationTool}
+        onToolChange={setAnnotationTool}
+        onClearAll={() => engine.clearAllAnnotations()}
+        autoColor={autoColor}
+        onAutoColorToggle={setAutoColor}
+        pieceType={annotationPieceType}
+        onPieceTypeChange={setAnnotationPieceType}
+      />
       <main className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
         {peerSession.connectionError && (
           <div className="text-xs text-red-400">P2P error: {peerSession.connectionError}</div>
         )}
         <div className="flex gap-8 items-start">
           {peerSession.view === 'LOCAL_ACTIVE' ? (
-            <GameCanvas state={gameState} />
+            <GameCanvas
+              state={gameState}
+              engine={engine}
+              annotationTool={annotationTool}
+              annotationPieceType={annotationPieceType}
+              autoColor={autoColor}
+            />
           ) : (
             peerSession.spectatorBuffer && (
               <div className="flex gap-8 items-start">

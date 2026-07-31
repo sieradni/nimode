@@ -7,6 +7,7 @@ import {
 } from './types';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { createEmptyBoard } from './boardUtils';
+import { createEmptyAnnotations } from './annotationEngine';
 
 export const INITIAL_STATS: GameStats = {
   piecesPlaced: 0,
@@ -44,6 +45,7 @@ export function createInitialGameState(
     arrCounters: { left: 0, right: 0 },
     gameOver: false,
     paused: false,
+    annotations: createEmptyAnnotations(),
   };
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PieceType } from '../engine/types/piece';
 
-export type AnnotationTool = 'pen' | 'eraser' | 'rect';
+export type AnnotationTool = 'pen' | 'erase' | 'rect';
 
 export interface AnnotationToolbarProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export interface AnnotationToolbarProps {
 
 const TOOL_LABELS: Record<AnnotationTool, string> = {
   pen: 'Pen',
-  eraser: 'Eraser',
+  erase: 'Eraser',
   rect: 'Rect Fill',
 };
 
@@ -67,7 +67,7 @@ export function AnnotationToolbar({
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
       <div className="bg-slate-900/95 border border-slate-700 rounded-lg p-3 flex items-center gap-2">
         <div className="flex items-center gap-1 bg-slate-800 rounded p-1">
-          {(['pen', 'eraser', 'rect'] as AnnotationTool[]).map((t) => (
+          {(['pen', 'erase', 'rect'] as AnnotationTool[]).map((t) => (
             <button
               key={t}
               type="button"

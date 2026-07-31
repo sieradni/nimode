@@ -1,5 +1,6 @@
 import { BoardMatrix } from './board';
 import { PieceType, ActivePiece } from './piece';
+import { AnnotationMatrix } from './annotations';
 
 export interface QueueState {
   queue: PieceType[];
@@ -112,6 +113,7 @@ export interface GameState {
   arrCounters: { left: number; right: number };
   gameOver: boolean;
   paused: boolean;
+  annotations: AnnotationMatrix;
 }
 
 export interface InstanceConfig {

@@ -6,6 +6,8 @@ import { InputHandler } from './inputHandler';
 import { createInitialGameState } from './engineState';
 import { movePiece, spawnNextPiece, holdPiece, hardDrop, lockPiece } from './engineActions';
 import { StatsTracker } from './statsTracker';
+import { applyAnnotationPen, applyAnnotationErase, clearAllAnnotations, applyAnnotationRectFill } from './annotationEngine';
+import { autoColorAnnotations } from './autoColorEngine';
 
 export class EngineCore implements IEngineCore {
   private config: GameConfig = DEFAULT_CONFIG;
@@ -30,6 +32,26 @@ export class EngineCore implements IEngineCore {
   }
 
   handleInput(input: InputEvent): void {
+    if (input.type === 'ANNOTATE_PEN') {
+      this.applyAnnotationPen(input.x, input.y, input.pieceType);
+      return;
+    }
+    if (input.type === 'ANNOTATE_ERASE') {
+      this.applyAnnotationErase(input.x, input.y);
+      return;
+    }
+    if (input.type === 'ANNOTATE_RECT_FILL') {
+      this.applyAnnotationRectFill(input.x1, input.y1, input.x2, input.y2, input.pieceType);
+      return;
+    }
+    if (input.type === 'ANNOTATE_CLEAR_ALL') {
+      this.clearAllAnnotations();
+      return;
+    }
+    if (input.type === 'ANNOTATE_AUTO_COLOR') {
+      this.autoColorAnnotations();
+      return;
+    }
     this.inputHandler.handleInput(input);
   }
 
@@ -119,6 +141,7 @@ export class EngineCore implements IEngineCore {
       stats: this.statsTracker.getStats(),
       gameOver: this.state.gameOver,
       paused: this.state.paused,
+      annotations: this.state.annotations.map(row => [...row]),
     };
   }
 
@@ -134,5 +157,25 @@ export class EngineCore implements IEngineCore {
 
   setQueue(pieces: PieceType[]): void {
     this.state.queue.queue = [...pieces];
+  }
+
+  applyAnnotationPen(x: number, y: number, pieceType: number): void {
+    this.state.annotations = applyAnnotationPen(this.state.annotations, x, y, pieceType);
+  }
+
+  applyAnnotationErase(x: number, y: number): void {
+    this.state.annotations = applyAnnotationErase(this.state.annotations, x, y);
+  }
+
+  applyAnnotationRectFill(x1: number, y1: number, x2: number, y2: number, pieceType: number): void {
+    this.state.annotations = applyAnnotationRectFill(this.state.annotations, x1, y1, x2, y2, pieceType);
+  }
+
+  clearAllAnnotations(): void {
+    this.state.annotations = clearAllAnnotations(this.state.annotations);
+  }
+
+  autoColorAnnotations(): void {
+    this.state.annotations = autoColorAnnotations(this.state.annotations);
   }
 }

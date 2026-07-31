@@ -62,7 +62,7 @@ describe('AnnotationToolbar', () => {
     const onToolChange = vi.fn();
     render(<AnnotationToolbar isOpen={true} onClose={() => {}} onToolChange={onToolChange} />);
     fireEvent.click(screen.getByRole('button', { name: /eraser/i }));
-    expect(onToolChange).toHaveBeenCalledWith('eraser');
+    expect(onToolChange).toHaveBeenCalledWith('erase');
   });
 
   it('should call onClearAll when clear all clicked', () => {
@@ -119,7 +119,7 @@ describe('AnnotationToolbar', () => {
   });
 
   it('should reflect initial tool prop', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} tool="eraser" />);
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} tool="erase" />);
     expect(screen.getByRole('button', { name: /eraser/i })).toHaveAttribute('aria-pressed', 'true');
   });
 

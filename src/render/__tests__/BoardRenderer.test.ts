@@ -27,16 +27,18 @@ describe('BoardRenderer', () => {
   it('should render an empty board without throwing', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
 
-    expect(() => renderBoard(ctx, board, null)).not.toThrow();
+    expect(() => renderBoard(ctx, board, null, annotations)).not.toThrow();
   });
 
   it('should draw filled cells with the correct piece color', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
     board[39]![0] = 1; // I-piece (cyan) at bottom-left visible cell
 
-    renderBoard(ctx, board, null);
+    renderBoard(ctx, board, null, annotations);
 
     const calls = (ctx as unknown as typeof ctx & { calls: Record<string, unknown[]> }).calls;
     expect(calls.fillRect).toBeDefined();
@@ -46,8 +48,9 @@ describe('BoardRenderer', () => {
   it('should render board background fill', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
 
-    renderBoard(ctx, board, null);
+    renderBoard(ctx, board, null, annotations);
 
     expect(ctx.fillStyle).toBe('#1a1a2e');
   });
@@ -55,9 +58,10 @@ describe('BoardRenderer', () => {
   it('should render the active piece on the board', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
     const activePiece = { type: 6 as const, x: 3, y: 36, rotation: 0 as const };
 
-    renderBoard(ctx, board, activePiece);
+    renderBoard(ctx, board, activePiece, annotations);
 
     const calls = (ctx as unknown as typeof ctx & { calls: Record<string, unknown[]> }).calls;
     expect(calls.fillRect).toBeDefined();
@@ -66,8 +70,9 @@ describe('BoardRenderer', () => {
   it('should render grid lines', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
 
-    renderBoard(ctx, board, null);
+    renderBoard(ctx, board, null, annotations);
 
     expect(ctx.strokeStyle).toBeDefined();
     expect(ctx.beginPath).toHaveBeenCalled();
@@ -77,8 +82,9 @@ describe('BoardRenderer', () => {
   it('should accept custom cell size', () => {
     const ctx = createMockCtx();
     const board = Array(40).fill(null).map(() => Array(10).fill(0));
+    const annotations = Array(40).fill(null).map(() => Array(10).fill(0));
 
-    renderBoard(ctx, board, null, { cellSize: 40 });
+    renderBoard(ctx, board, null, annotations, { cellSize: 40 });
 
     expect(ctx.fillRect).toHaveBeenCalled();
   });

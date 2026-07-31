@@ -20,8 +20,8 @@
 - [x] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
 - [x] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
 - [x] **T-3.5:** Build Annotation Toolbar UI (pen, eraser, rect fill, clear all, auto-color toggle).
-- [ ] **T-3.6:** Wire mouse/touch handlers on GameBoardCanvas for annotation drawing.
-- [ ] **T-3.7:** Integrate autoColorEngine with annotation drawing (trigger on stroke end).
+- [x] **T-3.6:** Wire mouse/touch handlers on GameBoardCanvas for annotation drawing.
+- [x] **T-3.7:** Integrate autoColorEngine with annotation drawing (trigger on stroke end).
 
 ## Phase 4: Settings & $0 Persistence
 - [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
@@ -53,7 +53,7 @@
 - [x] **T-8.2:** Wire Canvas renderers (BoardRenderer, QueueHoldRenderer, StatsOverlayRenderer) into App.tsx, replacing text-based display.
 - [x] **T-8.3:** Wire keyboard input handler into App.tsx (bind keydown/keyup to EngineCore.handleInput).
 - [x] **T-8.4:** Wire P2P components (HostBroadcaster, PeerJSManager, SpectatorBuffer) into App.tsx lifecycle.
-- [ ] **T-8.5:** Wire annotation toolbar and mouse handlers into App.tsx.
+- [x] **T-8.5:** Wire annotation toolbar and mouse handlers into App.tsx.
 
 ## Phase 9: Deployment & Discord Activity
 - [x] **T-9.1:** Add `.nojekyll` file for GitHub Pages compatibility.

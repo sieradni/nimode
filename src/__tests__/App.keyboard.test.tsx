@@ -28,6 +28,7 @@ import App from '../App';
 
 function createState(): EngineState {
   const board = Array.from({ length: 40 }, () => Array(10).fill(0));
+  const annotations = Array.from({ length: 40 }, () => Array(10).fill(0));
   return {
     board,
     activePiece: { type: 6, x: 3, y: 36, rotation: 0 },
@@ -52,6 +53,7 @@ function createState(): EngineState {
     },
     gameOver: false,
     paused: false,
+    annotations,
   };
 }
 

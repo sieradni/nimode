@@ -82,8 +82,8 @@ export function renderSpectatorState(
       }
     : null;
 
-  renderBoard(ctx, state.matrix, activePiece, { cellSize: boardCellSize });
-  renderAnnotations(ctx, state.annotations, boardCellSize);
+  renderBoard(ctx, state.matrix, activePiece, state.annotations, { cellSize: boardCellSize });
+  // renderAnnotations is now handled inside renderBoard
 
   const boardWidth = BOARD_WIDTH * boardCellSize;
 
