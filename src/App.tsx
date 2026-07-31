@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { EngineCore } from './engine/EngineCore';
 import { sevenBagRandomizer } from './engine/systems/SevenBagRandomizer';
 import { srsPlusRotationSystem } from './engine/systems/SrsPlusRotationSystem';
 import { EngineState } from './engine/interfaces/IEngineCore';
 import { SettingsModal } from './components/SettingsModal';
 import { GameCanvas } from './components/GameCanvas';
+import { KeyboardInputAdapter } from './engine/keyboardInput';
 import { createDiscordSdk } from './discord/sdk';
 import { getDiscordClientId } from './discord/config';
 import { useDiscordAuth } from './discord/useDiscordAuth';
@@ -23,6 +24,7 @@ function App() {
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsOpenRef = useRef(false);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -38,6 +40,19 @@ function App() {
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
+  }, [engine]);
+
+  useEffect(() => {
+    settingsOpenRef.current = settingsOpen;
+  }, [settingsOpen]);
+
+  useEffect(() => {
+    const adapter = new KeyboardInputAdapter({
+      onInput: (event) => engine.handleInput(event),
+      isEnabled: () => !settingsOpenRef.current,
+    });
+    adapter.attach();
+    return () => adapter.detach();
   }, [engine]);
 
   return (

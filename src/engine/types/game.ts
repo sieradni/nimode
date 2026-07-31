@@ -85,7 +85,7 @@ export const DEFAULT_KEYBINDINGS: KeyBindings = {
   ROTATE_CW: 'KeyX',
   ROTATE_CCW: 'KeyZ',
   ROTATE_180: 'KeyC',
-  HOLD: 'KeyC',
+  HOLD: 'KeyH',
   RESET: 'KeyR',
 };
 

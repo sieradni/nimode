@@ -96,7 +96,7 @@ describe('SettingsModal', () => {
   it('should show error when duplicate key is assigned', () => {
     render(<SettingsModal isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByText(ACTION_LABELS.MOVE_LEFT));
-    fireEvent.keyDown(window, { code: 'KeyC' });
+    fireEvent.keyDown(window, { code: 'ArrowUp' });
     expect(screen.getByText(/already bound/i)).toBeInTheDocument();
   });
 
