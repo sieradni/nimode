@@ -41,7 +41,7 @@
 - [x] **T-7.1:** Write Vitest unit tests for SRS+ kick tables and 180 spins.
 - [x] **T-7.2:** Write Vitest unit tests for 7-Bag randomizer distribution.
 - [x] **T-7.3:** Write Vitest unit tests for annotation auto-coloring matrix parser.
-- [ ] **T-7.4:** Run `npm run verify` and fix all lint, type, and test issues.
+- [x] **T-7.4:** Run `npm run verify` and fix all lint, type, and test issues.
 
 ## Phase 8: App Integration & Wiring
 - [ ] **T-8.1:** Wire Discord SDK initialization into App.tsx (authenticate, get userId/instanceId).
