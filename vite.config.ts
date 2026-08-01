@@ -12,6 +12,14 @@ export default defineConfig({
     },
   },
   base,
+  server: {
+    host: true,
+    port: 5173,
+    allowedHosts: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

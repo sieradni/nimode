@@ -32,7 +32,7 @@
 ## Phase 5: Statistics & Analytics Engine
 - [x] **T-5.1:** Implement real-time stats tracker (PPS, APM, KPP, Finesse, Lines, Quads, T-Spins).
 - [x] **T-5.2:** Build HUD stats renderer overlay.
-- [ ] **T-5.3:** Add Attack and Efficiency to stats tracker (event-driven).
+- [x] **T-5.3:** Add Attack and Efficiency to stats tracker (event-driven).
 
 ## Phase 6: P2P Spectating & Presence Engine
 - [x] **T-6.1:** Implement PeerJS signaling manager tied to Discord `instance_id`.
@@ -71,3 +71,23 @@
 - [ ] **T-11.2:** Implement FourteenBagRandomizer (14-Bag).
 - [ ] **T-11.3:** Implement MemorylessBagRandomizer.
 - [ ] **T-11.4:** Add rotation system / bag randomizer selectors to SettingsModal.
+
+---
+
+## Findings & Notes
+
+### Local-dev white page (diagnosed)
+- **Root cause (confirmed):** a browser **adblocker** content script (`content.js`) was intercepting Vite dev-server module loads — manifested as `Loading failed for the module …/src/engine/statsTracker.ts` plus `Ignoring unsupported entryTypes: longtask. content.js`. The module bytes are valid (Vite serves `statsTracker.ts` as 200 `text/javascript`, clean startup log); disabling the adblocker restores the app. Not a code bug.
+- **Secondary (verified, separate path):** the on-disk `dist/` was built in CI with `VITE_BASE_PATH=/nimode/`, so its asset URLs are absolute (`/nimode/assets/…`). Serving that `dist` on localhost at root (e.g. `npm run preview` of the stale bundle) → JS 404 → blank `#root`. Deployed works because GH Pages serves under the matching `/nimode/` prefix. Local build uses `VITE_BASE_PATH=./` (via `.env.local`).
+- **Working-tree fix committed alongside this update:** `index.html` source paths → relative (`./src/main.tsx`, `./favicon.svg`) to match `base: './'` and the Discord Activity embedded context; `vite.config.ts` gained a `server` block (`host`, `allowedHosts`, CORS header) for LAN/Discord dev testing.
+
+### Completion status (gaps vs. README claims)
+- README advertises "adjustable gravity (0G–20G), 0G float mode, subzero mode" — **not implemented**: `GameConfig` has no `gravity`/`subzero` fields and `EngineCore.applyGravity` (`src/engine/EngineCore.ts:113`) is hardcoded to 1G. (T-4.4, T-10.1–T-10.4.)
+- Alternate systems (T-11.1–T-11.4: ARS, 14-Bag, Memoryless) not implemented.
+- AGENTS.md 150-line rule violated: `src/App.tsx` (163), `src/engine/EngineCore.ts` (181), and several large test files (e.g. `PeerJSManager.test.ts` 426, `HostBroadcaster.test.ts` 321).
+
+### Next steps (prioritized)
+1. Implement gravity/subzero (T-10.1–T-10.4): extend `GameConfig`/`Types`, refactor `applyGravity` to consume `config.gravity`, add SettingsModal controls — tests first.
+2. Split `App.tsx` and `EngineCore.ts` into <150-line modules.
+3. Implement alternate rotation systems & bag randomizers (T-11.x).
+4. Add the 150-line file cap to the verify/lint workflow so it's enforced (currently only self-imposed).
