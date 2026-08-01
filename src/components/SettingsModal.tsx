@@ -52,7 +52,8 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
   };
 
   const handleExport = () => {
-    const json = exportSettingsAsJson(bindings);
+    const config = gameConfigStore.getConfig();
+    const json = exportSettingsAsJson(bindings, config);
     const { url, filename } = downloadSettingsBlob(json);
     const a = document.createElement('a');
     a.href = url;

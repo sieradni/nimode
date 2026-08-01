@@ -1,6 +1,6 @@
 import type { SpectatorPayload } from '../engine/types/game';
 
-export const INTERPOLATION_DELAY_MS = 50;
+export const INTERPOLATION_DELAY_MS = 20;
 export const MAX_SNAPSHOTS = 128;
 
 export interface TimestampedSnapshot {

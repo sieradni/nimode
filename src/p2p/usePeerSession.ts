@@ -66,11 +66,31 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     const handleData = (payload: SpectatorPayload) => {
       buffer.push(payload, performance.now());
     };
-    const handleOpen = () => {
-      broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
-      broadcaster.start();
-      manager.sendPresence();
-    };
+                 const handleOpen = () => {
+                  broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
+                  broadcaster.start();
+                  manager.sendPresence();
+                  if (fetchParticipants) {
+                    fetchParticipants()
+                      .then((discovered) => {
+                        setParticipants(discovered);
+                        for (const p of discovered) {
+                          if (p.id === userId) continue;
+                          roster.seedEntry(
+                            { userId: p.id, displayName: p.displayName ?? p.username, isPrivate: false },
+                            false,
+                          );
+                          manager.connectToPeer(
+                            `${instanceId}-${p.id}`,
+                            makeMetadata(userId, configStore),
+                          );
+                        }
+                      })
+                      .catch(() => {
+                        // Discovery is best-effort; the roster remains connection-driven.
+                      });
+                  }
+                };
     const handleError = (error: Error) => {
       setConnectionError(error.message);
     };
@@ -90,22 +110,6 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       .then(() => {
         setPeerManager(manager);
         setSpectatorBuffer(buffer);
-        if (fetchParticipants) {
-          fetchParticipants()
-            .then((discovered) => {
-              setParticipants(discovered);
-              for (const p of discovered) {
-                if (p.id === userId) continue;
-                roster.seedEntry(
-                  { userId: p.id, displayName: p.displayName ?? p.username, isPrivate: false },
-                  false,
-                );
-              }
-            })
-            .catch(() => {
-              // Discovery is best-effort; the roster remains connection-driven.
-            });
-        }
       })
       .catch((err: unknown) => {
         setConnectionError(err instanceof Error ? err.message : String(err));

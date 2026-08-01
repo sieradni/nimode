@@ -109,7 +109,7 @@ export interface InstanceConfig {
 }
 ```
 
-- **Public (default):** The host broadcaster actively sends state deltas (20 Hz) to all spectators. The participant appears selectable in the Presence Roster.
+- **Public (default):** The host broadcaster actively sends state deltas at 50 Hz (20 ms interval) to all spectators; the spectator interpolates against a 20 ms render-time offset (typical end-to-end latency <50 ms). The participant appears selectable in the Presence Roster.
 - **Private:** The host broadcaster is **silent** — no `SpectatorPayload` is transmitted. The participant appears in the Presence Roster with a "Private" badge and cannot be selected for spectating.
 
 Privacy state is stored locally via `localStorage` and is **not** gossiped via WebRTC (it is part of the presence metadata distributed through the signaling channel).
@@ -118,7 +118,7 @@ Privacy state is stored locally via `localStorage` and is **not** gossiped via W
 The machine gains a guard condition: selecting a target from the roster must check `target.isPrivate`; if `true`, the transition is blocked and the roster shows a disabled/private indicator.
 
 ## Spectating Data Serialization Protocol
-The host serializes game state at 20 Hz over WebRTC (only when `isPrivate === false`):
+The host serializes game state at 50 Hz (every 20 ms) over WebRTC (only when `isPrivate === false`):
 ```typescript
 export interface SpectatorPayload {
   userId: string;

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SettingsModal } from './SettingsModal';
 import { InstanceConfigStore } from '../p2p/InstanceConfigStore';
+import { GameConfigStore } from '../engine/configStore';
 import { keybindingsStore } from '../engine/keybindingsStore';
 import { DEFAULT_KEYBINDINGS } from '../engine/types';
 import { ACTION_LABELS } from '../engine/settingsConstants';
@@ -146,5 +147,30 @@ describe('SettingsModal', () => {
 
     act(() => store.setPrivate(false));
     expect(checkbox).not.toBeChecked();
+  });
+
+  it('should export the current game config alongside keybindings', async () => {
+    const store = new GameConfigStore();
+    store.setGravity(15);
+    render(<SettingsModal isOpen={true} onClose={() => {}} configStore={store} />);
+
+    const captured: { blob: Blob | null } = { blob: null };
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((blob: Blob) => {
+        captured.blob = blob;
+        return 'blob:mock-url';
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    fireEvent.click(screen.getByRole('button', { name: /export/i }));
+
+    expect(captured.blob).not.toBeNull();
+    const text = await (captured.blob as Blob).text();
+    const parsed = JSON.parse(text);
+    expect(parsed.keybindings).toBeDefined();
+    expect(parsed.config).toBeDefined();
+    expect(parsed.config.gravity).toBe(15);
   });
 });

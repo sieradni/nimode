@@ -14,6 +14,7 @@ export interface FixedTickCallbacks {
   onLock(result: LockResult, piece: ActivePiece | null): void;
   onKeyPress(): void;
   onHold(): void;
+  rotationOccurred(): boolean;
 }
 
 export interface FixedTickResult {
@@ -37,7 +38,10 @@ export function runFixedTick(
 
   inputHandler.updateMovement(config, dt, (dx, dy) => {
     const success = movePiece(state, dx, dy);
-    if (success) moved = true;
+    if (success) {
+      moved = true;
+      callbacks.onKeyPress();
+    }
     return success;
   });
 
@@ -62,6 +66,7 @@ export function runFixedTick(
   }
   if (actions.hardDrop) {
     const lockedPiece = state.activePiece ? { ...state.activePiece } : null;
+    callbacks.onKeyPress();
     callbacks.onLock(hardDrop(state, bagRandomizer, rotationSystem), lockedPiece);
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
@@ -78,7 +83,7 @@ export function runFixedTick(
   gravityTimer = step.gravityTimer;
   if (step.shouldLock) {
     const lockedPiece = state.activePiece ? { ...state.activePiece } : null;
-    callbacks.onLock(lockPiece(state, bagRandomizer, rotationSystem), lockedPiece);
+    callbacks.onLock(lockPiece(state, bagRandomizer, rotationSystem, callbacks.rotationOccurred()), lockedPiece);
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
   }

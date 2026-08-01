@@ -30,6 +30,10 @@ export function GameCanvas({
     engine.handleInput({ type: 'ANNOTATE_ERASE', x, y });
   };
 
+  const handleAnnotationFloodErase = (x: number, y: number) => {
+    engine.handleInput({ type: 'ANNOTATE_FLOOD_ERASE', x, y });
+  };
+
   const handleAnnotationRectFill = (x1: number, y1: number, x2: number, y2: number, pieceType: number) => {
     engine.handleInput({ type: 'ANNOTATE_RECT_FILL', x1, y1, x2, y2, pieceType });
   };
@@ -52,6 +56,7 @@ export function GameCanvas({
         state={state}
         onAnnotationPen={handleAnnotationPen}
         onAnnotationErase={handleAnnotationErase}
+        onAnnotationFloodErase={handleAnnotationFloodErase}
         onAnnotationRectFill={handleAnnotationRectFill}
         annotationTool={annotationTool}
         annotationPieceType={annotationPieceType}

@@ -1,4 +1,5 @@
 import { GameConfig, InputState } from './types';
+import { BOARD_WIDTH } from './types/board';
 
 export interface DASArrTimers {
   dasLeft: number;
@@ -13,6 +14,7 @@ export interface DASMovementState {
   initialLeft: boolean;
   initialRight: boolean;
   initialDown: boolean;
+  softDropSteps: number;
 }
 
 export function createInitialMovementState(): DASMovementState {
@@ -21,7 +23,12 @@ export function createInitialMovementState(): DASMovementState {
     initialLeft: false,
     initialRight: false,
     initialDown: false,
+    softDropSteps: 0,
   };
+}
+
+function softDropDelay(sdf: number, sdfFactor: number, steps: number): number {
+  return Math.max(sdf - sdfFactor * steps, 1);
 }
 
 export function updateDASMovement(
@@ -29,7 +36,7 @@ export function updateDASMovement(
   inputState: InputState,
   config: GameConfig,
   dt: number,
-  onMove: (dx: number, dy: number) => void,
+  onMove: (dx: number, dy: number) => boolean,
 ): void {
   if (inputState.left) {
     if (state.initialLeft) {
@@ -40,7 +47,9 @@ export function updateDASMovement(
     if (state.timers.dasLeft >= config.das) {
       state.timers.arrLeft += dt;
       if (config.arr === 0) {
-        onMove(-10, 0);
+        for (let i = 0; i < BOARD_WIDTH; i++) {
+          if (!onMove(-1, 0)) break;
+        }
       } else if (state.timers.arrLeft >= config.arr) {
         onMove(-1, 0);
         state.timers.arrLeft = 0;
@@ -57,7 +66,9 @@ export function updateDASMovement(
     if (state.timers.dasRight >= config.das) {
       state.timers.arrRight += dt;
       if (config.arr === 0) {
-        onMove(10, 0);
+        for (let i = 0; i < BOARD_WIDTH; i++) {
+          if (!onMove(1, 0)) break;
+        }
       } else if (state.timers.arrRight >= config.arr) {
         onMove(1, 0);
         state.timers.arrRight = 0;
@@ -69,10 +80,14 @@ export function updateDASMovement(
     if (state.initialDown) {
       onMove(0, 1);
       state.initialDown = false;
+      state.softDropSteps = 0;
     }
     state.timers.dasDown += dt;
-    if (state.timers.dasDown >= config.sdf) {
+    const delay = softDropDelay(config.sdf, config.sdfFactor, state.softDropSteps);
+    if (state.timers.dasDown >= delay) {
       onMove(0, 1);
+      state.softDropSteps++;
+      state.timers.dasDown = 0;
     }
   }
 }

@@ -81,6 +81,56 @@ describe('InputHandler movement (DAS/ARR/SDF)', () => {
     expect(leftMoves.length).toBeGreaterThan(1);
   });
 
+  it('with ARR=0, after DAS the piece repeats to the wall until blocked', () => {
+    const handler = new InputHandler();
+    const onMove = vi
+      .fn()
+      .mockReturnValueOnce(true) // initial move (return ignored)
+      .mockReturnValueOnce(true) // repeat toward wall
+      .mockReturnValueOnce(false); // blocked -> stop
+
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    handler.updateMovement({ ...CONFIG, das: 50, arr: 0 }, 1, onMove);
+    handler.updateMovement({ ...CONFIG, das: 50, arr: 0 }, 50, onMove);
+
+    expect(onMove).toHaveBeenCalledTimes(3);
+    const leftMoves = onMove.mock.calls.filter(([dx]) => dx === -1);
+    expect(leftMoves).toHaveLength(3);
+  });
+
+  it('with ARR=0 and wall-blocked, movement does not repeat past the wall', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn().mockReturnValue(false);
+
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    handler.updateMovement({ ...CONFIG, das: 50, arr: 0 }, 1, onMove);
+    handler.updateMovement({ ...CONFIG, das: 50, arr: 0 }, 50, onMove);
+    handler.updateMovement({ ...CONFIG, das: 50, arr: 0 }, 16.67, onMove);
+
+    expect(onMove).toHaveBeenCalledTimes(3);
+  });
+
+  it('soft drop repeats at the sdf rate and accelerates by sdfFactor', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn();
+
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 1, onMove);
+    expect(onMove).toHaveBeenCalledTimes(1);
+
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 50, onMove);
+    expect(onMove).toHaveBeenCalledTimes(2);
+
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 20, onMove);
+    expect(onMove).toHaveBeenCalledTimes(2);
+
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 10, onMove);
+    expect(onMove).toHaveBeenCalledTimes(3);
+
+    const downMoves = onMove.mock.calls.filter(([, dy]) => dy === 1);
+    expect(downMoves).toHaveLength(3);
+  });
+
   it('resets the immediate move on release', () => {
     const handler = new InputHandler();
     const onMove = vi.fn();

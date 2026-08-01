@@ -68,4 +68,16 @@ describe('EngineCore', () => {
     const state = engine.getState();
     expect(state.activePiece?.type).toBe(1);
   });
+
+  it('setQueue([]) refills from the randomizer so the game does not hang', () => {
+    const engine = createEngine();
+    engine.setQueue([]);
+
+    engine.handleInput({ type: 'HARD_DROP' });
+    engine.tick(16.67);
+
+    const state = engine.getState();
+    expect(state.activePiece).not.toBeNull();
+    expect(state.gameOver).toBe(false);
+  });
 });

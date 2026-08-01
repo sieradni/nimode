@@ -13,6 +13,13 @@ const T_CORNER_OFFSETS: ReadonlyArray<{ dx: number; dy: number }> = [
   { dx: 2, dy: 2 },
 ];
 
+const T_BACK_OFFSET: ReadonlyArray<{ dx: number; dy: number }> = [
+  { dx: 0, dy: 1 },
+  { dx: -1, dy: 0 },
+  { dx: 0, dy: -1 },
+  { dx: 1, dy: 0 },
+];
+
 export function detectTSpin(board: BoardMatrix, piece: ActivePiece): boolean {
   if (piece.type !== 6) return false;
 
@@ -30,4 +37,16 @@ export function detectTSpin(board: BoardMatrix, piece: ActivePiece): boolean {
   }
 
   return occupiedCorners >= 3;
+}
+
+export function detectTSpinMini(board: BoardMatrix, piece: ActivePiece): boolean {
+  if (piece.type !== 6) return false;
+  if (!detectTSpin(board, piece)) return false;
+
+  const r = piece.rotation;
+  const back = T_BACK_OFFSET[r as 0 | 1 | 2 | 3]!;
+  const bx = piece.x + back.dx;
+  const by = piece.y + back.dy;
+  if (bx < 0 || bx >= BOARD_WIDTH || by < 0 || by >= BOARD_HEIGHT) return false;
+  return board[by]?.[bx] === 0;
 }

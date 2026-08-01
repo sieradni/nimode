@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../../engine/types';
 import { EngineState } from '../../engine/interfaces/IEngineCore';
 import { renderBoard } from '../../render/BoardRenderer';
 import { renderStatsOverlay } from '../../render/StatsOverlayRenderer';
+import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
+import { useBoardInput } from './BoardInputHandler';
 
-export const BOARD_CELL_SIZE = 30;
-
-type AnnotationTool = 'pen' | 'erase' | 'rect';
+export { BOARD_CELL_SIZE };
+export type { AnnotationTool };
 
 interface GameBoardCanvasProps {
   state: EngineState;
   onAnnotationPen?: (x: number, y: number, pieceType: number) => void;
   onAnnotationErase?: (x: number, y: number) => void;
+  onAnnotationFloodErase?: (x: number, y: number) => void;
   onAnnotationRectFill?: (x1: number, y1: number, x2: number, y2: number, pieceType: number) => void;
   annotationTool?: AnnotationTool;
   annotationPieceType?: number;
@@ -24,6 +26,7 @@ export function GameBoardCanvas({
   state,
   onAnnotationPen,
   onAnnotationErase,
+  onAnnotationFloodErase,
   onAnnotationRectFill,
   annotationTool = 'pen',
   annotationPieceType = 1,
@@ -32,7 +35,17 @@ export function GameBoardCanvas({
   onDrawingEnd,
 }: GameBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [rectStart, setRectStart] = useState<{ x: number; y: number } | null>(null);
+  const { handleMouseDown, handleMouseMove, handleMouseUp } = useBoardInput(canvasRef, {
+    onAnnotationPen,
+    onAnnotationErase,
+    onAnnotationFloodErase,
+    onAnnotationRectFill,
+    annotationTool,
+    annotationPieceType,
+    isDrawing,
+    onDrawingStart,
+    onDrawingEnd,
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,80 +56,14 @@ export function GameBoardCanvas({
     renderStatsOverlay(ctx, state.stats, canvas.width, canvas.height);
   }, [state]);
 
-  const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    let clientX: number;
-    let clientY: number;
-    const touches = 'touches' in e ? e.touches : undefined;
-    if (touches && touches.length > 0) {
-      const touch = touches[0];
-      if (touch) {
-        clientX = touch.clientX;
-        clientY = touch.clientY;
-      } else {
-        return null;
-      }
-    } else if ('clientX' in e) {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    } else {
-      return null;
-    }
-    const x = Math.floor((clientX - rect.left) / BOARD_CELL_SIZE);
-    const y = Math.floor((clientY - rect.top) / BOARD_CELL_SIZE) + (40 - VISIBLE_HEIGHT);
-    return { x, y };
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!onAnnotationPen && !onAnnotationErase && !onAnnotationRectFill) return;
-    const coords = getCanvasCoordinates(e);
-    if (!coords) return;
-    const { x, y } = coords;
-
-    if (annotationTool === 'pen' && onAnnotationPen) {
-      onAnnotationPen(x, y, annotationPieceType);
-      onDrawingStart?.();
-    } else if (annotationTool === 'erase' && onAnnotationErase) {
-      onAnnotationErase(x, y);
-      onDrawingStart?.();
-    } else if (annotationTool === 'rect' && onAnnotationRectFill) {
-      setRectStart({ x, y });
-      onDrawingStart?.();
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || annotationTool !== 'rect' || !rectStart || !onAnnotationRectFill) return;
-    const coords = getCanvasCoordinates(e);
-    if (!coords) return;
-    const { x, y } = coords;
-    onAnnotationRectFill(rectStart.x, rectStart.y, x, y, annotationPieceType);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    if (annotationTool === 'rect' && rectStart && onAnnotationRectFill) {
-      const coords = getCanvasCoordinates(e);
-      if (coords) {
-        onAnnotationRectFill(rectStart.x, rectStart.y, coords.x, coords.y, annotationPieceType);
-      }
-      setRectStart(null);
-    }
-    onDrawingEnd?.();
-  };
-
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     handleMouseDown(e);
   };
-
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     handleMouseMove(e);
   };
-
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     handleMouseUp(e);

@@ -1,6 +1,8 @@
 import { BOARD_HEIGHT, BOARD_WIDTH } from './types/board';
 import type { AnnotationMatrix } from './types/annotations';
 
+export { applyAnnotationFloodErase } from './floodEraseEngine';
+
 export function createEmptyAnnotations(): AnnotationMatrix {
   const matrix: AnnotationMatrix = [];
   for (let y = 0; y < BOARD_HEIGHT; y++) {

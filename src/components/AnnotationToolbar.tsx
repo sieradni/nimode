@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { PieceType } from '../engine/types/piece';
+import { AnnotationToolbarControls } from './AnnotationToolbarControls';
+import type { AnnotationTool } from './canvas/canvasConstants';
 
-export type AnnotationTool = 'pen' | 'erase' | 'rect';
+export type { AnnotationTool } from './canvas/canvasConstants';
 
 export interface AnnotationToolbarProps {
   isOpen: boolean;
@@ -9,6 +11,7 @@ export interface AnnotationToolbarProps {
   tool?: AnnotationTool;
   onToolChange?: (tool: AnnotationTool) => void;
   onClearAll?: () => void;
+  onResetBoard?: () => void;
   autoColor?: boolean;
   onAutoColorToggle?: (enabled: boolean) => void;
   pieceType?: PieceType;
@@ -18,18 +21,9 @@ export interface AnnotationToolbarProps {
 const TOOL_LABELS: Record<AnnotationTool, string> = {
   pen: 'Pen',
   erase: 'Eraser',
+  floodErase: 'Flood Erase',
   rect: 'Rect Fill',
 };
-
-const PIECE_OPTIONS: { value: PieceType; label: string }[] = [
-  { value: 1, label: 'I' },
-  { value: 2, label: 'J' },
-  { value: 3, label: 'L' },
-  { value: 4, label: 'O' },
-  { value: 5, label: 'S' },
-  { value: 6, label: 'T' },
-  { value: 7, label: 'Z' },
-];
 
 export function AnnotationToolbar({
   isOpen,
@@ -37,6 +31,7 @@ export function AnnotationToolbar({
   tool: initialTool = 'pen',
   onToolChange,
   onClearAll,
+  onResetBoard,
   autoColor: initialAutoColor = false,
   onAutoColorToggle,
   pieceType: initialPieceType = 1,
@@ -67,7 +62,7 @@ export function AnnotationToolbar({
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
       <div className="bg-slate-900/95 border border-slate-700 rounded-lg p-3 flex items-center gap-2">
         <div className="flex items-center gap-1 bg-slate-800 rounded p-1">
-          {(['pen', 'erase', 'rect'] as AnnotationTool[]).map((t) => (
+          {(['pen', 'erase', 'floodErase', 'rect'] as AnnotationTool[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -85,43 +80,13 @@ export function AnnotationToolbar({
           ))}
         </div>
 
-        <div className="w-px h-6 bg-slate-700 mx-1" />
-
-        {tool === 'pen' && (
-          <div className="flex items-center gap-2">
-            <label htmlFor="piece-type" className="text-xs text-slate-400">
-              Piece:
-            </label>
-            <select
-              id="piece-type"
-              role="combobox"
-              aria-label="Piece type"
-              value={pieceType}
-              onChange={(e) => handlePieceTypeChange(Number(e.target.value) as PieceType)}
-              className="px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
-            >
-              {PIECE_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="w-px h-6 bg-slate-700 mx-1" />
-
-        <label className="flex items-center gap-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            role="checkbox"
-            aria-label="Auto-color"
-            checked={autoColor}
-            onChange={(e) => handleAutoColorToggle(e.target.checked)}
-            className="w-4 h-4 accent-slate-500 rounded border-slate-600 bg-slate-800"
-          />
-          <span className="text-xs text-slate-300">Auto-color</span>
-        </label>
+        <AnnotationToolbarControls
+          tool={tool}
+          autoColor={autoColor}
+          pieceType={pieceType}
+          onAutoColorToggle={handleAutoColorToggle}
+          onPieceTypeChange={handlePieceTypeChange}
+        />
 
         <div className="w-px h-6 bg-slate-700 mx-1" />
 
@@ -132,6 +97,16 @@ export function AnnotationToolbar({
         >
           Clear All
         </button>
+
+        {onResetBoard && (
+          <button
+            type="button"
+            onClick={onResetBoard}
+            className="px-3 py-1.5 text-xs rounded bg-red-900/60 hover:bg-red-800/60 text-red-200 transition-colors"
+          >
+            Reset Board
+          </button>
+        )}
       </div>
 
       <button

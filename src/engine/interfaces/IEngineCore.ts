@@ -27,6 +27,7 @@ export type InputEvent =
   | { type: 'RESET' }
   | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
   | { type: 'ANNOTATE_ERASE'; x: number; y: number }
+  | { type: 'ANNOTATE_FLOOD_ERASE'; x: number; y: number }
   | { type: 'ANNOTATE_RECT_FILL'; x1: number; y1: number; x2: number; y2: number; pieceType: number }
   | { type: 'ANNOTATE_CLEAR_ALL' }
   | { type: 'ANNOTATE_AUTO_COLOR' };

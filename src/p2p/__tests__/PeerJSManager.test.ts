@@ -608,4 +608,72 @@ describe('PeerJSManager', () => {
       expect(() => manager.connectToPeer('host-id')).toThrow();
     });
   });
+
+  describe('connection lifecycle', () => {
+    it('does not open a duplicate outgoing connection to the same peer', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'spectator-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+
+      await manager.init();
+      manager.connectToPeer('host-a');
+      const callCount = vi.mocked(mockPeer.connect).mock.calls.length;
+
+      // Connecting again to the same peer reuses the live connection.
+      manager.connectToPeer('host-a');
+
+      expect(vi.mocked(mockPeer.connect).mock.calls.length).toBe(callCount);
+    });
+
+    it('replaces a prior incoming connection from the same peer', async () => {
+      const connA = createMockDataConnection('remote-1');
+      const connB = createMockDataConnection('remote-1');
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+
+      await manager.init();
+      mockPeer._emit('connection', connA);
+      mockPeer._emit('connection', connB);
+
+      expect(connA.close).toHaveBeenCalled();
+      // The newest connection is the one that receives subsequent state.
+      const payload = makePayload();
+      manager.broadcast(payload);
+      expect(connB.send).toHaveBeenCalledWith(payload);
+      // connA was replaced and is no longer in the active routing set
+      // (it only received the initial presence handshake).
+      expect(connA.send).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not remove a live connection when a stale duplicate closes', async () => {
+      const connA = createMockDataConnection('remote-1');
+      const connB = createMockDataConnection('remote-1');
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+
+      await manager.init();
+      mockPeer._emit('connection', connA);
+      mockPeer._emit('connection', connB);
+      connA._emit('close');
+
+      const payload = makePayload();
+      manager.broadcast(payload);
+      expect(connB.send).toHaveBeenCalledWith(payload);
+    });
+  });
 });

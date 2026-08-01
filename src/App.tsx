@@ -69,10 +69,9 @@ function App() {
     };
 
     animationFrameId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [engine, peerSession.view]);
-
-  useEffect(() => {
+     return () => cancelAnimationFrame(animationFrameId);
+   }, [engine, peerSession.view]);
+   useEffect(() => {
     settingsOpenRef.current = settingsOpen;
   }, [settingsOpen]);
 
@@ -93,17 +92,18 @@ function App() {
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <AnnotationToolbar
-        isOpen={annotationToolbarOpen}
-        onClose={() => setAnnotationToolbarOpen(false)}
-        tool={annotationTool}
-        onToolChange={setAnnotationTool}
-        onClearAll={() => engine.handleInput({ type: 'ANNOTATE_CLEAR_ALL' })}
-        autoColor={autoColor}
-        onAutoColorToggle={setAutoColor}
-        pieceType={annotationPieceType}
-        onPieceTypeChange={setAnnotationPieceType}
-      />
+       <AnnotationToolbar
+         isOpen={annotationToolbarOpen}
+         onClose={() => setAnnotationToolbarOpen(false)}
+         tool={annotationTool}
+         onToolChange={setAnnotationTool}
+         onClearAll={() => engine.handleInput({ type: 'ANNOTATE_CLEAR_ALL' })}
+         onResetBoard={() => { engine.reset(); setGameState(engine.getState()); }}
+         autoColor={autoColor}
+         onAutoColorToggle={setAutoColor}
+         pieceType={annotationPieceType}
+         onPieceTypeChange={setAnnotationPieceType}
+       />
       <main className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
         {peerSession.connectionError && (
           <div className="text-xs text-slate-400">P2P error: {peerSession.connectionError}</div>

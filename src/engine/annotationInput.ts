@@ -1,11 +1,12 @@
 import { AnnotationMatrix } from './types';
 import { InputEvent } from './interfaces/IEngineCore';
-import { applyAnnotationPen, applyAnnotationErase, applyAnnotationRectFill, clearAllAnnotations } from './annotationEngine';
+import { applyAnnotationPen, applyAnnotationErase, applyAnnotationRectFill, applyAnnotationFloodErase, clearAllAnnotations } from './annotationEngine';
 import { autoColorAnnotations } from './autoColorEngine';
 
 export type AnnotationEvent =
   | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
   | { type: 'ANNOTATE_ERASE'; x: number; y: number }
+  | { type: 'ANNOTATE_FLOOD_ERASE'; x: number; y: number }
   | { type: 'ANNOTATE_RECT_FILL'; x1: number; y1: number; x2: number; y2: number; pieceType: number }
   | { type: 'ANNOTATE_CLEAR_ALL' }
   | { type: 'ANNOTATE_AUTO_COLOR' };
@@ -23,6 +24,8 @@ export function reduceAnnotationEvent(
       return applyAnnotationPen(annotations, event.x, event.y, event.pieceType);
     case 'ANNOTATE_ERASE':
       return applyAnnotationErase(annotations, event.x, event.y);
+    case 'ANNOTATE_FLOOD_ERASE':
+      return applyAnnotationFloodErase(annotations, event.x, event.y);
     case 'ANNOTATE_RECT_FILL':
       return applyAnnotationRectFill(annotations, event.x1, event.y1, event.x2, event.y2, event.pieceType);
     case 'ANNOTATE_CLEAR_ALL':

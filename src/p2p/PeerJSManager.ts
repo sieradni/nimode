@@ -10,12 +10,12 @@ import type {
 import { createPeerJSInstance } from './peerFactory';
 import { wireDataConnection, sendPresenceToConnections } from './connectionWire';
 import { TypedEventEmitter } from './eventEmitter';
+import { parsePeerMetadata } from './peerMetadata';
 import type { SpectatorPayload } from '../engine/types/game';
 
 export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
   private peer: Peer | null = null;
   private readonly connections = new Map<string, PeerConnectionInfo>();
-  private readonly outgoingConnections = new Set<DataConnection>();
   private isOpen = false;
   private metadata: PeerMetadata;
 
@@ -56,9 +56,7 @@ export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
       this.isOpen = true;
       this.emit('open', id);
     });
-    this.peer.on('error', (err: Error) => {
-      this.emit('error', err);
-    });
+    this.peer.on('error', (err: Error) => this.emit('error', err));
     this.peer.on('close', () => {
       this.isOpen = false;
       this.emit('closed');
@@ -72,25 +70,22 @@ export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
 
   private handleIncomingConnection(conn: DataConnection): void {
     const peerId = conn.peer;
-    const raw = conn.metadata as Record<string, unknown> | undefined;
-    const metadata: PeerMetadata = {
-      userId: typeof raw?.userId === 'string' ? raw.userId : peerId,
-      displayName: typeof raw?.displayName === 'string' ? raw.displayName : peerId,
-      isPrivate: raw?.isPrivate === true,
-    };
+    const existing = this.connections.get(peerId);
+    if (existing) {
+      this.connections.delete(peerId);
+      existing.connection.close();
+    }
+    const metadata = parsePeerMetadata(conn);
     this.connections.set(peerId, { peerId, metadata, connection: conn });
     this.emit('peerJoined', metadata);
-
-    this.wireDataConnection(conn, () => {
-      this.connections.delete(peerId);
-      this.emit('peerLeft', metadata.userId);
-    });
+    this.wireConnection(conn, peerId, metadata.userId);
   }
 
   connectToPeer(peerId: string, metadata?: PeerMetadata): void {
     if (!this.peer) {
       throw new Error('Peer not initialized; call init() first');
     }
+    if (this.connections.has(peerId)) return;
     const meta: PeerMetadata = metadata ?? {
       userId: peerId,
       displayName: peerId,
@@ -98,22 +93,27 @@ export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
     };
     const conn = this.peer.connect(peerId, { serialization: 'json', metadata: meta });
     if (!conn) return;
-    this.outgoingConnections.add(conn);
-    conn.on('open', () => {
-      this.emit('peerJoined', meta);
-    });
-    this.wireDataConnection(conn, () => {
-      this.outgoingConnections.delete(conn);
-      this.emit('peerLeft', meta.userId);
-    });
+    this.connections.set(peerId, { peerId, metadata: meta, connection: conn });
+    conn.on('open', () => this.emit('peerJoined', meta));
+    this.wireConnection(conn, peerId, meta.userId);
   }
 
-  private wireDataConnection(conn: DataConnection, onClosed: () => void): void {
+  private wireConnection(
+    conn: DataConnection,
+    peerId: string,
+    userId: string,
+  ): void {
     wireDataConnection(conn, this.metadata, {
       onPresence: (metadata) => this.emit('presence', metadata),
       onData: (payload) => this.emit('data', payload),
       onError: (error) => this.emit('error', error),
-      onClosed,
+      onClosed: () => {
+        const entry = this.connections.get(peerId);
+        if (entry?.connection === conn) {
+          this.connections.delete(peerId);
+          this.emit('peerLeft', userId);
+        }
+      },
     });
   }
 
@@ -125,18 +125,15 @@ export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
 
   sendPresence(metadata?: PeerMetadata): void {
     if (metadata) this.metadata = metadata;
-    const connections: DataConnection[] = [
-      ...[...this.connections.values()].map((info) => info.connection),
-      ...this.outgoingConnections,
-    ];
+    const connections: DataConnection[] = [...this.connections.values()].map(
+      (info) => info.connection,
+    );
     sendPresenceToConnections(connections, this.metadata);
   }
 
   close(): void {
     for (const info of this.connections.values()) info.connection.close();
     this.connections.clear();
-    for (const conn of this.outgoingConnections) conn.close();
-    this.outgoingConnections.clear();
     this.peer?.destroy();
     this.peer = null;
     this.isOpen = false;

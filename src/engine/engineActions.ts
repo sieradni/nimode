@@ -2,7 +2,7 @@ import { GameState, ActivePiece } from './types';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { IRotationSystem } from './interfaces/IRotationSystem';
 import { checkCollision, lockPieceToBoard, clearBoardLines } from './boardUtils';
-import { detectTSpin, LockResult } from './tSpinDetector';
+import { detectTSpin, detectTSpinMini, LockResult } from './tSpinDetector';
 
 export function movePiece(state: GameState, dx: number, dy: number): boolean {
   if (!state.activePiece) return false;
@@ -25,6 +25,9 @@ export function spawnNextPiece(
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem
 ): void {
+  if (state.queue.queue.length === 0) {
+    state.queue.queue.push(randomizer.pop());
+  }
   const nextType = state.queue.queue.shift();
   if (nextType === undefined) return;
 
@@ -49,11 +52,13 @@ export function spawnNextPiece(
 export function lockPiece(
   state: GameState,
   randomizer: IBagRandomizer,
-  rotationSystem: IRotationSystem
+  rotationSystem: IRotationSystem,
+  rotationOccurred: boolean,
 ): LockResult {
   if (!state.activePiece) return { linesCleared: 0, tSpin: false, tSpinMini: false };
 
-  const tSpin = detectTSpin(state.board, state.activePiece);
+  const tSpin = rotationOccurred ? detectTSpin(state.board, state.activePiece) : false;
+  const tSpinMini = rotationOccurred ? detectTSpinMini(state.board, state.activePiece) : false;
 
   state.board = lockPieceToBoard(state.board, state.activePiece);
   const { newBoard, linesCleared } = clearBoardLines(state.board);
@@ -61,7 +66,7 @@ export function lockPiece(
 
   spawnNextPiece(state, randomizer, rotationSystem);
   state.queue.canHold = true;
-  return { linesCleared, tSpin, tSpinMini: false };
+  return { linesCleared, tSpin, tSpinMini };
 }
 
 export function holdPiece(
@@ -100,5 +105,5 @@ export function hardDrop(
   while (movePiece(state, 0, 1)) {
     // falling until the piece lands
   }
-  return lockPiece(state, randomizer, rotationSystem);
+  return lockPiece(state, randomizer, rotationSystem, false);
 }

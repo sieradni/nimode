@@ -11,7 +11,6 @@ import { ActivePiece } from './types';
 import { LockResult } from './tSpinDetector';
 import { isAnnotationEvent, reduceAnnotationEvent } from './annotationInput';
 import { runFixedTick } from './stepEngine';
-
 export class EngineCore implements IEngineCore {
   private config: GameConfig = DEFAULT_CONFIG;
   private rotationSystem: IRotationSystem;
@@ -22,6 +21,7 @@ export class EngineCore implements IEngineCore {
   private accumulator = 0;
   private lockDelayState: LockDelayState = createLockDelayState();
   private playerStats = new PlayerStats();
+  private rotationOccurred = false;
 
   constructor(deps: EngineDependencies) {
     this.rotationSystem = deps.rotationSystem;
@@ -88,6 +88,7 @@ export class EngineCore implements IEngineCore {
         onLock: (lockResult, piece) => this.recordLockStats(lockResult, piece),
         onKeyPress: () => this.playerStats.recordKeyPress(),
         onHold: () => this.playerStats.onPieceSpawn(this.state.activePiece),
+        rotationOccurred: () => this.rotationOccurred,
       },
     );
     this.lockDelayState = result.lockDelayState;
@@ -99,12 +100,14 @@ export class EngineCore implements IEngineCore {
     const result = this.rotationSystem.rotate(this.state.board, this.state.activePiece, direction);
     if (result) {
       this.state.activePiece = result.piece;
+      this.rotationOccurred = true;
       return true;
     }
     return false;
   }
 
   private recordLockStats(result: LockResult, piece: ActivePiece | null): void {
+    this.rotationOccurred = false;
     this.playerStats.onPieceLock(result, piece);
     this.playerStats.onPieceSpawn(this.state.activePiece);
   }
@@ -131,6 +134,7 @@ export class EngineCore implements IEngineCore {
     this.accumulator = 0;
     this.lockDelayState = createLockDelayState();
     this.playerStats.reset();
+    this.rotationOccurred = false;
     spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
     this.playerStats.onPieceSpawn(this.state.activePiece);
   }

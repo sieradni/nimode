@@ -255,4 +255,28 @@ describe('App P2P integration', () => {
       expect.anything()
     );
   });
+
+  it('exchanges presence proactively so a Private participant shows as unavailable before spectating', async () => {
+    mockPeer.connect.mockReturnValue(mockConn);
+    mockGetParticipants.mockResolvedValue([
+      { id: 'remote-2', username: 'remote-two', displayName: 'Bob' },
+      { id: 'user-123', username: 'self', displayName: 'Self' },
+    ]);
+    render(<App />);
+    await flushAuth();
+    act(() => mockPeer._emit('open', 'instance-1-user-123'));
+
+    expect(await screen.findByText('Bob')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /spectate/i })).toBeInTheDocument();
+
+    act(() =>
+      mockConn._emit('data', {
+        kind: 'presence',
+        metadata: { userId: 'remote-2', displayName: 'Bob', isPrivate: true },
+      }),
+    );
+
+    expect(screen.queryByRole('button', { name: /spectate/i })).toBeNull();
+    expect(screen.getByText(/private/i)).toBeInTheDocument();
+  });
 });

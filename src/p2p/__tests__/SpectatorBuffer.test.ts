@@ -167,7 +167,7 @@ describe('SpectatorBuffer', () => {
       }),
       250
     );
-    const now = 250;
+    const now = 210;
     const state = buffer.getInterpolatedState(now);
     expect(state.hasData).toBe(true);
     expect(state.queue).toEqual([1]);

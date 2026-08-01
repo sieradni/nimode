@@ -32,6 +32,7 @@ export class InputHandler {
         if (!input.pressed) {
           this.movement.timers.dasDown = 0;
           this.movement.initialDown = false;
+          this.movement.softDropSteps = 0;
         }
         break;
       case 'HARD_DROP':
@@ -95,7 +96,7 @@ export class InputHandler {
   updateMovement(
     config: GameConfig,
     dt: number,
-    onMove: (dx: number, dy: number) => void
+    onMove: (dx: number, dy: number) => boolean
   ): void {
     updateDASMovement(this.movement, this.inputState, config, dt, onMove);
   }
