@@ -43,7 +43,13 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('pen');
   const [annotationColor, setAnnotationColor] = useState<string>(DEFAULT_ANNOTATION_COLOR);
-  const [autoColor, setAutoColor] = useState(false);
+  const [autoColor, setAutoColor] = useState(() => configStore.getConfig().autoColor);
+
+  useEffect(() => {
+    const handleConfigChange = () => setAutoColor(configStore.getConfig().autoColor);
+    configStore.subscribe(handleConfigChange);
+    return () => configStore.unsubscribe(handleConfigChange);
+  }, []);
   const [annotationToolbarOpen, setAnnotationToolbarOpen] = useState(false);
   const settingsOpenRef = useRef(false);
 
