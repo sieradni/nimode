@@ -32,6 +32,8 @@
             <li>All application data, preferences, and local state are stored entirely on your local device using standard browser storage (such as <code>localStorage</code>).</li>
             <li>We do not transmit, collect, or store your personal data on any external servers.</li>
             <li>No third-party analytics, tracking services, or ad networks are integrated into the Activity.</li>
+            <li><strong>Multiplayer Spectating (P2P):</strong> When you join a Discord Activity session, your game state (board, active piece, queue, hold, annotations, and statistics) may be transmitted directly to other participants via peer-to-peer WebRTC connections if your instance is set to Public. A public STUN server (<code>stun.l.google.com:19302</code>) is used solely to establish these connections; no game data passes through it.</li>
+            <li>You can disable spectating at any time using the <strong>Private Instance</strong> toggle, which stops all outbound game state transmissions.</li>
         </ul>
 
         <h2>3. Data Retention & Deletion</h2>
