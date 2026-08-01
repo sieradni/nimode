@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
+import { createInitialGameState } from '../engineState';
+import { spawnNextPiece } from '../engineActions';
+import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
 import { PieceType } from '../types';
 
 const ALL_PIECES: PieceType[] = [1, 2, 3, 4, 5, 6, 7];
@@ -110,5 +113,42 @@ describe('SevenBagRandomizer distribution', () => {
     for (let i = 0; i < 20; i++) {
       expect(isPermutation(randomizer.generateBag())).toBe(true);
     }
+  });
+});
+
+describe('SevenBagRandomizer engine integration', () => {
+  it('spawnNextPiece produces valid 7-bag sequences (regression test for double-consumption bug)', () => {
+    const randomizer = new SevenBagRandomizer(12345);
+    const rotationSystem = new SrsPlusRotationSystem();
+    const state = createInitialGameState(randomizer);
+
+    const spawned: PieceType[] = [];
+    for (let i = 0; i < 28; i++) {
+      spawnNextPiece(state, randomizer, rotationSystem);
+      if (state.activePiece) {
+        spawned.push(state.activePiece.type);
+      }
+    }
+
+    const bags = groupIntoBags(spawned);
+    for (const bag of bags) {
+      expect(isPermutation(bag)).toBe(true);
+    }
+  });
+
+  it('initial queue consumes pieces from randomizer (not peek)', () => {
+    const randomizer = new SevenBagRandomizer(42);
+    const state = createInitialGameState(randomizer);
+
+    // Initial queue should have 6 pieces (INITIAL_QUEUE_SIZE)
+    expect(state.queue.queue).toHaveLength(6);
+
+    // First spawn should consume the 7th piece of first bag
+    spawnNextPiece(state, randomizer, new SrsPlusRotationSystem());
+    expect(state.activePiece).not.toBeNull();
+    
+    // Total consumed: 6 (initial) + 1 (first spawn) = 7 = one complete bag
+    const firstBag = [...state.queue.queue, state.activePiece!.type];
+    expect(isPermutation(firstBag)).toBe(true);
   });
 });
