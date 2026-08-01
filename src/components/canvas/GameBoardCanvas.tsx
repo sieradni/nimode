@@ -65,7 +65,7 @@ export function GameBoardCanvas({
       return null;
     }
     const x = Math.floor((clientX - rect.left) / BOARD_CELL_SIZE);
-    const y = Math.floor((rect.bottom - clientY) / BOARD_CELL_SIZE) + (40 - VISIBLE_HEIGHT);
+    const y = Math.floor((clientY - rect.top) / BOARD_CELL_SIZE) + (40 - VISIBLE_HEIGHT);
     return { x, y };
   };
 

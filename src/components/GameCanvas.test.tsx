@@ -55,16 +55,13 @@ function createState(): EngineState {
 function createMockEngine(): IEngineCore {
   return {
     initialize: vi.fn(),
+    updateConfig: vi.fn(),
     tick: vi.fn(),
     handleInput: vi.fn(),
     getState: vi.fn(),
     reset: vi.fn(),
     setQueue: vi.fn(),
-    applyAnnotationPen: vi.fn(),
-    applyAnnotationErase: vi.fn(),
-    applyAnnotationRectFill: vi.fn(),
-    clearAllAnnotations: vi.fn(),
-    autoColorAnnotations: vi.fn(),
+    clearHold: vi.fn(),
   };
 }
 

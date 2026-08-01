@@ -54,6 +54,9 @@ export class InputHandler {
       case 'HOLD':
         this.inputState.hold = true;
         break;
+      case 'CLEAR_HOLD':
+        this.inputState.clearHold = true;
+        break;
       case 'RESET':
         this.inputState.reset = true;
         break;
@@ -70,6 +73,7 @@ export class InputHandler {
     ccw: boolean;
     rotate180: boolean;
     hold: boolean;
+    clearHold: boolean;
     reset: boolean;
   } {
     const actions = {
@@ -78,6 +82,7 @@ export class InputHandler {
       ccw: this.inputState.ccw,
       rotate180: this.inputState.rotate180,
       hold: this.inputState.hold,
+      clearHold: this.inputState.clearHold,
       reset: this.inputState.reset,
     };
 
@@ -86,6 +91,7 @@ export class InputHandler {
     this.inputState.ccw = false;
     this.inputState.rotate180 = false;
     this.inputState.hold = false;
+    this.inputState.clearHold = false;
     this.inputState.reset = false;
 
     return actions;
@@ -125,7 +131,7 @@ export class InputHandler {
     if (this.inputState.down) {
       this.timers.dasDown += dt;
       if (this.timers.dasDown >= config.sdf) {
-        onMove(0, -1);
+        onMove(0, 1);
       }
     }
   }

@@ -4,27 +4,31 @@ import { IRotationSystem } from './interfaces/IRotationSystem';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { InputHandler } from './inputHandler';
 import { createInitialGameState } from './engineState';
-import { movePiece, spawnNextPiece, holdPiece, hardDrop } from './engineActions';
-import { applyGravityToState } from './gravityEngine';
-import { StatsTracker } from './statsTracker';
-import { applyAnnotationPen, applyAnnotationErase, clearAllAnnotations, applyAnnotationRectFill } from './annotationEngine';
-import { autoColorAnnotations } from './autoColorEngine';
+import { spawnNextPiece } from './engineActions';
+import { LockDelayState, createLockDelayState } from './lockDelayEngine';
+import { PlayerStats } from './playerStats';
+import { ActivePiece } from './types';
+import { LockResult } from './tSpinDetector';
+import { isAnnotationEvent, reduceAnnotationEvent } from './annotationInput';
+import { runFixedTick } from './stepEngine';
 
 export class EngineCore implements IEngineCore {
   private config: GameConfig = DEFAULT_CONFIG;
   private rotationSystem: IRotationSystem;
   private bagRandomizer: IBagRandomizer;
   private state: GameState;
-  private inputHandler: InputHandler = new InputHandler();
-  private gravityTimer: number = 0;
-  private accumulator: number = 0;
-  private statsTracker = new StatsTracker();
+  private inputHandler = new InputHandler();
+  private gravityTimer = 0;
+  private accumulator = 0;
+  private lockDelayState: LockDelayState = createLockDelayState();
+  private playerStats = new PlayerStats();
 
   constructor(deps: EngineDependencies) {
     this.rotationSystem = deps.rotationSystem;
     this.bagRandomizer = deps.bagRandomizer;
     this.state = createInitialGameState(this.bagRandomizer, this.config);
     spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
+    this.playerStats.onPieceSpawn(this.state.activePiece);
   }
 
   initialize(config: GameConfig): void {
@@ -32,28 +36,26 @@ export class EngineCore implements IEngineCore {
     this.reset();
   }
 
+  updateConfig(config: GameConfig): void {
+    this.config = { ...DEFAULT_CONFIG, ...config };
+  }
+
   handleInput(input: InputEvent): void {
-    if (input.type === 'ANNOTATE_PEN') {
-      this.applyAnnotationPen(input.x, input.y, input.pieceType);
-      return;
-    }
-    if (input.type === 'ANNOTATE_ERASE') {
-      this.applyAnnotationErase(input.x, input.y);
-      return;
-    }
-    if (input.type === 'ANNOTATE_RECT_FILL') {
-      this.applyAnnotationRectFill(input.x1, input.y1, input.x2, input.y2, input.pieceType);
-      return;
-    }
-    if (input.type === 'ANNOTATE_CLEAR_ALL') {
-      this.clearAllAnnotations();
-      return;
-    }
-    if (input.type === 'ANNOTATE_AUTO_COLOR') {
-      this.autoColorAnnotations();
+    if (isAnnotationEvent(input)) {
+      this.state.annotations = reduceAnnotationEvent(this.state.annotations, input);
       return;
     }
     this.inputHandler.handleInput(input);
+    if (!this.state.activePiece) return;
+    if ((input.type === 'MOVE_LEFT' || input.type === 'MOVE_RIGHT') && input.pressed) {
+      this.playerStats.recordInput('move');
+    } else if (
+      input.type === 'ROTATE_CW' ||
+      input.type === 'ROTATE_CCW' ||
+      input.type === 'ROTATE_180'
+    ) {
+      this.playerStats.recordInput('rotate');
+    }
   }
 
   tick(deltaTime: number): void {
@@ -69,63 +71,42 @@ export class EngineCore implements IEngineCore {
   }
 
   private fixedTick(dt: number): void {
-    this.statsTracker.tick(dt);
-    this.inputHandler.updateMovement(this.config, dt, (dx, dy) =>
-      movePiece(this.state, dx, dy)
-    );
-    this.processDiscreteActions();
-    this.applyGravity(dt);
-  }
-
-  private processDiscreteActions(): void {
-    const actions = this.inputHandler.consumeOneTimeInputs();
-
-    if (actions.reset) {
-      this.reset();
-      return;
-    }
-    if (actions.cw) { this.rotatePiece(1); this.statsTracker.recordKeyPress(); }
-    if (actions.ccw) { this.rotatePiece(-1); this.statsTracker.recordKeyPress(); }
-    if (actions.rotate180) { this.rotatePiece(2); this.statsTracker.recordKeyPress(); }
-    if (actions.hold) {
-      holdPiece(this.state, this.bagRandomizer, this.rotationSystem);
-      this.statsTracker.recordKeyPress();
-    }
-    if (actions.hardDrop) {
-      const lines = hardDrop(this.state, this.bagRandomizer, this.rotationSystem);
-      this.recordLockStats(lines);
-    }
-  }
-
-  private rotatePiece(direction: 1 | -1 | 2): void {
-    if (!this.state.activePiece) return;
-
-    const result = this.rotationSystem.rotate(
-      this.state.board,
-      this.state.activePiece,
-      direction
-    );
-
-    if (result) {
-      this.state.activePiece = result.piece;
-    }
-  }
-
-  private applyGravity(dt: number): void {
-    this.gravityTimer = applyGravityToState(
+    this.playerStats.tick(dt);
+    const result = runFixedTick(
       this.state,
       this.config,
-      this.gravityTimer,
-      dt,
+      this.inputHandler,
       this.bagRandomizer,
       this.rotationSystem,
-      (lines) => this.recordLockStats(lines),
+      this.lockDelayState,
+      this.gravityTimer,
+      dt,
+      {
+        rotate: (direction) => this.rotatePiece(direction),
+        onReset: () => this.reset(),
+        onClearHold: () => this.clearHold(),
+        onLock: (lockResult, piece) => this.recordLockStats(lockResult, piece),
+        onKeyPress: () => this.playerStats.recordKeyPress(),
+        onHold: () => this.playerStats.onPieceSpawn(this.state.activePiece),
+      },
     );
+    this.lockDelayState = result.lockDelayState;
+    this.gravityTimer = result.gravityTimer;
   }
 
-  private recordLockStats(linesCleared: number): void {
-    this.statsTracker.recordPiecePlaced();
-    if (linesCleared > 0) this.statsTracker.recordLineClear(linesCleared, false, false);
+  private rotatePiece(direction: 1 | -1 | 2): boolean {
+    if (!this.state.activePiece) return false;
+    const result = this.rotationSystem.rotate(this.state.board, this.state.activePiece, direction);
+    if (result) {
+      this.state.activePiece = result.piece;
+      return true;
+    }
+    return false;
+  }
+
+  private recordLockStats(result: LockResult, piece: ActivePiece | null): void {
+    this.playerStats.onPieceLock(result, piece);
+    this.playerStats.onPieceSpawn(this.state.activePiece);
   }
 
   getState(): EngineState {
@@ -135,7 +116,7 @@ export class EngineCore implements IEngineCore {
       queue: [...this.state.queue.queue],
       hold: this.state.queue.hold,
       canHold: this.state.queue.canHold,
-      stats: this.statsTracker.getStats(),
+      stats: this.playerStats.getStats(),
       gameOver: this.state.gameOver,
       paused: this.state.paused,
       annotations: this.state.annotations.map(row => [...row]),
@@ -148,31 +129,18 @@ export class EngineCore implements IEngineCore {
     this.inputHandler.reset();
     this.gravityTimer = 0;
     this.accumulator = 0;
-    this.statsTracker.reset();
+    this.lockDelayState = createLockDelayState();
+    this.playerStats.reset();
     spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
+    this.playerStats.onPieceSpawn(this.state.activePiece);
   }
 
   setQueue(pieces: PieceType[]): void {
     this.state.queue.queue = [...pieces];
   }
 
-  applyAnnotationPen(x: number, y: number, pieceType: number): void {
-    this.state.annotations = applyAnnotationPen(this.state.annotations, x, y, pieceType);
-  }
-
-  applyAnnotationErase(x: number, y: number): void {
-    this.state.annotations = applyAnnotationErase(this.state.annotations, x, y);
-  }
-
-  applyAnnotationRectFill(x1: number, y1: number, x2: number, y2: number, pieceType: number): void {
-    this.state.annotations = applyAnnotationRectFill(this.state.annotations, x1, y1, x2, y2, pieceType);
-  }
-
-  clearAllAnnotations(): void {
-    this.state.annotations = clearAllAnnotations(this.state.annotations);
-  }
-
-  autoColorAnnotations(): void {
-    this.state.annotations = autoColorAnnotations(this.state.annotations);
+  clearHold(): void {
+    this.state.queue.hold = null;
+    this.state.queue.canHold = true;
   }
 }

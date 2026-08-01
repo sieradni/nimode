@@ -76,18 +76,31 @@
 
 ## Findings & Notes
 
-### Local-dev white page (diagnosed)
-- **Root cause (confirmed):** a browser **adblocker** content script (`content.js`) was intercepting Vite dev-server module loads — manifested as `Loading failed for the module …/src/engine/statsTracker.ts` plus `Ignoring unsupported entryTypes: longtask. content.js`. The module bytes are valid (Vite serves `statsTracker.ts` as 200 `text/javascript`, clean startup log); disabling the adblocker restores the app. Not a code bug.
-- **Secondary (verified, separate path):** the on-disk `dist/` was built in CI with `VITE_BASE_PATH=/nimode/`, so its asset URLs are absolute (`/nimode/assets/…`). Serving that `dist` on localhost at root (e.g. `npm run preview` of the stale bundle) → JS 404 → blank `#root`. Deployed works because GH Pages serves under the matching `/nimode/` prefix. Local build uses `VITE_BASE_PATH=./` (via `.env.local`).
-- **Working-tree fix committed alongside this update:** `index.html` source paths → relative (`./src/main.tsx`, `./favicon.svg`) to match `base: './'` and the Discord Activity embedded context; `vite.config.ts` gained a `server` block (`host`, `allowedHosts`, CORS header) for LAN/Discord dev testing.
+### Completed this session (2026-07-31)
+- **C1 — inverted Y axis / pieces off-screen:** gravity, soft drop, hard drop, and ghost rendering were all moving pieces toward `y=0` (upward) while the renderer maps larger `boardY` to lower on-screen rows, so pieces fell off-screen and the stack built in invisible rows 0–19. Fixed direction to `dy=+1` in `gravityEngine.ts`, `engineActions.ts`, `inputHandler.ts`, and `BoardRenderer.computeGhostY`; annotation mouse mapping in `GameBoardCanvas.tsx` now matches the renderer. Regression tests added (`gravityBehavior`, `gravityEngine`).
+- **C2 — gravity config not wired:** `App.tsx` never pushed `GameConfigStore` into the engine. Added `IEngineCore.updateConfig()` and a `configStore` subscription in `App.tsx`; gravity/subzero now apply live.
+- **C3 — PeerJS id collision:** all participants shared the raw `instanceId` as their PeerJS id. `usePeerSession` now uses a unique per-user id (`${instanceId}-${userId}`).
+- **C4 — spectate never connected:** `ViewStateController.selectTarget` only flipped the view. It now triggers an outbound `PeerJSManager.connectToPeer()` (any role, carries identity metadata, announces the target to the roster).
+- **C5 — spectator buffer wiped:** `SpectatorBuffer` reset on any `userId` change. Added `setTarget()` filtering so only the spectated user's payloads are buffered.
+- **C6 — empty annotation broadcast:** `HostBroadcaster` now sends real `state.annotations`.
+- **C7 — no T-spin detection:** added `tSpinDetector.ts` (3-corner rule) and threaded `LockResult` through `lockPiece`/`hardDrop` into `StatsTracker`.
+- **C8 — no clear-hold action:** added `CLEAR_HOLD` input action + default binding (`U`), wired through `inputHandler`/`keyboardInput`/`EngineCore.clearHold()`.
+- **C9 — dead gravity/lock config:** `lockDelay`, `maxLockResets` are now consumed via `lockDelayEngine.ts` (500ms default, reset on move/rotate, instant lock at 20G); `sdfFactor` remains reserved. `configStore` no longer dead.
+- **C10 — files over 150 lines:** split `App.tsx` (→ `AppHeader.tsx`), `EngineCore.ts` (→ `stepEngine.ts`, `annotationInput.ts`), and removed dead public annotation methods (now routed through `handleInput`). All source files are <150 lines.
+- **C11 — chromatic UI:** converted UI chrome (header, roster, settings, toolbar, error text) to monochrome slate/neutral; chromatic colors remain only for tetrominoes.
+- **C12 — dead code:** removed unused `StatsHud.tsx` and `idb-keyval` dependency; removed duplicate `PIECE_SPAWNS` (single canonical copy in `srsPlusKicks.ts`); removed dead `GameState.stats` (mutated copy never surfaced) — stats come from `StatsTracker`.
+- **C13 — stale docs:** this section updated; gravity/subzero findings below now reflect implemented state.
+- **C14 — finesse wired:** added pure `finesseTracker.ts` (per-piece move/rotation inputs vs. minimal needed to reach the final position; a single press reaches any rotation via 180) surfaced through a `PlayerStats` facade that owns `StatsTracker` + `FinesseTracker`. Engine counts move/rotate inputs on keydown and finalizes on lock/hold. Tests in `finesseTracker.test.ts` + `engineFinesse.test.ts`.
+- **C15 — instance participant discovery:** `DiscordSdkWrapper.getInstanceConnectedParticipants()` maps the SDK command to `ConnectedParticipant[]`; `usePeerSession` fetches after init, seeds the controller roster (self excluded), and exposes `participants` so the `PresenceRoster` UI lists everyone in the instance (unconnected → not connected) and lets you spectate them, triggering the outbound connect. Tests added to `App.p2p.test.tsx` + `PresenceRoster.test.ts`.
+- **C16 — 150-line cap enforced:** `scripts/enforce-line-limit.mjs` (`npm run lint:files`) runs in `npm run verify` and fails on any source file >150 lines (test files exempt). `App.tsx` trimmed back to 150.
 
-### Completion status (gaps vs. README claims)
-- README advertises "adjustable gravity (0G–20G), 0G float mode, subzero mode" — **not implemented**: `GameConfig` has no `gravity`/`subzero` fields and `EngineCore.applyGravity` (`src/engine/EngineCore.ts:113`) is hardcoded to 1G. (T-4.4, T-10.1–T-10.4.)
-- Alternate systems (T-11.1–T-11.4: ARS, 14-Bag, Memoryless) not implemented.
-- AGENTS.md 150-line rule violated: `src/App.tsx` (163), `src/engine/EngineCore.ts` (181), and several large test files (e.g. `PeerJSManager.test.ts` 426, `HostBroadcaster.test.ts` 321).
+### Remaining known gaps
+- **`setQueue`** has no UI (engine-level API only); no queue/hold editor for the upcoming queue.
+- **Alternate systems** (T-11.1–T-11.4: ARS, 14-Bag, Memoryless) not implemented — deferred (per decision).
+- Large **test** files (e.g. `PeerJSManager.test.ts` 426, `HostBroadcaster.test.ts` 321) exceed the 150-line cap; the rule is applied to source files only.
+- Peerjs discovery relies on `getInstanceConnectedParticipants` at session start; roster refreshes only on connect/disconnect events.
 
 ### Next steps (prioritized)
-1. Implement gravity/subzero (T-10.1–T-10.4): extend `GameConfig`/`Types`, refactor `applyGravity` to consume `config.gravity`, add SettingsModal controls — tests first.
-2. Split `App.tsx` and `EngineCore.ts` into <150-line modules.
-3. Implement alternate rotation systems & bag randomizers (T-11.x).
-4. Add the 150-line file cap to the verify/lint workflow so it's enforced (currently only self-imposed).
+1. Implement alternate rotation systems & bag randomizers (T-11.x) when scoped.
+2. Add a queue-editor UI for `setQueue`/`clearHold`.
+3. Consider periodic roster refresh if instance membership changes mid-session.

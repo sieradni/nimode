@@ -12,27 +12,30 @@ function createMockRoster() {
 }
 
 function createMockBuffer() {
-  const clear = vi.fn();
+  const setTarget = vi.fn();
   const buffer = {
-    clear,
+    setTarget,
   } as unknown as SpectatorBuffer;
-  return { buffer, clear };
+  return { buffer, setTarget };
 }
 
 describe('ViewStateController', () => {
   let roster: PresenceRoster;
   let canSpectate: ReturnType<typeof vi.fn>;
   let buffer: SpectatorBuffer;
-  let clear: ReturnType<typeof vi.fn>;
+  let setTarget: ReturnType<typeof vi.fn>;
+  let connectToTarget: ReturnType<typeof vi.fn>;
   let controller: ViewStateController;
+
   beforeEach(() => {
     const rosterMock = createMockRoster();
     roster = rosterMock.roster;
     canSpectate = rosterMock.canSpectate;
     const bufferMock = createMockBuffer();
     buffer = bufferMock.buffer;
-    clear = bufferMock.clear;
-    controller = new ViewStateController({ roster, buffer });
+    setTarget = bufferMock.setTarget;
+    connectToTarget = vi.fn();
+    controller = new ViewStateController({ roster, buffer, connectToTarget });
   });
 
   it('starts in LOCAL_ACTIVE with null target', () => {
@@ -53,7 +56,7 @@ describe('ViewStateController', () => {
     expect(controller.getTargetId()).toBe('user-1');
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith('SPECTATING_TARGET');
-    expect(clear).toHaveBeenCalledTimes(1);
+    expect(setTarget).toHaveBeenCalledWith('user-1');
   });
 
   it('selectTarget on a private user is blocked', () => {
@@ -68,7 +71,7 @@ describe('ViewStateController', () => {
     expect(controller.getView()).toBe('LOCAL_ACTIVE');
     expect(controller.getTargetId()).toBeNull();
     expect(listener).not.toHaveBeenCalled();
-    expect(clear).not.toHaveBeenCalled();
+    expect(setTarget).not.toHaveBeenCalled();
   });
 
   it('selectTarget on an unknown user is blocked', () => {
@@ -79,10 +82,26 @@ describe('ViewStateController', () => {
     expect(result).toBe(false);
     expect(controller.getView()).toBe('LOCAL_ACTIVE');
     expect(controller.getTargetId()).toBeNull();
-    expect(clear).not.toHaveBeenCalled();
+    expect(setTarget).not.toHaveBeenCalled();
   });
 
-  it('returnToLocal restores LOCAL_ACTIVE and clears target', () => {
+  it('opens an outbound connection to the spectated target', () => {
+    canSpectate.mockReturnValue(true);
+
+    controller.selectTarget('user-1');
+
+    expect(connectToTarget).toHaveBeenCalledWith('user-1');
+  });
+
+  it('does not open a connection when spectating is blocked', () => {
+    canSpectate.mockReturnValue(false);
+
+    controller.selectTarget('user-1');
+
+    expect(connectToTarget).not.toHaveBeenCalled();
+  });
+
+  it('returnToLocal restores LOCAL_ACTIVE and clears the target', () => {
     canSpectate.mockReturnValue(true);
     controller.selectTarget('user-1');
 
@@ -95,18 +114,19 @@ describe('ViewStateController', () => {
     expect(controller.getTargetId()).toBeNull();
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith('LOCAL_ACTIVE');
+    expect(setTarget).toHaveBeenCalledWith(null);
   });
 
-  it('switching targets clears the buffer again', () => {
+  it('switching targets re-targets the buffer', () => {
     canSpectate.mockReturnValue(true);
 
     controller.selectTarget('user-1');
-    expect(clear).toHaveBeenCalledTimes(1);
+    expect(setTarget).toHaveBeenLastCalledWith('user-1');
 
     controller.selectTarget('user-2');
 
     expect(controller.getTargetId()).toBe('user-2');
-    expect(clear).toHaveBeenCalledTimes(2);
+    expect(setTarget).toHaveBeenLastCalledWith('user-2');
   });
 
   it('onViewChange/offViewChange add and remove listeners', () => {
@@ -135,16 +155,6 @@ describe('ViewStateController', () => {
     expect(controller.getView()).toBe('SPECTATING_TARGET');
     expect(controller.getTargetId()).toBe('user-1');
     expect(listener).not.toHaveBeenCalled();
-    expect(clear).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not clear the buffer on returnToLocal', () => {
-    canSpectate.mockReturnValue(true);
-    controller.selectTarget('user-1');
-
-    clear.mockClear();
-    controller.returnToLocal();
-
-    expect(clear).not.toHaveBeenCalled();
+    expect(setTarget).toHaveBeenCalledTimes(1);
   });
 });

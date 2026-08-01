@@ -47,6 +47,10 @@ export class StatsTracker {
     this.finesse++;
   }
 
+  recordFinesseErrors(count: number): void {
+    this.finesse += count;
+  }
+
   tick(dt: number): void {
     this.elapsedMs += dt;
   }

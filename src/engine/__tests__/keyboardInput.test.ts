@@ -11,6 +11,7 @@ const BINDINGS: KeyBindings = {
   ROTATE_CCW: 'KeyZ',
   ROTATE_180: 'KeyC',
   HOLD: 'KeyH',
+  CLEAR_HOLD: 'KeyU',
   RESET: 'KeyR',
 };
 

@@ -76,7 +76,7 @@ export function AnnotationToolbar({
               onClick={() => handleToolChange(t)}
               className={`px-3 py-1.5 text-xs rounded transition-colors ${
                 tool === t
-                  ? 'bg-sky-600 text-white'
+                  ? 'bg-slate-600 text-white'
                   : 'text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -138,7 +138,7 @@ export function AnnotationToolbar({
         type="button"
         onClick={onClose}
         aria-label="Close annotation toolbar"
-        className="p-2 rounded-full bg-slate-900/95 border border-slate-700 text-slate-400 hover:text-sky-400 hover:border-sky-400 transition-colors"
+        className="p-2 rounded-full bg-slate-900/95 border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-400 transition-colors"
       >
         ✕
       </button>

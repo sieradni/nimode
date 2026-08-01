@@ -15,6 +15,7 @@ type ListenerOf<K extends keyof PeerConnectionEvents> = PeerConnectionEvents[K];
 export class PeerJSManager {
   private peer: Peer | null = null;
   private readonly connections = new Map<string, PeerConnectionInfo>();
+  private readonly outgoingConnections = new Set<DataConnection>();
   private readonly listeners = new Map<
     keyof PeerConnectionEvents,
     Set<(...args: unknown[]) => void>
@@ -83,19 +84,24 @@ export class PeerJSManager {
     });
   }
 
-  connectToHost(hostId: string): void {
-    if (this.role !== 'spectator') {
-      throw new Error('connectToHost is only available in spectator role');
-    }
+  connectToPeer(peerId: string, metadata?: PeerMetadata): void {
     if (!this.peer) {
       throw new Error('Peer not initialized; call init() first');
     }
-    const conn = this.peer.connect(hostId, { serialization: 'json' });
+    const meta: PeerMetadata = metadata ?? {
+      userId: peerId,
+      displayName: peerId,
+      isPrivate: false,
+    };
+    const conn = this.peer.connect(peerId, { serialization: 'json', metadata: meta });
+    if (!conn) return;
+    this.outgoingConnections.add(conn);
     conn.on('open', () => {
-      this.emit('open', this.peer!.id);
+      this.emit('peerJoined', meta);
     });
     this.wireDataConnection(conn, () => {
-      this.emit('closed');
+      this.outgoingConnections.delete(conn);
+      this.emit('peerLeft', meta.userId);
     });
   }
 
@@ -130,10 +136,10 @@ export class PeerJSManager {
   }
 
   close(): void {
-    for (const info of this.connections.values()) {
-      info.connection.close();
-    }
+    for (const info of this.connections.values()) info.connection.close();
     this.connections.clear();
+    for (const conn of this.outgoingConnections) conn.close();
+    this.outgoingConnections.clear();
     this.peer?.destroy();
     this.peer = null;
     this.isOpen = false;

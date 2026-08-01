@@ -197,4 +197,24 @@ describe('SpectatorBuffer', () => {
     buffer.push(makePayload({ userId: 'user1' }), 0);
     expect(buffer.getUserId()).toBe('user1');
   });
+
+  it('ignores payloads from users other than the set target', () => {
+    const buffer = new SpectatorBuffer();
+    buffer.setTarget('user1');
+    buffer.push(makePayload({ userId: 'user2', queue: [9] }), 0);
+    expect(buffer.hasData()).toBe(false);
+    buffer.push(makePayload({ userId: 'user1', queue: [1, 2] }), 10);
+    expect(buffer.hasData()).toBe(true);
+    expect(buffer.getUserId()).toBe('user1');
+    expect(buffer.getInterpolatedState(200).queue).toEqual([1, 2]);
+  });
+
+  it('clears snapshots when the target is cleared', () => {
+    const buffer = new SpectatorBuffer();
+    buffer.setTarget('user1');
+    buffer.push(makePayload({ userId: 'user1', queue: [1] }), 0);
+    expect(buffer.hasData()).toBe(true);
+    buffer.setTarget(null);
+    expect(buffer.hasData()).toBe(false);
+  });
 });

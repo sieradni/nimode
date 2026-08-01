@@ -39,8 +39,19 @@ function toInterpolatedState(payload: SpectatorPayload): InterpolatedState {
 export class SpectatorBuffer {
   private snapshots: TimestampedSnapshot[] = [];
   private userId: string | null = null;
+  private targetUserId: string | null = null;
+
+  setTarget(userId: string | null): void {
+    this.targetUserId = userId;
+    if (userId === null) {
+      this.clear();
+    }
+  }
 
   push(payload: SpectatorPayload, receivedAt: number): void {
+    if (this.targetUserId !== null && payload.userId !== this.targetUserId) {
+      return;
+    }
     if (payload.userId !== this.userId) {
       this.snapshots = [];
       this.userId = payload.userId;

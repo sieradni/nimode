@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
 import type { SpectatorPayload } from '../engine/types/game';
+import type { ConnectedParticipant } from '../discord/types';
 import type { PeerFactory } from './types';
 import type { InstanceConfigStore } from './InstanceConfigStore';
 import { PeerJSManager } from './PeerJSManager';
@@ -18,6 +19,7 @@ export interface UsePeerSessionOptions {
   engine: IEngineCore;
   configStore: InstanceConfigStore;
   createPeer?: PeerFactory;
+  fetchParticipants?: () => Promise<ConnectedParticipant[]>;
 }
 
 export interface PeerSession {
@@ -27,28 +29,43 @@ export interface PeerSession {
   selectTarget: (userId: string) => boolean;
   returnToLocal: () => void;
   connectionError: string | null;
+  participants: ConnectedParticipant[];
 }
 
 export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
-  const { instanceId, userId, engine, configStore, createPeer } = options;
+  const { instanceId, userId, engine, configStore, createPeer, fetchParticipants } = options;
   const [peerManager, setPeerManager] = useState<PeerJSManager | null>(null);
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
   const [view, setView] = useState<ActiveView>('LOCAL_ACTIVE');
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<ConnectedParticipant[]>([]);
   const controllerRef = useRef<ViewStateController | null>(null);
 
   useEffect(() => {
     if (!instanceId) return;
 
+    const peerId = `${instanceId}-${userId}`;
     const manager = new PeerJSManager({
-      instanceId,
+      instanceId: peerId,
       role: 'host',
       stunServers: STUN_SERVERS,
       createPeer,
     });
     const buffer = new SpectatorBuffer();
     const roster = new PresenceRoster(manager);
-    const controller = new ViewStateController({ roster, buffer });
+    const controller = new ViewStateController({
+      roster,
+      buffer,
+      connectToTarget: (targetUserId) => {
+        if (manager.open) {
+          manager.connectToPeer(`${instanceId}-${targetUserId}`, {
+            userId,
+            displayName: userId,
+            isPrivate: false,
+          });
+        }
+      },
+    });
     controllerRef.current = controller;
     let broadcaster: HostBroadcaster | null = null;
 
@@ -74,6 +91,22 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       .then(() => {
         setPeerManager(manager);
         setSpectatorBuffer(buffer);
+        if (fetchParticipants) {
+          fetchParticipants()
+            .then((discovered) => {
+              setParticipants(discovered);
+              for (const p of discovered) {
+                if (p.id === userId) continue;
+                roster.seedEntry(
+                  { userId: p.id, displayName: p.displayName ?? p.username, isPrivate: false },
+                  false,
+                );
+              }
+            })
+            .catch(() => {
+              // Discovery is best-effort; the roster remains connection-driven.
+            });
+        }
       })
       .catch((err: unknown) => {
         setConnectionError(err instanceof Error ? err.message : String(err));
@@ -89,7 +122,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       manager.close();
       controllerRef.current = null;
     };
-  }, [instanceId, userId, engine, configStore, createPeer]);
+  }, [instanceId, userId, engine, configStore, createPeer, fetchParticipants]);
 
   return {
     peerManager,
@@ -100,5 +133,6 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       controllerRef.current?.returnToLocal();
     },
     connectionError,
+    participants,
   };
 }

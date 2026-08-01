@@ -24,17 +24,6 @@ export const PIECE_COLORS: Record<PieceType, string> = {
   7: '#f00000',
 };
 
-export const PIECE_SPAWNS: Record<PieceType, { x: number; y: number; rotation: RotationState }> = {
-  0: { x: 3, y: 38, rotation: 0 },
-  1: { x: 3, y: 38, rotation: 0 },
-  2: { x: 3, y: 38, rotation: 0 },
-  3: { x: 3, y: 38, rotation: 0 },
-  4: { x: 4, y: 39, rotation: 0 },
-  5: { x: 3, y: 38, rotation: 0 },
-  6: { x: 3, y: 38, rotation: 0 },
-  7: { x: 3, y: 38, rotation: 0 },
-};
-
 export interface PieceState {
   x: number;
   y: number;

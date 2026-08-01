@@ -78,6 +78,7 @@ describe('importSettingsFromJson', () => {
       ROTATE_CCW: 'KeyZ',
       ROTATE_180: 'KeyC',
       HOLD: 'ShiftLeft',
+      CLEAR_HOLD: 'KeyU',
       RESET: 'KeyR',
     };
     const customConfig: GameConfig = {

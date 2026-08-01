@@ -88,7 +88,7 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-sky-400">Settings</h2>
+          <h2 className="text-lg font-bold text-slate-200">Settings</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200" aria-label="Close">✕</button>
         </div>
         <PrivateInstanceToggle configStore={instanceStore} />
@@ -104,14 +104,14 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
                 onClick={() => { setListeningAction(action); setError(null); }}
               >
                 <span className="text-sm text-slate-300">{ACTION_LABELS[action]}</span>
-                <span className={`text-sm font-mono ${isListening ? 'text-yellow-400 animate-pulse' : 'text-sky-300'}`}>
+                <span className={`text-sm font-mono ${isListening ? 'text-slate-200 animate-pulse' : 'text-slate-300'}`}>
                   {isListening ? 'Press a key...' : key}
                 </span>
               </div>
             );
           })}
         </div>
-        {error && <div className="text-red-400 text-xs mb-3">{error}</div>}
+        {error && <div className="text-slate-400 text-xs mb-3">{error}</div>}
         <div className="flex flex-wrap gap-2">
           <button onClick={handleResetAll} className="px-3 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-200">Reset All</button>
           <button onClick={handleExport} className="px-3 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-200">Export</button>

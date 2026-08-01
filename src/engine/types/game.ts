@@ -34,6 +34,7 @@ export type InputAction =
   | 'ROTATE_CCW'
   | 'ROTATE_180'
   | 'HOLD'
+  | 'CLEAR_HOLD'
   | 'RESET';
 
 export interface InputState {
@@ -45,6 +46,7 @@ export interface InputState {
   ccw: boolean;
   rotate180: boolean;
   hold: boolean;
+  clearHold: boolean;
   reset: boolean;
 }
 
@@ -57,6 +59,7 @@ export interface KeyBindings {
   ROTATE_CCW: string;
   ROTATE_180: string;
   HOLD: string;
+  CLEAR_HOLD: string;
   RESET: string;
 }
 
@@ -91,6 +94,7 @@ export const DEFAULT_KEYBINDINGS: KeyBindings = {
   ROTATE_CCW: 'KeyZ',
   ROTATE_180: 'KeyC',
   HOLD: 'KeyH',
+  CLEAR_HOLD: 'KeyU',
   RESET: 'KeyR',
 };
 
@@ -103,6 +107,7 @@ export const EMPTY_INPUT_STATE: InputState = {
   ccw: false,
   rotate180: false,
   hold: false,
+  clearHold: false,
   reset: false,
 };
 
@@ -110,7 +115,6 @@ export interface GameState {
   board: BoardMatrix;
   activePiece: ActivePiece | null;
   queue: QueueState;
-  stats: GameStats;
   config: GameConfig;
   inputState: InputState;
   dasCounters: { left: number; right: number; down: number };

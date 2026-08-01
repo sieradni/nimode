@@ -11,8 +11,10 @@ import { getDiscordClientId } from './discord/config';
 import { useDiscordAuth } from './discord/useDiscordAuth';
 import { usePeerSession } from './p2p/usePeerSession';
 import { instanceConfigStore } from './p2p/InstanceConfigStore';
+import { configStore } from './engine/configStore';
 import { PresenceRoster } from './components/PresenceRoster';
 import { SpectatorBoardCanvas } from './components/canvas/SpectatorBoardCanvas';
+import { AppHeader } from './components/AppHeader';
 import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
 import { PieceType } from './engine/types/piece';
 
@@ -35,6 +37,7 @@ function App() {
     userId,
     engine,
     configStore: instanceConfigStore,
+    fetchParticipants: discordAuth.status === 'authenticated' ? sdk.getInstanceConnectedParticipants : undefined,
   });
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
@@ -44,6 +47,13 @@ function App() {
   const [autoColor, setAutoColor] = useState(false);
   const [annotationToolbarOpen, setAnnotationToolbarOpen] = useState(false);
   const settingsOpenRef = useRef(false);
+
+  useEffect(() => {
+    engine.updateConfig(configStore.getConfig());
+    const handleConfigChange = () => engine.updateConfig(configStore.getConfig());
+    configStore.subscribe(handleConfigChange);
+    return () => configStore.unsubscribe(handleConfigChange);
+  }, [engine]);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -77,42 +87,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-mono">
-      <header className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80">
-        <h1 className="text-xl font-bold text-sky-400">nimode</h1>
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-400">Modern Tetris Engine Active</div>
-          {discordAuth.status === 'connecting' && (
-            <div className="text-xs text-slate-400">Connecting to Discord...</div>
-          )}
-          {discordAuth.status === 'authenticated' && (
-            <div className="text-xs text-emerald-400">Connected: {discordAuth.auth.userId}</div>
-          )}
-          {discordAuth.status === 'unavailable' && (
-            <div className="text-xs text-slate-400">Standalone mode</div>
-          )}
-          <button
-            onClick={() => setAnnotationToolbarOpen(true)}
-            className="text-slate-400 hover:text-sky-400 transition-colors"
-            aria-label="Annotation Toolbar"
-          >
-            ✏
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="text-slate-400 hover:text-sky-400 transition-colors"
-            aria-label="Settings"
-          >
-            ⚙
-          </button>
-        </div>
-      </header>
+      <AppHeader
+        discordAuth={discordAuth}
+        onOpenAnnotationToolbar={() => setAnnotationToolbarOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AnnotationToolbar
         isOpen={annotationToolbarOpen}
         onClose={() => setAnnotationToolbarOpen(false)}
         tool={annotationTool}
         onToolChange={setAnnotationTool}
-        onClearAll={() => engine.clearAllAnnotations()}
+        onClearAll={() => engine.handleInput({ type: 'ANNOTATE_CLEAR_ALL' })}
         autoColor={autoColor}
         onAutoColorToggle={setAutoColor}
         pieceType={annotationPieceType}
@@ -120,7 +106,7 @@ function App() {
       />
       <main className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
         {peerSession.connectionError && (
-          <div className="text-xs text-red-400">P2P error: {peerSession.connectionError}</div>
+          <div className="text-xs text-slate-400">P2P error: {peerSession.connectionError}</div>
         )}
         <div className="flex gap-8 items-start">
           {peerSession.view === 'LOCAL_ACTIVE' ? (
@@ -151,6 +137,7 @@ function App() {
               localUserId={userId}
               localDisplayName={userId}
               localPps={gameState.stats.pps}
+              discoveredParticipants={peerSession.participants}
               onSelectParticipant={peerSession.selectTarget}
             />
           )}

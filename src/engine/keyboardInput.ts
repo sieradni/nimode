@@ -26,6 +26,8 @@ export function actionToInputEvent(action: InputAction, pressed: boolean): Input
       return pressed ? { type: 'ROTATE_180' } : null;
     case 'HOLD':
       return pressed ? { type: 'HOLD' } : null;
+    case 'CLEAR_HOLD':
+      return pressed ? { type: 'CLEAR_HOLD' } : null;
     case 'RESET':
       return pressed ? { type: 'RESET' } : null;
     default:

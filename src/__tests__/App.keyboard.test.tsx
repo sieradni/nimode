@@ -21,6 +21,7 @@ vi.mock('../engine/EngineCore', () => ({
     handleInput: mockHandleInput,
     tick: mockTick,
     getState: mockGetState,
+    updateConfig: vi.fn(),
   })),
 }));
 

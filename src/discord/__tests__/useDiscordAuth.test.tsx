@@ -11,7 +11,11 @@ const AUTH: DiscordAuth = {
 };
 
 function createWrapper(init: DiscordSdkWrapper['init']): DiscordSdkWrapper {
-  return { clientId: 'test-client-id', init };
+  return {
+    clientId: 'test-client-id',
+    init,
+    getInstanceConnectedParticipants: () => Promise.resolve([]),
+  };
 }
 
 describe('useDiscordAuth', () => {

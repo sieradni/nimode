@@ -23,15 +23,15 @@ export function GameCanvas({
   const [isDrawing, setIsDrawing] = useState(false);
 
   const handleAnnotationPen = (x: number, y: number, pieceType: number) => {
-    engine.applyAnnotationPen(x, y, pieceType);
+    engine.handleInput({ type: 'ANNOTATE_PEN', x, y, pieceType });
   };
 
   const handleAnnotationErase = (x: number, y: number) => {
-    engine.applyAnnotationErase(x, y);
+    engine.handleInput({ type: 'ANNOTATE_ERASE', x, y });
   };
 
   const handleAnnotationRectFill = (x1: number, y1: number, x2: number, y2: number, pieceType: number) => {
-    engine.applyAnnotationRectFill(x1, y1, x2, y2, pieceType);
+    engine.handleInput({ type: 'ANNOTATE_RECT_FILL', x1, y1, x2, y2, pieceType });
   };
 
   const handleDrawingStart = () => {
@@ -41,7 +41,7 @@ export function GameCanvas({
   const handleDrawingEnd = () => {
     setIsDrawing(false);
     if (autoColor) {
-      engine.autoColorAnnotations();
+      engine.handleInput({ type: 'ANNOTATE_AUTO_COLOR' });
     }
   };
 

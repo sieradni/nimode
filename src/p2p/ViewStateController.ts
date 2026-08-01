@@ -6,13 +6,19 @@ export type ActiveView = 'LOCAL_ACTIVE' | 'SPECTATING_TARGET';
 export class ViewStateController {
   private readonly roster: PresenceRoster;
   private readonly buffer: SpectatorBuffer;
+  private readonly connectToTarget: ((userId: string) => void) | null;
   private view: ActiveView = 'LOCAL_ACTIVE';
   private targetId: string | null = null;
   private readonly listeners = new Set<(view: ActiveView) => void>();
 
-  constructor(options: { roster: PresenceRoster; buffer: SpectatorBuffer }) {
+  constructor(options: {
+    roster: PresenceRoster;
+    buffer: SpectatorBuffer;
+    connectToTarget?: (userId: string) => void;
+  }) {
     this.roster = options.roster;
     this.buffer = options.buffer;
+    this.connectToTarget = options.connectToTarget ?? null;
   }
 
   getView(): ActiveView {
@@ -27,14 +33,16 @@ export class ViewStateController {
     if (!this.roster.canSpectate(userId)) {
       return false;
     }
-    this.buffer.clear();
+    this.buffer.setTarget(userId);
     this.targetId = userId;
     this.view = 'SPECTATING_TARGET';
+    this.connectToTarget?.(userId);
     this.notify();
     return true;
   }
 
   returnToLocal(): void {
+    this.buffer.setTarget(null);
     this.targetId = null;
     this.view = 'LOCAL_ACTIVE';
     this.notify();

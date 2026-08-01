@@ -41,8 +41,8 @@ function drawPieceShape(
 
 function computeGhostY(board: BoardMatrix, piece: ActivePiece): number {
   let y = piece.y;
-  while (y > 0 && !checkCollision(board, { ...piece, y: y - 1 })) {
-    y--;
+  while (y < BOARD_HEIGHT - 1 && !checkCollision(board, { ...piece, y: y + 1 })) {
+    y++;
   }
   return y;
 }

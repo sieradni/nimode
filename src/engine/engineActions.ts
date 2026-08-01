@@ -2,7 +2,7 @@ import { GameState, ActivePiece } from './types';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { IRotationSystem } from './interfaces/IRotationSystem';
 import { checkCollision, lockPieceToBoard, clearBoardLines } from './boardUtils';
-import { updateStatsOnLineClear } from './engineState';
+import { detectTSpin, LockResult } from './tSpinDetector';
 
 export function movePiece(state: GameState, dx: number, dy: number): boolean {
   if (!state.activePiece) return false;
@@ -50,18 +50,18 @@ export function lockPiece(
   state: GameState,
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem
-): number {
-  if (!state.activePiece) return 0;
+): LockResult {
+  if (!state.activePiece) return { linesCleared: 0, tSpin: false, tSpinMini: false };
+
+  const tSpin = detectTSpin(state.board, state.activePiece);
 
   state.board = lockPieceToBoard(state.board, state.activePiece);
   const { newBoard, linesCleared } = clearBoardLines(state.board);
   state.board = newBoard;
-  state.stats = updateStatsOnLineClear(state.stats, linesCleared);
-  state.stats.piecesPlaced++;
 
   spawnNextPiece(state, randomizer, rotationSystem);
   state.queue.canHold = true;
-  return linesCleared;
+  return { linesCleared, tSpin, tSpinMini: false };
 }
 
 export function holdPiece(
@@ -94,12 +94,11 @@ export function hardDrop(
   state: GameState,
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem
-): number {
-  if (!state.activePiece) return 0;
+): LockResult {
+  if (!state.activePiece) return { linesCleared: 0, tSpin: false, tSpinMini: false };
 
-  let canDrop = true;
-  while (canDrop) {
-    canDrop = movePiece(state, 0, -1);
+  while (movePiece(state, 0, 1)) {
+    // falling until the piece lands
   }
   return lockPiece(state, randomizer, rotationSystem);
 }

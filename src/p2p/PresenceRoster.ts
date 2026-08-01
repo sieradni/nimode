@@ -52,6 +52,20 @@ export class PresenceRoster {
     return !entry.isPrivate;
   }
 
+  seedEntry(metadata: PeerMetadata, isConnected: boolean): void {
+    const existing = this.entries.get(metadata.userId);
+    if (existing?.isConnected) return;
+    this.entries.set(metadata.userId, {
+      userId: metadata.userId,
+      displayName: metadata.displayName,
+      isPrivate: metadata.isPrivate,
+      pps: existing?.pps ?? 0,
+      isConnected,
+      isLocal: false,
+    });
+    this.notify();
+  }
+
   private handlePeerJoined = (metadata: PeerMetadata): void => {
     this.entries.set(metadata.userId, {
       userId: metadata.userId,

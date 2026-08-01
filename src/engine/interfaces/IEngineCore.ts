@@ -23,6 +23,7 @@ export type InputEvent =
   | { type: 'ROTATE_CCW' }
   | { type: 'ROTATE_180' }
   | { type: 'HOLD' }
+  | { type: 'CLEAR_HOLD' }
   | { type: 'RESET' }
   | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
   | { type: 'ANNOTATE_ERASE'; x: number; y: number }
@@ -37,14 +38,11 @@ export interface EngineDependencies {
 
 export interface IEngineCore {
   initialize(config: GameConfig): void;
+  updateConfig(config: GameConfig): void;
   tick(deltaTime: number): void;
   handleInput(input: InputEvent): void;
   getState(): EngineState;
   reset(): void;
   setQueue(pieces: PieceType[]): void;
-  applyAnnotationPen(x: number, y: number, pieceType: number): void;
-  applyAnnotationErase(x: number, y: number): void;
-  applyAnnotationRectFill(x1: number, y1: number, x2: number, y2: number, pieceType: number): void;
-  clearAllAnnotations(): void;
-  autoColorAnnotations(): void;
+  clearHold(): void;
 }

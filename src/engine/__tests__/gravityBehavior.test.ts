@@ -36,7 +36,7 @@ describe('EngineCore gravity (T-10.2)', () => {
     engine.tick(1000 / 60);
 
     const newY = engine.getState().activePiece?.y ?? 0;
-    expect(newY).toBe(startY - 1);
+    expect(newY).toBe(startY + 1);
   });
 
   it('gravity=20 (20G) should instantly drop piece to landing position', () => {
@@ -47,5 +47,20 @@ describe('EngineCore gravity (T-10.2)', () => {
     const board = engine.getState().board;
     const hasPlacedBlocks = board.some(row => row.some(cell => cell !== 0));
     expect(hasPlacedBlocks).toBe(true);
+  });
+
+  it('locked pieces land inside the visible field (rows 20-39)', () => {
+    const engine = createEngine({ gravity: 20 });
+
+    for (let i = 0; i < 20; i++) {
+      engine.tick(1000 / 60);
+    }
+
+    const board = engine.getState().board;
+    for (let y = 0; y < 20; y++) {
+      expect(board[y]!.every(cell => cell === 0)).toBe(true);
+    }
+    const visibleHasBlocks = board.slice(20).some(row => row.some(cell => cell !== 0));
+    expect(visibleHasBlocks).toBe(true);
   });
 });

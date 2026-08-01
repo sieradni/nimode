@@ -157,6 +157,50 @@ describe('PresenceRoster', () => {
     expect(roster.canSpectate('private-user')).toBe(false);
   });
 
+  it('seedEntry adds a discovered participant as not connected', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+
+    roster.seedEntry(makeMetadata({ userId: 'discovered-1', displayName: 'Carol' }), false);
+
+    const entries = roster.getEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual({
+      userId: 'discovered-1',
+      displayName: 'Carol',
+      isPrivate: false,
+      pps: 0,
+      isConnected: false,
+      isLocal: false,
+    });
+    expect(roster.canSpectate('discovered-1')).toBe(true);
+  });
+
+  it('seedEntry does not downgrade an already connected entry', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: 'user-1', displayName: 'Alice' }));
+
+    roster.seedEntry(makeMetadata({ userId: 'user-1', displayName: 'Alice' }), false);
+
+    const entries = roster.getEntries();
+    expect(entries[0]!.isConnected).toBe(true);
+  });
+
+  it('notifies listeners when seeding entries', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    const updateHandler = vi.fn();
+    roster.onUpdate(updateHandler);
+
+    roster.seedEntry(makeMetadata({ userId: 'discovered-1', displayName: 'Carol' }), false);
+
+    expect(updateHandler).toHaveBeenCalledTimes(1);
+    expect(updateHandler).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ userId: 'discovered-1' })]),
+    );
+  });
+
   it('stop() unsubscribes and clears entries', () => {
     const roster = new PresenceRoster(mockPeerManager);
     roster.start();

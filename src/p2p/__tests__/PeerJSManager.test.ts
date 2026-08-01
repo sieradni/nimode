@@ -265,12 +265,12 @@ describe('PeerJSManager', () => {
     });
   });
 
-  describe('spectator mode', () => {
-    it('connects to a host and emits data on received payloads', async () => {
+  describe('outbound connections', () => {
+    it('connects to a peer and emits data on received payloads', async () => {
       const createPeer = vi.fn(() => mockPeer);
       const manager = new PeerJSManager({
         instanceId: 'spectator-id',
-        role: 'spectator',
+        role: 'host',
         stunServers: ['stun:stun.l.google.com:19302'],
         createPeer,
       });
@@ -278,44 +278,88 @@ describe('PeerJSManager', () => {
       manager.on('data', dataHandler);
 
       await manager.init();
-      manager.connectToHost('host-id');
+      manager.connectToPeer('host-id');
 
-      expect(mockPeer.connect).toHaveBeenCalledWith('host-id', { serialization: 'json' });
+      expect(mockPeer.connect).toHaveBeenCalledWith(
+        'host-id',
+        expect.objectContaining({ serialization: 'json' })
+      );
       const payload = makePayload({ userId: 'host-id' });
       mockConn._emit('data', payload);
 
       expect(dataHandler).toHaveBeenCalledWith(payload);
     });
 
-    it('emits open when the outgoing connection opens', async () => {
+    it('sends identity metadata on the outgoing connection', async () => {
       const createPeer = vi.fn(() => mockPeer);
       const manager = new PeerJSManager({
         instanceId: 'spectator-id',
-        role: 'spectator',
-        stunServers: ['stun:stun.l.google.com:19302'],
-        createPeer,
-      });
-      const openHandler = vi.fn();
-      manager.on('open', openHandler);
-
-      await manager.init();
-      manager.connectToHost('host-id');
-      mockConn._emit('open');
-
-      expect(openHandler).toHaveBeenCalled();
-    });
-
-    it('throws when connectToHost is called in host role', async () => {
-      const createPeer = vi.fn(() => mockPeer);
-      const manager = new PeerJSManager({
-        instanceId: 'host-id',
         role: 'host',
         stunServers: ['stun:stun.l.google.com:19302'],
         createPeer,
       });
 
       await manager.init();
-      expect(() => manager.connectToHost('other-id')).toThrow();
+      manager.connectToPeer('host-id', {
+        userId: 'discord-1',
+        displayName: 'Alice',
+        isPrivate: false,
+      });
+
+      expect(mockPeer.connect).toHaveBeenCalledWith(
+        'host-id',
+        expect.objectContaining({
+          metadata: { userId: 'discord-1', displayName: 'Alice', isPrivate: false },
+        })
+      );
+    });
+
+    it('emits peerJoined when the outgoing connection opens', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'spectator-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const joinedHandler = vi.fn();
+      manager.on('peerJoined', joinedHandler);
+
+      await manager.init();
+      manager.connectToPeer('host-id', {
+        userId: 'host-user',
+        displayName: 'Host',
+        isPrivate: false,
+      });
+      mockConn._emit('open');
+
+      expect(joinedHandler).toHaveBeenCalledWith({
+        userId: 'host-user',
+        displayName: 'Host',
+        isPrivate: false,
+      });
+    });
+
+    it('emits peerLeft when the outgoing connection closes', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'spectator-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const leftHandler = vi.fn();
+      manager.on('peerLeft', leftHandler);
+
+      await manager.init();
+      manager.connectToPeer('host-id', {
+        userId: 'host-user',
+        displayName: 'Host',
+        isPrivate: false,
+      });
+      mockConn._emit('close');
+
+      expect(leftHandler).toHaveBeenCalledWith('host-user');
     });
   });
 
@@ -413,14 +457,14 @@ describe('PeerJSManager', () => {
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('connectToHost throws when peer is not initialized', () => {
+    it('connectToPeer throws when peer is not initialized', () => {
       const manager = new PeerJSManager({
         instanceId: 'spectator-id',
         role: 'spectator',
         stunServers: ['stun:stun.l.google.com:19302'],
       });
 
-      expect(() => manager.connectToHost('host-id')).toThrow();
+      expect(() => manager.connectToPeer('host-id')).toThrow();
     });
   });
 });

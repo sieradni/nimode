@@ -4,7 +4,8 @@ import type { DiscordAuth } from '../discord/types';
 import type { SpectatorPayload } from '../engine/types/game';
 import { instanceConfigStore } from '../p2p/InstanceConfigStore';
 
-const { mockInit, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers } = vi.hoisted(() => {
+const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers } =
+  vi.hoisted(() => {
   const peerHandlers: Record<string, Array<(...args: unknown[]) => void>> = {};
   const connHandlers: Record<string, Array<(...args: unknown[]) => void>> = {};
 
@@ -38,6 +39,7 @@ const { mockInit, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers
 
   return {
     mockInit: vi.fn(),
+    mockGetParticipants: vi.fn(),
     mockCreatePeer: vi.fn(() => mockPeer),
     mockPeer,
     mockConn,
@@ -50,6 +52,7 @@ vi.mock('../discord/sdk', () => ({
   createDiscordSdk: vi.fn(() => ({
     clientId: 'test-client-id',
     init: mockInit,
+    getInstanceConnectedParticipants: mockGetParticipants,
   })),
 }));
 
@@ -90,6 +93,8 @@ describe('App P2P integration', () => {
     import.meta.env.VITE_DISCORD_CLIENT_ID = 'test-client-id';
     mockInit.mockReset();
     mockInit.mockResolvedValue(AUTH);
+    mockGetParticipants.mockReset();
+    mockGetParticipants.mockResolvedValue([]);
     mockCreatePeer.mockReset();
     mockCreatePeer.mockReturnValue(mockPeer);
     mockConn.send.mockReset();
@@ -106,11 +111,11 @@ describe('App P2P integration', () => {
     delete import.meta.env.VITE_DISCORD_CLIENT_ID;
   });
 
-  it('creates a host Peer with the Discord instance id when authenticated', async () => {
+  it('creates a host Peer with a unique per-user id when authenticated', async () => {
     render(<App />);
     await flushAuth();
 
-    expect(mockCreatePeer).toHaveBeenCalledWith('instance-1', STUN_SERVERS);
+    expect(mockCreatePeer).toHaveBeenCalledWith('instance-1-user-123', STUN_SERVERS);
   });
 
   it('broadcasts engine state at 20Hz once the peer opens', async () => {
@@ -196,5 +201,42 @@ describe('App P2P integration', () => {
 
     act(() => mockConn._emit('data', makePayload()));
     expect(screen.getByTestId('spectator-canvas')).toBeInTheDocument();
+  });
+
+  it('opens an outbound connection to the spectated target peer', async () => {
+    mockPeer.connect.mockReturnValue(mockConn);
+    render(<App />);
+    await flushAuth();
+
+    mockConn.metadata = { userId: 'remote-1', displayName: 'Alice', isPrivate: false };
+    act(() => mockPeer._emit('open', 'instance-1-user-123'));
+    act(() => mockPeer._emit('connection', mockConn));
+    fireEvent.click(await screen.findByRole('button', { name: /spectate/i }));
+
+    expect(mockPeer.connect).toHaveBeenCalledWith(
+      'instance-1-remote-1',
+      expect.objectContaining({ metadata: expect.objectContaining({ userId: 'user-123' }) })
+    );
+  });
+
+  it('discovers instance participants and lets the user spectate them', async () => {
+    mockPeer.connect.mockReturnValue(mockConn);
+    mockGetParticipants.mockResolvedValue([
+      { id: 'remote-2', username: 'remote-two', displayName: 'Bob' },
+      { id: 'user-123', username: 'self', displayName: 'Self' },
+    ]);
+    render(<App />);
+    await flushAuth();
+    act(() => mockPeer._emit('open', 'instance-1-user-123'));
+
+    expect(await screen.findByText('Bob')).toBeInTheDocument();
+    expect(screen.queryByText('Self')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /spectate/i }));
+    expect(await screen.findByTestId('spectator-canvas')).toBeInTheDocument();
+    expect(mockPeer.connect).toHaveBeenCalledWith(
+      'instance-1-remote-2',
+      expect.anything()
+    );
   });
 });
