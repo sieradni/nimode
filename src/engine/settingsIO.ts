@@ -14,8 +14,9 @@ const REQUIRED_ACTIONS: (keyof KeyBindings)[] = [
   'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'RESET',
 ];
 
-const CONFIG_KEYS: (keyof GameConfig)[] = [
-  'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets',
+type NumericConfigKey = Exclude<keyof GameConfig, 'subzero'>;
+const CONFIG_NUMERIC_KEYS: NumericConfigKey[] = [
+  'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets', 'gravity',
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,9 +33,10 @@ function isValidKeyBindings(value: unknown): value is KeyBindings {
 
 function isValidGameConfig(value: unknown): value is GameConfig {
   if (!isRecord(value)) return false;
-  for (const key of CONFIG_KEYS) {
+  for (const key of CONFIG_NUMERIC_KEYS) {
     if (typeof value[key] !== 'number') return false;
   }
+  if (typeof value.subzero !== 'boolean') return false;
   return true;
 }
 
@@ -56,9 +58,10 @@ function mergeBindings(imported: KeyBindings): KeyBindings {
 
 function mergeConfig(imported: GameConfig): GameConfig {
   const result = { ...DEFAULT_CONFIG };
-  for (const key of CONFIG_KEYS) {
+  for (const key of CONFIG_NUMERIC_KEYS) {
     result[key] = imported[key];
   }
+  result.subzero = imported.subzero;
   return result;
 }
 
@@ -117,4 +120,8 @@ export function loadConfigFromStorage(): GameConfig {
   } catch {
     return { ...DEFAULT_CONFIG };
   }
+}
+
+export function saveConfigToStorage(config: GameConfig): void {
+  localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
 }

@@ -5,15 +5,19 @@ import { exportSettingsAsJson, downloadSettingsBlob, importSettingsFromJson } fr
 import { ACTION_LABELS, ALL_ACTIONS } from '../engine/settingsConstants';
 import { InstanceConfigStore, instanceConfigStore } from '../p2p/InstanceConfigStore';
 import { PrivateInstanceToggle } from './PrivateInstanceToggle';
+import { GravityConfigControls } from './GravityConfigControls';
+import { GameConfigStore, configStore } from '../engine/configStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   instanceConfigStore?: InstanceConfigStore;
+  configStore?: GameConfigStore;
 }
 
-export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceConfigStoreProp }: SettingsModalProps) {
-  const configStore = instanceConfigStoreProp ?? instanceConfigStore;
+export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceConfigStoreProp, configStore: configStoreProp }: SettingsModalProps) {
+  const instanceStore = instanceConfigStoreProp ?? instanceConfigStore;
+  const gameConfigStore = configStoreProp ?? configStore;
   const [listeningAction, setListeningAction] = useState<InputAction | null>(null);
   const [bindings, setBindings] = useState(keybindingsStore.getBindings());
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +91,8 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
           <h2 className="text-lg font-bold text-sky-400">Settings</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200" aria-label="Close">✕</button>
         </div>
-        <PrivateInstanceToggle configStore={configStore} />
+        <PrivateInstanceToggle configStore={instanceStore} />
+        <GravityConfigControls store={gameConfigStore} />
         <div className="space-y-1 mb-4">
           {ALL_ACTIONS.map((action) => {
             const isListening = listeningAction === action;

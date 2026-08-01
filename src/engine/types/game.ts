@@ -67,6 +67,8 @@ export interface GameConfig {
   sdfFactor: number;
   lockDelay: number;
   maxLockResets: number;
+  gravity: number;
+  subzero: boolean;
 }
 
 export const DEFAULT_CONFIG: GameConfig = {
@@ -76,6 +78,8 @@ export const DEFAULT_CONFIG: GameConfig = {
   sdfFactor: 20,
   lockDelay: 500,
   maxLockResets: 15,
+  gravity: 1,
+  subzero: false,
 };
 
 export const DEFAULT_KEYBINDINGS: KeyBindings = {

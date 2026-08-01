@@ -27,7 +27,7 @@
 - [x] **T-4.1:** Build keybinding remapping engine with `localStorage` persistence.
 - [x] **T-4.2:** Add JSON Import / Export functionality for keybindings and game settings.
 - [x] **T-4.3:** Build UI settings modal.
-- [ ] **T-4.4:** Add gravity (0G-20G), 0G float, subzero toggles to GameConfig and SettingsModal.
+- [x] **T-4.4:** Add gravity (0G-20G), 0G float, subzero toggles to GameConfig and SettingsModal.
 
 ## Phase 5: Statistics & Analytics Engine
 - [x] **T-5.1:** Implement real-time stats tracker (PPS, APM, KPP, Finesse, Lines, Quads, T-Spins).
@@ -61,10 +61,10 @@
 - [x] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).
 
 ## Phase 10: Gravity Modes & Subzero (from architecture.md lines 140-144)
-- [ ] **T-10.1:** Extend GameConfig with `gravity` (number, guideline G level 0-20, default 1) and `subzero` (boolean, default false).
-- [ ] **T-10.2:** Refactor EngineCore.applyGravity to consume config.gravity (0G = no auto-fall, 20G = instant drop).
-- [ ] **T-10.3:** Implement subzero mode: disable lock-on-contact, only lock on hard drop.
-- [ ] **T-10.4:** Add gravity/subzero controls to SettingsModal with persistence.
+- [x] **T-10.1:** Extend GameConfig with `gravity` (number, guideline G level 0-20, default 1) and `subzero` (boolean, default false).
+- [x] **T-10.2:** Refactor EngineCore.applyGravity to consume config.gravity (0G = no auto-fall, 20G = instant drop).
+- [x] **T-10.3:** Implement subzero mode: disable lock-on-contact, only lock on hard drop.
+- [x] **T-10.4:** Add gravity/subzero controls to SettingsModal with persistence.
 
 ## Phase 11: Alternate Rotation Systems & Bag Randomizers
 - [ ] **T-11.1:** Implement ARSRotationSystem (ARS - Arika Rotation System).

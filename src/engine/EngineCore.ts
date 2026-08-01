@@ -4,7 +4,8 @@ import { IRotationSystem } from './interfaces/IRotationSystem';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { InputHandler } from './inputHandler';
 import { createInitialGameState } from './engineState';
-import { movePiece, spawnNextPiece, holdPiece, hardDrop, lockPiece } from './engineActions';
+import { movePiece, spawnNextPiece, holdPiece, hardDrop } from './engineActions';
+import { applyGravityToState } from './gravityEngine';
 import { StatsTracker } from './statsTracker';
 import { applyAnnotationPen, applyAnnotationErase, clearAllAnnotations, applyAnnotationRectFill } from './annotationEngine';
 import { autoColorAnnotations } from './autoColorEngine';
@@ -111,19 +112,15 @@ export class EngineCore implements IEngineCore {
   }
 
   private applyGravity(dt: number): void {
-    if (!this.state.activePiece) return;
-
-    this.gravityTimer += dt;
-    const gravityRate = 1000 / 60;
-
-    if (this.gravityTimer >= gravityRate) {
-      if (!movePiece(this.state, 0, -1)) {
-        this.recordLockStats(
-          lockPiece(this.state, this.bagRandomizer, this.rotationSystem)
-        );
-      }
-      this.gravityTimer = 0;
-    }
+    this.gravityTimer = applyGravityToState(
+      this.state,
+      this.config,
+      this.gravityTimer,
+      dt,
+      this.bagRandomizer,
+      this.rotationSystem,
+      (lines) => this.recordLockStats(lines),
+    );
   }
 
   private recordLockStats(linesCleared: number): void {
