@@ -1,42 +1,37 @@
 import { InputState, GameConfig, EMPTY_INPUT_STATE } from './types';
 import { InputEvent } from './interfaces/IEngineCore';
-
-export interface DASArrTimers {
-  dasLeft: number;
-  dasRight: number;
-  dasDown: number;
-  arrLeft: number;
-  arrRight: number;
-}
-
-export function createInitialTimers(): DASArrTimers {
-  return { dasLeft: 0, dasRight: 0, dasDown: 0, arrLeft: 0, arrRight: 0 };
-}
+import { DASMovementState, createInitialMovementState, updateDASMovement } from './dasMovement';
 
 export class InputHandler {
   private inputState: InputState = { ...EMPTY_INPUT_STATE };
-  private timers: DASArrTimers = createInitialTimers();
+  private movement: DASMovementState = createInitialMovementState();
 
   handleInput(input: InputEvent): void {
     switch (input.type) {
       case 'MOVE_LEFT':
+        if (input.pressed && !this.inputState.left) this.movement.initialLeft = true;
         this.inputState.left = input.pressed;
         if (!input.pressed) {
-          this.timers.dasLeft = 0;
-          this.timers.arrLeft = 0;
+          this.movement.timers.dasLeft = 0;
+          this.movement.timers.arrLeft = 0;
+          this.movement.initialLeft = false;
         }
         break;
       case 'MOVE_RIGHT':
+        if (input.pressed && !this.inputState.right) this.movement.initialRight = true;
         this.inputState.right = input.pressed;
         if (!input.pressed) {
-          this.timers.dasRight = 0;
-          this.timers.arrRight = 0;
+          this.movement.timers.dasRight = 0;
+          this.movement.timers.arrRight = 0;
+          this.movement.initialRight = false;
         }
         break;
       case 'SOFT_DROP':
+        if (input.pressed && !this.inputState.down) this.movement.initialDown = true;
         this.inputState.down = input.pressed;
         if (!input.pressed) {
-          this.timers.dasDown = 0;
+          this.movement.timers.dasDown = 0;
+          this.movement.initialDown = false;
         }
         break;
       case 'HARD_DROP':
@@ -102,42 +97,11 @@ export class InputHandler {
     dt: number,
     onMove: (dx: number, dy: number) => void
   ): void {
-    if (this.inputState.left) {
-      this.timers.dasLeft += dt;
-      if (this.timers.dasLeft >= config.das) {
-        this.timers.arrLeft += dt;
-        if (config.arr === 0) {
-          onMove(-10, 0); // Instant ARR to left wall
-        } else if (this.timers.arrLeft >= config.arr) {
-          onMove(-1, 0);
-          this.timers.arrLeft = 0;
-        }
-      }
-    }
-
-    if (this.inputState.right) {
-      this.timers.dasRight += dt;
-      if (this.timers.dasRight >= config.das) {
-        this.timers.arrRight += dt;
-        if (config.arr === 0) {
-          onMove(10, 0); // Instant ARR to right wall
-        } else if (this.timers.arrRight >= config.arr) {
-          onMove(1, 0);
-          this.timers.arrRight = 0;
-        }
-      }
-    }
-
-    if (this.inputState.down) {
-      this.timers.dasDown += dt;
-      if (this.timers.dasDown >= config.sdf) {
-        onMove(0, 1);
-      }
-    }
+    updateDASMovement(this.movement, this.inputState, config, dt, onMove);
   }
 
   reset(): void {
     this.inputState = { ...EMPTY_INPUT_STATE };
-    this.timers = createInitialTimers();
+    this.movement = createInitialMovementState();
   }
 }

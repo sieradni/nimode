@@ -110,7 +110,7 @@ describe('HostBroadcaster', () => {
     broadcaster.stop();
   });
 
-  it('broadcasts at 20 Hz when instance is public', () => {
+  it('broadcasts at 50 Hz when instance is public', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
@@ -122,13 +122,13 @@ describe('HostBroadcaster', () => {
     });
 
     broadcaster.start();
-    vi.advanceTimersByTime(50);
+    vi.advanceTimersByTime(20);
 
     expect(broadcast).toHaveBeenCalledTimes(1);
     broadcaster.stop();
   });
 
-  it('broadcasts multiple times at 20 Hz intervals', () => {
+  it('broadcasts multiple times at 50 Hz intervals', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
@@ -140,9 +140,9 @@ describe('HostBroadcaster', () => {
     });
 
     broadcaster.start();
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(100);
 
-    expect(broadcast).toHaveBeenCalledTimes(4);
+    expect(broadcast).toHaveBeenCalledTimes(5);
     broadcaster.stop();
   });
 
@@ -159,11 +159,11 @@ describe('HostBroadcaster', () => {
 
     broadcaster.start();
     vi.advanceTimersByTime(100);
-    expect(broadcast).toHaveBeenCalledTimes(2);
+    expect(broadcast).toHaveBeenCalledTimes(5);
 
     broadcaster.stop();
     vi.advanceTimersByTime(100);
-    expect(broadcast).toHaveBeenCalledTimes(2);
+    expect(broadcast).toHaveBeenCalledTimes(5);
   });
 
   it('does not create duplicate intervals when started twice', () => {
@@ -179,7 +179,7 @@ describe('HostBroadcaster', () => {
 
     broadcaster.start();
     broadcaster.start();
-    vi.advanceTimersByTime(50);
+    vi.advanceTimersByTime(20);
 
     expect(broadcast).toHaveBeenCalledTimes(1);
     broadcaster.stop();
@@ -305,7 +305,7 @@ describe('HostBroadcaster', () => {
     });
 
     broadcaster.start();
-    vi.advanceTimersByTime(50);
+    vi.advanceTimersByTime(20);
     expect(broadcast).toHaveBeenCalledTimes(1);
 
     configStore.setPrivate(true);
@@ -313,7 +313,7 @@ describe('HostBroadcaster', () => {
     expect(broadcast).toHaveBeenCalledTimes(1);
 
     configStore.setPrivate(false);
-    vi.advanceTimersByTime(50);
+    vi.advanceTimersByTime(20);
     expect(broadcast).toHaveBeenCalledTimes(2);
 
     broadcaster.stop();

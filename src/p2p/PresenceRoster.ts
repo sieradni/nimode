@@ -24,12 +24,14 @@ export class PresenceRoster {
     this.peerManager.on('peerJoined', this.handlePeerJoined);
     this.peerManager.on('peerLeft', this.handlePeerLeft);
     this.peerManager.on('data', this.handleData);
+    this.peerManager.on('presence', this.handlePresence);
   }
 
   stop(): void {
     this.peerManager.off('peerJoined', this.handlePeerJoined);
     this.peerManager.off('peerLeft', this.handlePeerLeft);
     this.peerManager.off('data', this.handleData);
+    this.peerManager.off('presence', this.handlePresence);
     this.entries.clear();
     this.notify();
   }
@@ -89,6 +91,19 @@ export class PresenceRoster {
       entry.pps = payload.stats.pps;
       this.notify();
     }
+  };
+
+  private handlePresence = (metadata: PeerMetadata): void => {
+    const existing = this.entries.get(metadata.userId);
+    this.entries.set(metadata.userId, {
+      userId: metadata.userId,
+      displayName: metadata.displayName,
+      isPrivate: metadata.isPrivate,
+      pps: existing?.pps ?? 0,
+      isConnected: true,
+      isLocal: false,
+    });
+    this.notify();
   };
 
   private notify(): void {

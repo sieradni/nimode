@@ -8,19 +8,16 @@ import type {
   PeerRole,
 } from './types';
 import { createPeerJSInstance } from './peerFactory';
+import { wireDataConnection, sendPresenceToConnections } from './connectionWire';
+import { TypedEventEmitter } from './eventEmitter';
 import type { SpectatorPayload } from '../engine/types/game';
 
-type ListenerOf<K extends keyof PeerConnectionEvents> = PeerConnectionEvents[K];
-
-export class PeerJSManager {
+export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
   private peer: Peer | null = null;
   private readonly connections = new Map<string, PeerConnectionInfo>();
   private readonly outgoingConnections = new Set<DataConnection>();
-  private readonly listeners = new Map<
-    keyof PeerConnectionEvents,
-    Set<(...args: unknown[]) => void>
-  >();
   private isOpen = false;
+  private metadata: PeerMetadata;
 
   readonly instanceId: string;
   readonly role: PeerRole;
@@ -28,10 +25,16 @@ export class PeerJSManager {
   private readonly createPeer: PeerFactory;
 
   constructor(options: PeerJSManagerOptions) {
+    super();
     this.instanceId = options.instanceId;
     this.role = options.role;
     this.stunServers = options.stunServers;
     this.createPeer = options.createPeer ?? createPeerJSInstance;
+    this.metadata = options.metadata ?? {
+      userId: options.instanceId,
+      displayName: options.instanceId,
+      isPrivate: false,
+    };
   }
 
   get id(): string {
@@ -106,13 +109,12 @@ export class PeerJSManager {
   }
 
   private wireDataConnection(conn: DataConnection, onClosed: () => void): void {
-    conn.on('data', (data: unknown) => {
-      this.emit('data', data as SpectatorPayload);
+    wireDataConnection(conn, this.metadata, {
+      onPresence: (metadata) => this.emit('presence', metadata),
+      onData: (payload) => this.emit('data', payload),
+      onError: (error) => this.emit('error', error),
+      onClosed,
     });
-    conn.on('error', (err: Error) => {
-      this.emit('error', err);
-    });
-    conn.on('close', onClosed);
   }
 
   broadcast(payload: SpectatorPayload): void {
@@ -121,18 +123,13 @@ export class PeerJSManager {
     }
   }
 
-  on<K extends keyof PeerConnectionEvents>(event: K, fn: ListenerOf<K>): void {
-    const set = this.listeners.get(event) ?? new Set<(...args: unknown[]) => void>();
-    set.add(fn as (...args: unknown[]) => void);
-    this.listeners.set(event, set);
-  }
-
-  off<K extends keyof PeerConnectionEvents>(event: K, fn: ListenerOf<K>): void {
-    this.listeners.get(event)?.delete(fn as (...args: unknown[]) => void);
-  }
-
-  private emit<K extends keyof PeerConnectionEvents>(event: K, ...args: unknown[]): void {
-    this.listeners.get(event)?.forEach((fn) => fn(...args));
+  sendPresence(metadata?: PeerMetadata): void {
+    if (metadata) this.metadata = metadata;
+    const connections: DataConnection[] = [
+      ...[...this.connections.values()].map((info) => info.connection),
+      ...this.outgoingConnections,
+    ];
+    sendPresenceToConnections(connections, this.metadata);
   }
 
   close(): void {

@@ -68,6 +68,11 @@ export class KeybindingsStore {
     saveToStorage(this.bindings);
   }
 
+  setAllBindings(bindings: KeyBindings): void {
+    this.bindings = { ...bindings };
+    saveToStorage(this.bindings);
+  }
+
   resetBinding(action: InputAction): void {
     this.bindings = {
       ...this.bindings,

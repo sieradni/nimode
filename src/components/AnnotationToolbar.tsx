@@ -98,7 +98,7 @@ export function AnnotationToolbar({
               aria-label="Piece type"
               value={pieceType}
               onChange={(e) => handlePieceTypeChange(Number(e.target.value) as PieceType)}
-              className="px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-slate-100 focus:outline-none focus:ring-1 focus:ring-sky-400"
+              className="px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
             >
               {PIECE_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -118,7 +118,7 @@ export function AnnotationToolbar({
             aria-label="Auto-color"
             checked={autoColor}
             onChange={(e) => handleAutoColorToggle(e.target.checked)}
-            className="w-4 h-4 accent-sky-500 rounded border-slate-600 bg-slate-800"
+            className="w-4 h-4 accent-slate-500 rounded border-slate-600 bg-slate-800"
           />
           <span className="text-xs text-slate-300">Auto-color</span>
         </label>

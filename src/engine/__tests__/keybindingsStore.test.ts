@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { KeybindingsStore } from '../keybindingsStore';
-import { DEFAULT_KEYBINDINGS } from '../types';
+import { DEFAULT_KEYBINDINGS, type KeyBindings } from '../types';
 
 const STORAGE_KEY = 'nimode_keybindings';
 
@@ -97,5 +97,20 @@ describe('KeybindingsStore', () => {
 
     store.resetAllBindings();
     expect(spy).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
+  });
+
+  it('setAllBindings replaces all bindings in memory and persists them', () => {
+    const store = new KeybindingsStore();
+    store.setBinding('MOVE_LEFT', 'KeyA');
+
+    const imported: KeyBindings = { ...DEFAULT_KEYBINDINGS, MOVE_LEFT: 'KeyQ', HARD_DROP: 'Space' };
+    store.setAllBindings(imported);
+
+    expect(store.getBindings()).toEqual(imported);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.MOVE_LEFT).toBe('KeyQ');
+
+    const store2 = new KeybindingsStore();
+    expect(store2.getBinding('MOVE_LEFT')).toBe('KeyQ');
   });
 });

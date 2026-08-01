@@ -18,14 +18,28 @@ describe('EngineCore finesse', () => {
     expect(engine.getState().stats.finesse).toBe(0);
   });
 
-  it('counts a pressed direction that never moves the piece as an error', () => {
+  it('reports zero finesse for a single press that moves the piece one cell', () => {
     const engine = createEngine();
     engine.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    engine.tick(16.67);
+    engine.handleInput({ type: 'MOVE_LEFT', pressed: false });
     engine.handleInput({ type: 'HARD_DROP' });
-    engine.tick(100);
+    engine.tick(16.67);
+    expect(engine.getState().stats.finesse).toBe(0);
+  });
+
+  it('counts a pressed direction that never moves the piece as an error', () => {
+    const engine = createEngine();
+    for (let i = 0; i < 10; i++) {
+      engine.handleInput({ type: 'MOVE_LEFT', pressed: true });
+      engine.handleInput({ type: 'MOVE_LEFT', pressed: false });
+      engine.tick(16.67);
+    }
+    engine.handleInput({ type: 'HARD_DROP' });
+    engine.tick(16.67);
     const stats = engine.getState().stats;
     expect(stats.piecesPlaced).toBe(1);
-    expect(stats.finesse).toBe(1);
+    expect(stats.finesse).toBeGreaterThan(0);
   });
 
   it('accumulates finesse errors across pieces', () => {

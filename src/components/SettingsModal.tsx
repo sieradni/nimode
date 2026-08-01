@@ -72,6 +72,10 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
     reader.onload = () => {
       const result = importSettingsFromJson(reader.result as string);
       if (result) {
+        keybindingsStore.setAllBindings(result.keybindings);
+        if (result.config) {
+          gameConfigStore.setConfig(result.config);
+        }
         refreshBindings();
         setError(null);
       } else {

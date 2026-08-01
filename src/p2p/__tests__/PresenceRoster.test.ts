@@ -66,6 +66,7 @@ describe('PresenceRoster', () => {
     expect(mockPeerManager.on).toHaveBeenCalledWith('peerJoined', expect.any(Function));
     expect(mockPeerManager.on).toHaveBeenCalledWith('peerLeft', expect.any(Function));
     expect(mockPeerManager.on).toHaveBeenCalledWith('data', expect.any(Function));
+    expect(mockPeerManager.on).toHaveBeenCalledWith('presence', expect.any(Function));
   });
 
   it('peerJoined adds entry with correct fields including isPrivate', () => {
@@ -145,6 +146,55 @@ describe('PresenceRoster', () => {
     expect(updateHandler).not.toHaveBeenCalled();
   });
 
+  it('presence event adds a new entry and marks it private', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const presence = getHandler(mockPeerManager, 'presence');
+    presence(makeMetadata({ userId: 'user-9', displayName: 'Zed', isPrivate: true }));
+
+    const entries = roster.getEntries();
+    expect(entries[0]).toEqual({
+      userId: 'user-9',
+      displayName: 'Zed',
+      isPrivate: true,
+      pps: 0,
+      isConnected: true,
+      isLocal: false,
+    });
+    expect(roster.canSpectate('user-9')).toBe(false);
+  });
+
+  it('presence event flips an existing entry to private', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: 'user-1', displayName: 'Alice', isPrivate: false }));
+    expect(roster.canSpectate('user-1')).toBe(true);
+
+    const presence = getHandler(mockPeerManager, 'presence');
+    presence(makeMetadata({ userId: 'user-1', displayName: 'Alice', isPrivate: true }));
+
+    expect(roster.getEntries()[0]!.isPrivate).toBe(true);
+    expect(roster.canSpectate('user-1')).toBe(false);
+  });
+
+  it('presence event preserves pps from a known entry', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: 'user-1', displayName: 'Alice' }));
+    const data = getHandler(mockPeerManager, 'data');
+    data(makePayload({ userId: 'user-1', stats: { pps: 3.1, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 } }));
+
+    const presence = getHandler(mockPeerManager, 'presence');
+    presence(makeMetadata({ userId: 'user-1', displayName: 'Alice', isPrivate: true }));
+
+    expect(roster.getEntries()[0]!.pps).toBe(3.1);
+  });
+
   it('canSpectate returns false for private, true for public', () => {
     const roster = new PresenceRoster(mockPeerManager);
     roster.start();
@@ -214,6 +264,7 @@ describe('PresenceRoster', () => {
     expect(mockPeerManager.off).toHaveBeenCalledWith('peerJoined', expect.any(Function));
     expect(mockPeerManager.off).toHaveBeenCalledWith('peerLeft', expect.any(Function));
     expect(mockPeerManager.off).toHaveBeenCalledWith('data', expect.any(Function));
+    expect(mockPeerManager.off).toHaveBeenCalledWith('presence', expect.any(Function));
     expect(roster.getEntries()).toEqual([]);
   });
 

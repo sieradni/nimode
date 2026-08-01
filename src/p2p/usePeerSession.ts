@@ -10,8 +10,7 @@ import { SpectatorBuffer } from './SpectatorBuffer';
 import { PresenceRoster } from './PresenceRoster';
 import { ViewStateController } from './ViewStateController';
 import type { ActiveView } from './ViewStateController';
-
-export const STUN_SERVERS = ['stun:stun.l.google.com:19302'];
+import { STUN_SERVERS, makeMetadata, buildConnectToTarget } from './peerSessionSetup';
 
 export interface UsePeerSessionOptions {
   instanceId: string | null;
@@ -40,6 +39,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ConnectedParticipant[]>([]);
   const controllerRef = useRef<ViewStateController | null>(null);
+  const managerRef = useRef<PeerJSManager | null>(null);
 
   useEffect(() => {
     if (!instanceId) return;
@@ -50,23 +50,17 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       role: 'host',
       stunServers: STUN_SERVERS,
       createPeer,
+      metadata: makeMetadata(userId, configStore),
     });
     const buffer = new SpectatorBuffer();
     const roster = new PresenceRoster(manager);
     const controller = new ViewStateController({
       roster,
       buffer,
-      connectToTarget: (targetUserId) => {
-        if (manager.open) {
-          manager.connectToPeer(`${instanceId}-${targetUserId}`, {
-            userId,
-            displayName: userId,
-            isPrivate: false,
-          });
-        }
-      },
+      connectToTarget: buildConnectToTarget({ instanceId, userId, manager, configStore }),
     });
     controllerRef.current = controller;
+    managerRef.current = manager;
     let broadcaster: HostBroadcaster | null = null;
 
     const handleData = (payload: SpectatorPayload) => {
@@ -75,14 +69,19 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     const handleOpen = () => {
       broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
       broadcaster.start();
+      manager.sendPresence();
     };
     const handleError = (error: Error) => {
       setConnectionError(error.message);
+    };
+    const handleConfigChange = () => {
+      manager.sendPresence(makeMetadata(userId, configStore));
     };
 
     manager.on('data', handleData);
     manager.on('open', handleOpen);
     manager.on('error', handleError);
+    configStore.subscribe(handleConfigChange);
     controller.onViewChange(setView);
     roster.start();
 
@@ -117,10 +116,12 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       manager.off('data', handleData);
       manager.off('open', handleOpen);
       manager.off('error', handleError);
+      configStore.unsubscribe(handleConfigChange);
       controller.offViewChange(setView);
       roster.stop();
       manager.close();
       controllerRef.current = null;
+      managerRef.current = null;
     };
   }, [instanceId, userId, engine, configStore, createPeer, fetchParticipants]);
 

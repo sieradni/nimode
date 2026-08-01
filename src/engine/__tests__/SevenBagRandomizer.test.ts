@@ -50,6 +50,16 @@ describe('SevenBagRandomizer', () => {
     const popped = Array.from({ length: 7 }, () => randomizer.pop());
     expect(popped).toEqual(peeked);
   });
+
+  it('reset() consumes exactly the two seeds a fresh instance uses', () => {
+    const seed = 4242;
+    const resetRandomizer = new SevenBagRandomizer(seed);
+    resetRandomizer.reset();
+
+    const advanced = new SevenBagRandomizer(seed + 2);
+
+    expect(resetRandomizer.getBagState()).toEqual(advanced.getBagState());
+  });
 });
 
 describe('SevenBagRandomizer distribution', () => {

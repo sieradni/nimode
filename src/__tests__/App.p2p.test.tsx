@@ -118,7 +118,7 @@ describe('App P2P integration', () => {
     expect(mockCreatePeer).toHaveBeenCalledWith('instance-1-user-123', STUN_SERVERS);
   });
 
-  it('broadcasts engine state at 20Hz once the peer opens', async () => {
+  it('broadcasts engine state at 50Hz once the peer opens', async () => {
     vi.useFakeTimers();
     try {
       render(<App />);
@@ -132,14 +132,17 @@ describe('App P2P integration', () => {
       });
 
       expect(mockConn.send).toHaveBeenCalled();
-      const sentPayload = mockConn.send.mock.calls[0]?.[0];
-      expect(sentPayload?.userId).toBe('user-123');
+      const stateCall = mockConn.send.mock.calls.find((call) => {
+        const message = call[0] as { userId?: string } | undefined;
+        return typeof message === 'object' && message !== null && message.userId === 'user-123';
+      });
+      expect(stateCall).toBeDefined();
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('does not broadcast when the instance is private', async () => {
+  it('does not broadcast state when the instance is private but still sends presence', async () => {
     vi.useFakeTimers();
     try {
       render(<App />);
@@ -153,7 +156,20 @@ describe('App P2P integration', () => {
         vi.advanceTimersByTime(100);
       });
 
-      expect(mockConn.send).not.toHaveBeenCalled();
+      const stateCalls = mockConn.send.mock.calls.filter((call) => {
+        const message = call[0] as { matrix?: unknown } | undefined;
+        return typeof message === 'object' && message !== null && 'matrix' in message;
+      });
+      expect(stateCalls).toHaveLength(0);
+
+      const presenceCall = mockConn.send.mock.calls.find((call) => {
+        const message = call[0] as { kind?: string } | undefined;
+        return typeof message === 'object' && message !== null && message.kind === 'presence';
+      });
+      expect(presenceCall?.[0]).toEqual({
+        kind: 'presence',
+        metadata: { userId: 'user-123', displayName: 'user-123', isPrivate: true },
+      });
     } finally {
       act(() => instanceConfigStore.setPrivate(false));
       vi.useRealTimers();

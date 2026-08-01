@@ -79,11 +79,11 @@ function App() {
   useEffect(() => {
     const adapter = new KeyboardInputAdapter({
       onInput: (event) => engine.handleInput(event),
-      isEnabled: () => !settingsOpenRef.current,
+      isEnabled: () => !settingsOpenRef.current && peerSession.view === 'LOCAL_ACTIVE',
     });
     adapter.attach();
     return () => adapter.detach();
-  }, [engine]);
+  }, [engine, peerSession.view]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-mono">

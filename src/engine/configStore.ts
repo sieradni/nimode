@@ -25,6 +25,12 @@ export class GameConfigStore {
     this.notify();
   }
 
+  setConfig(config: GameConfig): void {
+    this.config = { ...config };
+    saveConfigToStorage(this.config);
+    this.notify();
+  }
+
   resetToDefault(): void {
     this.config = { ...DEFAULT_CONFIG };
     saveConfigToStorage(this.config);

@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { PresenceRoster } from '../PresenceRoster';
+import type { PresenceRoster, PresenceEntry } from '../PresenceRoster';
 import type { SpectatorBuffer } from '../SpectatorBuffer';
 import { ViewStateController } from '../ViewStateController';
 
 function createMockRoster() {
   const canSpectate = vi.fn();
+  const onUpdate = vi.fn();
   const roster = {
     canSpectate,
+    onUpdate,
   } as unknown as PresenceRoster;
-  return { roster, canSpectate };
+  return { roster, canSpectate, onUpdate };
 }
 
 function createMockBuffer() {
@@ -22,6 +24,7 @@ function createMockBuffer() {
 describe('ViewStateController', () => {
   let roster: PresenceRoster;
   let canSpectate: ReturnType<typeof vi.fn>;
+  let onUpdate: ReturnType<typeof vi.fn>;
   let buffer: SpectatorBuffer;
   let setTarget: ReturnType<typeof vi.fn>;
   let connectToTarget: ReturnType<typeof vi.fn>;
@@ -31,6 +34,7 @@ describe('ViewStateController', () => {
     const rosterMock = createMockRoster();
     roster = rosterMock.roster;
     canSpectate = rosterMock.canSpectate;
+    onUpdate = rosterMock.onUpdate;
     const bufferMock = createMockBuffer();
     buffer = bufferMock.buffer;
     setTarget = bufferMock.setTarget;
@@ -156,5 +160,41 @@ describe('ViewStateController', () => {
     expect(controller.getTargetId()).toBe('user-1');
     expect(listener).not.toHaveBeenCalled();
     expect(setTarget).toHaveBeenCalledTimes(1);
+  });
+
+  it('auto-returns to local when the spectated target becomes private', () => {
+    canSpectate.mockReturnValue(true);
+    controller.selectTarget('user-1');
+
+    const listener = vi.fn();
+    controller.onViewChange(listener);
+
+    const updateHandler = onUpdate.mock.calls[0]?.[0] as (
+      entries: PresenceEntry[],
+    ) => void;
+    updateHandler([
+      { userId: 'user-1', displayName: 'Bob', isPrivate: true, pps: 0, isConnected: true, isLocal: false },
+    ]);
+
+    expect(controller.getView()).toBe('LOCAL_ACTIVE');
+    expect(controller.getTargetId()).toBeNull();
+    expect(listener).toHaveBeenCalledWith('LOCAL_ACTIVE');
+    expect(setTarget).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps spectating when the target remains public', () => {
+    canSpectate.mockReturnValue(true);
+    controller.selectTarget('user-1');
+
+    const updateHandler = onUpdate.mock.calls[0]?.[0] as (
+      entries: PresenceEntry[],
+    ) => void;
+    updateHandler([
+      { userId: 'user-1', displayName: 'Bob', isPrivate: false, pps: 12, isConnected: true, isLocal: false },
+    ]);
+
+    expect(controller.getView()).toBe('SPECTATING_TARGET');
+    expect(controller.getTargetId()).toBe('user-1');
+    expect(setTarget).not.toHaveBeenCalledWith(null);
   });
 });

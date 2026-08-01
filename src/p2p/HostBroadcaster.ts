@@ -3,7 +3,7 @@ import type { PeerJSManager } from './PeerJSManager';
 import type { SpectatorPayload } from '../engine/types/game';
 import type { InstanceConfigStore } from './InstanceConfigStore';
 
-const BROADCAST_INTERVAL_MS = 50;
+const BROADCAST_INTERVAL_MS = 20;
 
 export class HostBroadcaster {
   private readonly engine: IEngineCore;

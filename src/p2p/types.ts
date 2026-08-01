@@ -14,6 +14,7 @@ export interface PeerConnectionEvents {
   data: (payload: SpectatorPayload) => void;
   peerJoined: (metadata: PeerMetadata) => void;
   peerLeft: (userId: string) => void;
+  presence: (metadata: PeerMetadata) => void;
   error: (error: Error) => void;
   closed: () => void;
 }
@@ -25,6 +26,22 @@ export interface PeerJSManagerOptions {
   role: PeerRole;
   stunServers: string[];
   createPeer?: PeerFactory;
+  metadata?: PeerMetadata;
+}
+
+export interface PresenceMessage {
+  kind: 'presence';
+  metadata: PeerMetadata;
+}
+
+export function isPresenceMessage(value: unknown): value is PresenceMessage {
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.kind === 'presence' &&
+    typeof record.metadata === 'object' &&
+    record.metadata !== null
+  );
 }
 
 export interface PeerConnectionInfo {

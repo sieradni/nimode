@@ -419,6 +419,147 @@ describe('PeerJSManager', () => {
     });
   });
 
+  describe('presence', () => {
+    it('auto-sends local presence when an incoming connection is already open', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: true },
+      });
+
+      await manager.init();
+      mockPeer._emit('connection', mockConn);
+
+      expect(mockConn.send).toHaveBeenCalledWith({
+        kind: 'presence',
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: true },
+      });
+    });
+
+    it('auto-sends presence once a pending connection opens', async () => {
+      const pendingConn = createMockDataConnection('remote-1');
+      (pendingConn as { open: boolean }).open = false;
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+
+      await manager.init();
+      mockPeer._emit('connection', pendingConn);
+      expect(pendingConn.send).not.toHaveBeenCalled();
+
+      pendingConn._emit('open');
+
+      expect(pendingConn.send).toHaveBeenCalledWith({
+        kind: 'presence',
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+    });
+
+    it('emits presence when a presence message is received', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const presenceHandler = vi.fn();
+      manager.on('presence', presenceHandler);
+
+      await manager.init();
+      mockPeer._emit('connection', mockConn);
+      mockConn._emit('data', {
+        kind: 'presence',
+        metadata: { userId: 'remote-1', displayName: 'Remote', isPrivate: true },
+      });
+
+      expect(presenceHandler).toHaveBeenCalledWith({
+        userId: 'remote-1',
+        displayName: 'Remote',
+        isPrivate: true,
+      });
+    });
+
+    it('does not emit presence for spectator payloads', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const presenceHandler = vi.fn();
+      manager.on('presence', presenceHandler);
+
+      await manager.init();
+      mockPeer._emit('connection', mockConn);
+      mockConn._emit('data', makePayload());
+
+      expect(presenceHandler).not.toHaveBeenCalled();
+    });
+
+    it('sendPresence broadcasts to incoming and outgoing connections', async () => {
+      const connB = createMockDataConnection('spectator-b');
+      const peer = createMockPeer('host-id', connB);
+      peer.connect = vi.fn(() => connB);
+      const createPeer = vi.fn(() => peer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+
+      await manager.init();
+      peer._emit('connection', mockConn);
+      manager.connectToPeer('spectator-b');
+      (mockConn.send as ReturnType<typeof vi.fn>).mockClear();
+      (connB.send as ReturnType<typeof vi.fn>).mockClear();
+
+      manager.sendPresence();
+
+      expect(mockConn.send).toHaveBeenCalledWith({
+        kind: 'presence',
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+      expect(connB.send).toHaveBeenCalledWith({
+        kind: 'presence',
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+    });
+
+    it('sendPresence updates the stored metadata', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'host-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: false },
+      });
+
+      await manager.init();
+      mockPeer._emit('connection', mockConn);
+      (mockConn.send as ReturnType<typeof vi.fn>).mockClear();
+
+      manager.sendPresence({ userId: 'me', displayName: 'Me', isPrivate: true });
+
+      expect(mockConn.send).toHaveBeenCalledWith({
+        kind: 'presence',
+        metadata: { userId: 'me', displayName: 'Me', isPrivate: true },
+      });
+    });
+  });
+
   describe('helpers', () => {
     it('exposes id and role', async () => {
       const createPeer = vi.fn(() => mockPeer);

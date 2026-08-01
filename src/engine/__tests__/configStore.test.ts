@@ -106,4 +106,22 @@ describe('GameConfigStore', () => {
     const store = new GameConfigStore();
     expect(store.getConfig()).toEqual(customConfig);
   });
+
+  it('setConfig replaces the config, persists it, and notifies subscribers', () => {
+    const store = new GameConfigStore();
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const imported: GameConfig = { ...DEFAULT_CONFIG, gravity: 18, subzero: true, das: 200 };
+    store.setConfig(imported);
+
+    expect(store.getConfig()).toEqual(imported);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.gravity).toBe(18);
+
+    const store2 = new GameConfigStore();
+    expect(store2.getConfig()).toEqual(imported);
+  });
 });

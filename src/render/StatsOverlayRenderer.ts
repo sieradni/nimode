@@ -37,11 +37,10 @@ export function renderStatsOverlay(
   width: number,
   height: number
 ): void {
-  void height;
   const panelWidth = 180;
   const panelHeight = STATS_ROWS.length * ROW_HEIGHT + PADDING * 2;
   const x = width - panelWidth - PADDING;
-  const y = PADDING;
+  const y = Math.max(PADDING, Math.floor((height - panelHeight) / 2));
 
   ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
   ctx.fillRect(x, y, panelWidth, panelHeight);
@@ -61,7 +60,7 @@ export function renderStatsOverlay(
     ctx.textAlign = 'left';
     ctx.fillText(row.label, x + PADDING, rowY);
 
-    ctx.fillStyle = '#22d3ee';
+    ctx.fillStyle = '#e2e8f0';
     ctx.textAlign = 'right';
     ctx.fillText(formatValue(stats[row.key], row.format), x + panelWidth - PADDING, rowY);
   }

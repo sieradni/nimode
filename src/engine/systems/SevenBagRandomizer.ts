@@ -37,7 +37,6 @@ export class SevenBagRandomizer implements IBagRandomizer {
   constructor(seed?: number) {
     this.seed = seed;
     this.refillBag();
-    this.refillNextBag();
   }
 
   private nextSeed(): number | undefined {
@@ -105,7 +104,6 @@ export class SevenBagRandomizer implements IBagRandomizer {
     this.bag = [];
     this.nextBag = [];
     this.refillBag();
-    this.refillNextBag();
   }
 
   getBagState(): { current: PieceType[]; next: PieceType[] } {
