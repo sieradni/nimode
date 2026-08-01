@@ -31,6 +31,12 @@ export class GameConfigStore {
     this.notify();
   }
 
+  setSdfFactor(sdfFactor: number): void {
+    this.config = { ...this.config, sdfFactor };
+    saveConfigToStorage(this.config);
+    this.notify();
+  }
+
   setHandling(das: number, arr: number, sdf: number): void {
     this.config = { ...this.config, das, arr, sdf };
     saveConfigToStorage(this.config);

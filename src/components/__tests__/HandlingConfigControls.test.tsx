@@ -32,14 +32,14 @@ describe('HandlingConfigControls', () => {
         vi.unstubAllGlobals();
     });
 
-    it('should render DAS, ARR, and SDF sliders with current values', () => {
+    it('should render DAS, ARR, and SDF Factor sliders with current values', () => {
         render(<HandlingConfigControls store={store} />);
         const dasSlider = screen.getByLabelText('DAS') as HTMLInputElement;
         const arrSlider = screen.getByLabelText('ARR') as HTMLInputElement;
-        const sdfSlider = screen.getByLabelText('SDF') as HTMLInputElement;
+        const sdfSlider = screen.getByLabelText('SDF Factor') as HTMLInputElement;
         expect(dasSlider.value).toBe(String(DEFAULT_CONFIG.das));
         expect(arrSlider.value).toBe(String(DEFAULT_CONFIG.arr));
-        expect(sdfSlider.value).toBe(String(DEFAULT_CONFIG.sdf));
+        expect(sdfSlider.value).toBe(String(DEFAULT_CONFIG.sdfFactor));
     });
 
     it('should call store.setHandling when DAS slider changes', () => {
@@ -58,12 +58,12 @@ describe('HandlingConfigControls', () => {
         expect(spy).toHaveBeenCalledWith(DEFAULT_CONFIG.das, 25, DEFAULT_CONFIG.sdf);
     });
 
-    it('should call store.setHandling when SDF slider changes', () => {
-        const spy = vi.spyOn(store, 'setHandling');
+    it('should call store.setSdfFactor when SDF Factor slider changes', () => {
+        const spy = vi.spyOn(store, 'setSdfFactor');
         render(<HandlingConfigControls store={store} />);
-        const slider = screen.getByLabelText('SDF') as HTMLInputElement;
-        fireEvent.change(slider, { target: { value: '90' } });
-        expect(spy).toHaveBeenCalledWith(DEFAULT_CONFIG.das, DEFAULT_CONFIG.arr, 90);
+        const slider = screen.getByLabelText('SDF Factor') as HTMLInputElement;
+        fireEvent.change(slider, { target: { value: '20' } });
+        expect(spy).toHaveBeenCalledWith(20);
     });
 
     it('should update display when store changes externally', () => {
@@ -75,13 +75,13 @@ describe('HandlingConfigControls', () => {
         expect(dasSlider.value).toBe('220');
     });
 
-    it('should render number inputs that reflect DAS, ARR, and SDF values', () => {
+    it('should render number inputs that reflect DAS, ARR, and SDF Factor values', () => {
         render(<HandlingConfigControls store={store} />);
         const dasNumber = screen.getByLabelText('DAS value') as HTMLInputElement;
         const arrNumber = screen.getByLabelText('ARR value') as HTMLInputElement;
-        const sdfNumber = screen.getByLabelText('SDF value') as HTMLInputElement;
+        const sdfNumber = screen.getByLabelText('SDF Factor value') as HTMLInputElement;
         expect(dasNumber.value).toBe(String(DEFAULT_CONFIG.das));
         expect(arrNumber.value).toBe(String(DEFAULT_CONFIG.arr));
-        expect(sdfNumber.value).toBe(String(DEFAULT_CONFIG.sdf));
+        expect(sdfNumber.value).toBe(String(DEFAULT_CONFIG.sdfFactor));
     });
 });

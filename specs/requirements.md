@@ -68,7 +68,7 @@
 - **US-8.6:** As a player, I want drawn cells to default to white and take their colour from a colour picker rather than a preset tetromino selector, so annotation colour is a free choice and not tied to piece identity.
 - **US-8.7:** As a player, I expect to be able to set my handling so that I can practice infinite DAS finesse by setting ARR to 0. I should be able to hold right and tap left to move a piece one left of the right wall where the right input movement should be canceled.
 - **US-8.8:** As a player, I expect to be able to set my handling so that I can practice infinite soft drop speed that is not limited by the tick rate.
-- **US-8.9:** As a player, I expect soft drop to work exactly like games such as TETR.IO, where the soft drop is a consistent speed regardless of how long I'm pressing it.
+- **US-8.9:** As a player, I expect soft drop to work exactly like games such as TETR.IO, where the soft drop is a consistent speed regardless of how long I'm pressing it, and the handling control soft drop factor.
 
 
 ### Layout & Presentation Corrections

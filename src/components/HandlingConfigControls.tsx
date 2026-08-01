@@ -31,10 +31,10 @@ export function HandlingConfigControls({ store }: HandlingConfigControlsProps) {
         }
     };
 
-    const handleSDFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSDFFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseInt(e.target.value, 10);
-        if (!Number.isNaN(value) && value >= 0 && value <= 500) {
-            store.setHandling(config.das, config.arr, value);
+        if (!Number.isNaN(value) && value >= 0 && value <= 100) {
+            store.setSdfFactor(value);
         }
     };
 
@@ -96,26 +96,26 @@ export function HandlingConfigControls({ store }: HandlingConfigControlsProps) {
 
             <div>
                 <label className="block text-xs text-slate-300 mb-1">
-                    SDF Delay (Soft Drop Speed): {config.sdf}ms
+                    SDF Factor (Soft Drop Acceleration): {config.sdfFactor}
                 </label>
                 <div className="flex gap-4 items-center">
                     <input
                         type="range"
                         min={0}
-                        max={150}
-                        value={config.sdf}
-                        onChange={handleSDFChange}
+                        max={100}
+                        value={config.sdfFactor}
+                        onChange={handleSDFFactorChange}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500"
-                        aria-label="SDF"
+                        aria-label="SDF Factor"
                     />
                     <input
                         type="number"
                         min={0}
-                        max={150}
-                        value={config.sdf}
-                        onChange={handleSDFChange}
+                        max={100}
+                        value={config.sdfFactor}
+                        onChange={handleSDFFactorChange}
                         className="w-20 px-2 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200"
-                        aria-label="SDF value"
+                        aria-label="SDF Factor value"
                     />
                 </div>
             </div>

@@ -103,7 +103,7 @@ function App() {
         onClearAll={() => engine.handleInput({ type: 'ANNOTATE_CLEAR_ALL' })}
         onResetBoard={() => { engine.reset(); setGameState(engine.getState()); }}
         autoColor={autoColor}
-        onAutoColorToggle={setAutoColor}
+        onAutoColorToggle={configStore.setAutoColor}
         color={annotationColor}
         onColorChange={setAnnotationColor}
       />
