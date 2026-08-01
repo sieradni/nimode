@@ -39,6 +39,10 @@ VITE_BASE_PATH=./
 
 **Note**: For Discord Activity, use `VITE_BASE_PATH=./` (relative paths). For GitHub Pages deployment, the CI sets `VITE_BASE_PATH=/nimode/`.
 
+### 2.1 Provide the Discord Client ID to CI / deployment
+
+`VITE_DISCORD_CLIENT_ID` must be present at **build time** (Vite inlines `import.meta.env` into the bundle). `.env.local` covers local dev only — it is gitignored and never reaches CI. For GitHub Actions, create a repository secret named `VITE_DISCORD_CLIENT_ID` (Settings → Secrets and variables → Actions → New repository secret) with your Discord Application **Client ID**, and the `deploy.yml` Build step will inject it automatically.
+
 ### 3. Local Development
 
 ```bash
