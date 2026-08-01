@@ -43,7 +43,7 @@ describe('EngineCore', () => {
 
     const state = engine.getState();
     expect(state.hold).toBe(initialPieceType);
-    expect(state.canHold).toBe(false);
+    expect(state.canHold).toBe(true);
   });
 
   it('setQueue should replace the upcoming queue', () => {

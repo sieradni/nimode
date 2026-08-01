@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { SpectatorBuffer, INTERPOLATION_DELAY_MS } from '../SpectatorBuffer';
-import type { SpectatorPayload } from '../../engine/types/game';
+import type { SpectatorPayload } from '../../engine/types/instance';
 
 function makePayload(overrides: Partial<SpectatorPayload> = {}): SpectatorPayload {
   return {

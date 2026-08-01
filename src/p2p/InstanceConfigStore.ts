@@ -1,4 +1,4 @@
-import { InstanceConfig, DEFAULT_INSTANCE_CONFIG } from '../engine/types/game';
+import { InstanceConfig, DEFAULT_INSTANCE_CONFIG } from '../engine/types/instance';
 
 const STORAGE_KEY = 'nimode_instance_config';
 

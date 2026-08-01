@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { EngineState } from '../engine/interfaces/IEngineCore';
 import { IEngineCore } from '../engine/interfaces/IEngineCore';
-import { QueueHoldCanvas } from './canvas/QueueHoldCanvas';
+import { HoldCanvas } from './canvas/HoldCanvas';
 import { GameBoardCanvas } from './canvas/GameBoardCanvas';
+import { QueueCanvas } from './canvas/QueueCanvas';
 import { AnnotationTool } from './AnnotationToolbar';
+import { StatsPanel } from './StatsPanel';
 
 interface GameCanvasProps {
   state: EngineState;
@@ -11,6 +13,7 @@ interface GameCanvasProps {
   annotationTool: AnnotationTool;
   annotationPieceType: number;
   autoColor: boolean;
+  onReset: () => void;
 }
 
 export function GameCanvas({
@@ -19,6 +22,7 @@ export function GameCanvas({
   annotationTool,
   annotationPieceType,
   autoColor,
+  onReset,
 }: GameCanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -50,20 +54,37 @@ export function GameCanvas({
   };
 
   return (
-    <div className="flex gap-8 items-start">
-      <QueueHoldCanvas state={state} />
-      <GameBoardCanvas
-        state={state}
-        onAnnotationPen={handleAnnotationPen}
-        onAnnotationErase={handleAnnotationErase}
-        onAnnotationFloodErase={handleAnnotationFloodErase}
-        onAnnotationRectFill={handleAnnotationRectFill}
-        annotationTool={annotationTool}
-        annotationPieceType={annotationPieceType}
-        isDrawing={isDrawing}
-        onDrawingStart={handleDrawingStart}
-        onDrawingEnd={handleDrawingEnd}
-      />
+    <div className="relative flex gap-8 items-start">
+      <HoldCanvas state={state} />
+      <div className="flex flex-col gap-4 items-center">
+        <GameBoardCanvas
+          state={state}
+          onAnnotationPen={handleAnnotationPen}
+          onAnnotationErase={handleAnnotationErase}
+          onAnnotationFloodErase={handleAnnotationFloodErase}
+          onAnnotationRectFill={handleAnnotationRectFill}
+          annotationTool={annotationTool}
+          annotationPieceType={annotationPieceType}
+          isDrawing={isDrawing}
+          onDrawingStart={handleDrawingStart}
+          onDrawingEnd={handleDrawingEnd}
+        />
+        <QueueCanvas state={state} />
+      </div>
+      <StatsPanel stats={state.stats} />
+      {state.gameOver && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-200 mb-4">GAME OVER</h2>
+            <button
+              onClick={onReset}
+              className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-slate-200"
+            >
+              Press R or Click to Reset
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -40,7 +40,20 @@
 - **US-6.1:** As a player, I want a minimal, purely functional interface so that no decorative element competes with the game board for attention.
 - **US-6.2:** As a player, I want a monochrome interface so that chromatic color is reserved exclusively for tetromino representation and never used for UI chrome.
 
-### Extensibility & Future Readiness
+### UI/UX Fixes & Quality-of-Life
+- **US-7.1:** As a player, I want the stats overlay displayed on the side of the board rather than floating on top of it, so the board is never obscured.
+- **US-7.2:** As a player, I want the upcoming queue displayed on the top right of the board so it is clearly visible without cluttering the side panel.
+- **US-7.3:** As a player, I want the `x` key to clear the hold piece instead of a dedicated clear-hold keybind, so the hold action and clear-hold are unified.
+- **US-7.4:** As a player, I want to repeatedly press hold to swap between the current piece and the hold piece, so I can freely experiment with piece selection.
+- **US-7.5:** As a player, I want annotation shape detection to use the actual drawn shape rather than checking for adjacency to existing tetromino shapes, so annotations that are adjacent to placed pieces are correctly recognized.
+- **US-7.6:** As a player, I want rendered shapes, text, and lines to appear crisp and high-resolution, so the interface looks clean at any display scale.
+- **US-7.7:** As a player, I want pieces to spawn fully visible on the board, never partially off-screen, so I can always see my active piece.
+- **US-7.8:** As a player, I want the game to handle top-outs properly by allowing a reset instead of freezing, so I can recover from a game over state.
+- **US-7.9:** As a player, I want the settings modal close button to be always accessible without requiring scroll-back, so I can close settings quickly.
+- **US-7.10:** As a player, I want undo and redo buttons that save all history and actions, so I can revert or reapply mistakes.
+- **US-7.11:** As a player, I want to undo past top-outs, so I can recover from a game over and continue playing.
+- **US-7.12:** As a player, I want the annotation toolbar toggle to be shown on the side of the board rather than covering it, so the board remains visible when tools are open.
+- **US-7.13:** As a developer, I want all UI/UX fixes and quality-of-life improvements documented in the requirements specification.
 - **US-5.1:** As a developer, I want the rotation system to be modular so that ARS, Standard SRS, or Custom Rotation Systems can be selected in future updates.
 - **US-5.2:** As a developer, I want the bag system to be modular so that 14-Bag, Memoryless, or Custom Bag generators can be swapped cleanly.
 - **US-5.3:** As a developer, I want an event-driven stats system to calculate PPS, APM, KPP, Finesse, Quad/T-Spin counts, Attack, and Efficiency.

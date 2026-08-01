@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { DataConnection, Peer } from 'peerjs';
 import type { PeerMetadata } from '../types';
-import type { SpectatorPayload } from '../../engine/types/game';
+import type { SpectatorPayload } from '../../engine/types/instance';
 import { PeerJSManager } from '../PeerJSManager';
 
 type MockConn = DataConnection & {

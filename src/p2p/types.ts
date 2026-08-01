@@ -1,5 +1,5 @@
 import type { DataConnection, Peer } from 'peerjs';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 
 export type PeerRole = 'host' | 'spectator';
 

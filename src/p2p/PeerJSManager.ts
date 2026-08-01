@@ -11,7 +11,7 @@ import { createPeerJSInstance } from './peerFactory';
 import { wireDataConnection, sendPresenceToConnections } from './connectionWire';
 import { TypedEventEmitter } from './eventEmitter';
 import { parsePeerMetadata } from './peerMetadata';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 
 export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
   private peer: Peer | null = null;

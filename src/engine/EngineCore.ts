@@ -11,6 +11,8 @@ import { ActivePiece } from './types';
 import { LockResult } from './tSpinDetector';
 import { isAnnotationEvent, reduceAnnotationEvent } from './annotationInput';
 import { runFixedTick } from './stepEngine';
+import { UndoRedoEngine, IUndoRedoEngine } from './undoRedoEngine';
+import { restoreSnapshot } from './engineUndoRedo';
 export class EngineCore implements IEngineCore {
   private config: GameConfig = DEFAULT_CONFIG;
   private rotationSystem: IRotationSystem;
@@ -22,24 +24,29 @@ export class EngineCore implements IEngineCore {
   private lockDelayState: LockDelayState = createLockDelayState();
   private playerStats = new PlayerStats();
   private rotationOccurred = false;
-
+  private undoRedoEngine: IUndoRedoEngine = new UndoRedoEngine();
   constructor(deps: EngineDependencies) {
     this.rotationSystem = deps.rotationSystem;
     this.bagRandomizer = deps.bagRandomizer;
     this.state = createInitialGameState(this.bagRandomizer, this.config);
     spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
     this.playerStats.onPieceSpawn(this.state.activePiece);
+    this.saveSnapshot();
   }
-
+  private saveSnapshot(): void {
+    const stats = this.playerStats.getStatsSnapshot();
+    this.undoRedoEngine.saveSnapshot(this.state, stats, this.gravityTimer, {
+      timer: this.lockDelayState.timer,
+      resets: this.lockDelayState.resets,
+    });
+  }
   initialize(config: GameConfig): void {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.reset();
   }
-
   updateConfig(config: GameConfig): void {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
-
   handleInput(input: InputEvent): void {
     if (isAnnotationEvent(input)) {
       this.state.annotations = reduceAnnotationEvent(this.state.annotations, input);
@@ -57,19 +64,15 @@ export class EngineCore implements IEngineCore {
       this.playerStats.recordInput('rotate');
     }
   }
-
   tick(deltaTime: number): void {
-    if (this.state.paused || this.state.gameOver) return;
-
+    if (this.state.paused) return;
     this.accumulator += deltaTime;
     const tickRate = 1000 / 60;
-
     while (this.accumulator >= tickRate) {
       this.fixedTick(tickRate);
       this.accumulator -= tickRate;
     }
   }
-
   private fixedTick(dt: number): void {
     this.playerStats.tick(dt);
     const result = runFixedTick(
@@ -84,17 +87,17 @@ export class EngineCore implements IEngineCore {
       {
         rotate: (direction) => this.rotatePiece(direction),
         onReset: () => this.reset(),
-        onClearHold: () => this.clearHold(),
         onLock: (lockResult, piece) => this.recordLockStats(lockResult, piece),
         onKeyPress: () => this.playerStats.recordKeyPress(),
         onHold: () => this.playerStats.onPieceSpawn(this.state.activePiece),
+        onUndo: () => this.undo(),
+        onRedo: () => this.redo(),
         rotationOccurred: () => this.rotationOccurred,
       },
     );
     this.lockDelayState = result.lockDelayState;
     this.gravityTimer = result.gravityTimer;
   }
-
   private rotatePiece(direction: 1 | -1 | 2): boolean {
     if (!this.state.activePiece) return false;
     const result = this.rotationSystem.rotate(this.state.board, this.state.activePiece, direction);
@@ -105,46 +108,30 @@ export class EngineCore implements IEngineCore {
     }
     return false;
   }
-
   private recordLockStats(result: LockResult, piece: ActivePiece | null): void {
     this.rotationOccurred = false;
     this.playerStats.onPieceLock(result, piece);
     this.playerStats.onPieceSpawn(this.state.activePiece);
+    this.saveSnapshot();
   }
-
   getState(): EngineState {
-    return {
-      board: this.state.board.map(row => [...row]),
-      activePiece: this.state.activePiece ? { ...this.state.activePiece } : null,
-      queue: [...this.state.queue.queue],
-      hold: this.state.queue.hold,
-      canHold: this.state.queue.canHold,
-      stats: this.playerStats.getStats(),
-      gameOver: this.state.gameOver,
-      paused: this.state.paused,
-      annotations: this.state.annotations.map(row => [...row]),
-    };
+    return { board: this.state.board.map(r => [...r]), activePiece: this.state.activePiece ? {...this.state.activePiece} : null, queue: [...this.state.queue.queue], hold: this.state.queue.hold, canHold: this.state.queue.canHold, stats: this.playerStats.getStats(), gameOver: this.state.gameOver, paused: this.state.paused, annotations: this.state.annotations.map(r => [...r]) };
   }
+  undo(): boolean {
+    const snapshot = this.undoRedoEngine.undo();
+    if (!snapshot) return false;
+    restoreSnapshot(this.state, snapshot, this.playerStats);
+    return true;
+  }
+  redo(): boolean {
+    const snapshot = this.undoRedoEngine.redo();
+    if (!snapshot) return false;
+    restoreSnapshot(this.state, snapshot, this.playerStats);
+    return true;
+  }
+  canUndo(): boolean { return this.undoRedoEngine.canUndo(); }
+  canRedo(): boolean { return this.undoRedoEngine.canRedo(); }
+  reset(): void { this.bagRandomizer.reset(); this.state = createInitialGameState(this.bagRandomizer, this.config); this.inputHandler.reset(); this.gravityTimer = this.accumulator = 0; this.lockDelayState = createLockDelayState(); this.playerStats.reset(); this.rotationOccurred = false; this.undoRedoEngine.clear(); spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem); this.playerStats.onPieceSpawn(this.state.activePiece); this.saveSnapshot(); }
 
-  reset(): void {
-    this.bagRandomizer.reset();
-    this.state = createInitialGameState(this.bagRandomizer, this.config);
-    this.inputHandler.reset();
-    this.gravityTimer = 0;
-    this.accumulator = 0;
-    this.lockDelayState = createLockDelayState();
-    this.playerStats.reset();
-    this.rotationOccurred = false;
-    spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
-    this.playerStats.onPieceSpawn(this.state.activePiece);
-  }
-
-  setQueue(pieces: PieceType[]): void {
-    this.state.queue.queue = [...pieces];
-  }
-
-  clearHold(): void {
-    this.state.queue.hold = null;
-    this.state.queue.canHold = true;
-  }
+  setQueue(pieces: PieceType[]): void { this.state.queue.queue = [...pieces]; }
 }

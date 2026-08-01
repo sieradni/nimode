@@ -91,11 +91,11 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-200">Settings</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200" aria-label="Close">✕</button>
-        </div>
+       <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+         <div className="flex items-center justify-between mb-4 sticky top-0 bg-slate-900 pb-2">
+           <h2 className="text-lg font-bold text-slate-200">Settings</h2>
+           <button onClick={onClose} className="text-slate-400 hover:text-slate-200" aria-label="Close">✕</button>
+         </div>
         <PrivateInstanceToggle configStore={instanceStore} />
         <GravityConfigControls store={gameConfigStore} />
         <div className="space-y-1 mb-4">

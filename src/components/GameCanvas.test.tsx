@@ -3,16 +3,12 @@ import { render, screen } from '@testing-library/react';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../engine/types';
 import { renderBoard } from '../render/BoardRenderer';
-import { renderStatsOverlay } from '../render/StatsOverlayRenderer';
 import { renderQueue, renderHold } from '../render/QueueHoldRenderer';
 import { GameCanvas } from './GameCanvas';
 import { IEngineCore } from '../engine/interfaces/IEngineCore';
 
 vi.mock('../render/BoardRenderer', () => ({
   renderBoard: vi.fn(),
-}));
-vi.mock('../render/StatsOverlayRenderer', () => ({
-  renderStatsOverlay: vi.fn(),
 }));
 vi.mock('../render/QueueHoldRenderer', () => ({
   renderQueue: vi.fn(),
@@ -61,7 +57,10 @@ function createMockEngine(): IEngineCore {
     getState: vi.fn(),
     reset: vi.fn(),
     setQueue: vi.fn(),
-    clearHold: vi.fn(),
+    undo: vi.fn().mockReturnValue(true),
+    redo: vi.fn().mockReturnValue(true),
+    canUndo: vi.fn().mockReturnValue(true),
+    canRedo: vi.fn().mockReturnValue(true),
   };
 }
 
@@ -84,8 +83,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(screen.getByTestId('board-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('hold-canvas')).toBeInTheDocument();
@@ -99,8 +99,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     const canvas = screen.getByTestId('board-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(BOARD_WIDTH * 30);
@@ -114,8 +115,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     const canvas = screen.getByTestId('hold-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
@@ -129,8 +131,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     const canvas = screen.getByTestId('queue-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
@@ -145,31 +148,13 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledWith(mockCtx, state.board, state.activePiece, state.annotations, {
       cellSize: 30,
     });
-  });
-
-  it('renders the stats overlay on mount', () => {
-    const state = createState();
-    render(
-      <GameCanvas
-        state={state}
-        engine={mockEngine}
-        annotationTool="pen"
-        annotationPieceType={1}
-        autoColor={false}
-      />
-    );
-    expect(vi.mocked(renderStatsOverlay)).toHaveBeenCalledWith(
-      mockCtx,
-      state.stats,
-      BOARD_WIDTH * 30,
-      VISIBLE_HEIGHT * 30
-    );
   });
 
   it('renders the hold piece on mount', () => {
@@ -180,8 +165,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(vi.mocked(renderHold)).toHaveBeenCalledWith(mockCtx, state.hold, { cellSize: 20 });
   });
@@ -194,8 +180,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
       cellSize: 20,
@@ -209,8 +196,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledTimes(1);
     rerender(
@@ -219,8 +207,9 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationPieceType={1}
-        autoColor={false}
-      />
+         autoColor={false}
+         onReset={vi.fn()}
+       />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledTimes(2);
   });

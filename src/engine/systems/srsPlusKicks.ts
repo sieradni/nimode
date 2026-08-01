@@ -2,13 +2,13 @@ import { PieceType, RotationState } from '../types';
 
 export const PIECE_SPAWNS: Record<PieceType, { x: number; y: number; rotation: RotationState }> = {
   0: { x: 0, y: 0, rotation: 0 },
-  1: { x: 3, y: 19, rotation: 0 },
-  2: { x: 3, y: 19, rotation: 0 },
-  3: { x: 3, y: 19, rotation: 0 },
-  4: { x: 4, y: 19, rotation: 0 },
-  5: { x: 3, y: 19, rotation: 0 },
-  6: { x: 3, y: 19, rotation: 0 },
-  7: { x: 3, y: 19, rotation: 0 },
+  1: { x: 3, y: 20, rotation: 0 },
+  2: { x: 3, y: 20, rotation: 0 },
+  3: { x: 3, y: 20, rotation: 0 },
+  4: { x: 4, y: 20, rotation: 0 },
+  5: { x: 3, y: 20, rotation: 0 },
+  6: { x: 3, y: 20, rotation: 0 },
+  7: { x: 3, y: 20, rotation: 0 },
 };
 
 export const PIECE_SHAPES: Record<PieceType, number[][]> = {

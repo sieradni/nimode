@@ -15,10 +15,10 @@ describe('SrsPlusRotationSystem', () => {
 
   it('should return initial spawn position for pieces', () => {
     const spawnI = rotationSystem.getInitialState(1);
-    expect(spawnI).toEqual({ x: 3, y: 19, rotation: 0 });
+    expect(spawnI).toEqual({ x: 3, y: 20, rotation: 0 });
 
     const spawnO = rotationSystem.getInitialState(4);
-    expect(spawnO).toEqual({ x: 4, y: 19, rotation: 0 });
+    expect(spawnO).toEqual({ x: 4, y: 20, rotation: 0 });
   });
 
   it('should rotate piece clockwise in open space without kick', () => {

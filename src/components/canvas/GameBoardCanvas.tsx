@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../../engine/types';
 import { EngineState } from '../../engine/interfaces/IEngineCore';
 import { renderBoard } from '../../render/BoardRenderer';
-import { renderStatsOverlay } from '../../render/StatsOverlayRenderer';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
 import { useBoardInput } from './BoardInputHandler';
 
@@ -52,8 +51,8 @@ export function GameBoardCanvas({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
     renderBoard(ctx, state.board, state.activePiece, state.annotations, { cellSize: BOARD_CELL_SIZE });
-    renderStatsOverlay(ctx, state.stats, canvas.width, canvas.height);
   }, [state]);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {

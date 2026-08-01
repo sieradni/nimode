@@ -1,6 +1,6 @@
 import type { PeerJSManager } from './PeerJSManager';
 import type { PeerMetadata } from './types';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 
 export interface PresenceEntry {
   userId: string;

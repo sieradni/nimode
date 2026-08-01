@@ -72,6 +72,20 @@
 - [ ] **T-11.3:** Implement MemorylessBagRandomizer.
 - [ ] **T-11.4:** Add rotation system / bag randomizer selectors to SettingsModal.
 
+## Phase 12: UI/UX Fixes & Quality-of-Life
+- [ ] **T-12.1:** Move stats overlay to the side of the board instead of floating on top.
+- [ ] **T-12.2:** Reposition queue preview to the top right of the board.
+- [ ] **T-12.3:** Replace CLEAR_HOLD keybind with `x` key for hold clear.
+- [ ] **T-12.4:** Implement hold swapping (repeatedly pressing hold toggles between current and held piece).
+- [ ] **T-12.5:** Fix annotation shape detection to use actual drawn shape instead of adjacency check.
+- [ ] **T-12.6:** Fix fuzzy/low-resolution rendering (set canvas `imageSmoothingEnabled` and use `devicePixelRatio` scaling).
+- [ ] **T-12.7:** Fix pieces spawning partially off the board (ensure spawn position is fully visible).
+- [ ] **T-12.8:** Handle top-out properly — game should not freeze; allow player to reset.
+- [ ] **T-12.9:** Fix settings modal close button requiring scroll-back (make close button sticky/always visible).
+- [ ] **T-12.10:** Add undo/redo buttons with full action history tracking.
+- [ ] **T-12.11:** Allow undo past top-outs (restore pre-top-out board state).
+- [ ] **T-12.12:** Move annotation toolbar toggle to the side of the board so it does not cover the board.
+
 ---
 
 ## Findings & Notes

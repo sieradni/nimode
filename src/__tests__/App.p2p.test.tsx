@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { DiscordAuth } from '../discord/types';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 import { instanceConfigStore } from '../p2p/InstanceConfigStore';
 
 const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers } =

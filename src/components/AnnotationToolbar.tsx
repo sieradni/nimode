@@ -59,9 +59,9 @@ export function AnnotationToolbar({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
-      <div className="bg-slate-900/95 border border-slate-700 rounded-lg p-3 flex items-center gap-2">
-        <div className="flex items-center gap-1 bg-slate-800 rounded p-1">
+    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2">
+      <div className="bg-slate-900/95 border border-slate-700 rounded-lg p-3 flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1 bg-slate-800 rounded p-1">
           {(['pen', 'erase', 'floodErase', 'rect'] as AnnotationTool[]).map((t) => (
             <button
               key={t}
@@ -88,7 +88,7 @@ export function AnnotationToolbar({
           onPieceTypeChange={handlePieceTypeChange}
         />
 
-        <div className="w-px h-6 bg-slate-700 mx-1" />
+        <div className="h-px w-20 bg-slate-700 my-1" />
 
         <button
           type="button"

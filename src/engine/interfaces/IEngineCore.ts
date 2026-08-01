@@ -23,8 +23,9 @@ export type InputEvent =
   | { type: 'ROTATE_CCW' }
   | { type: 'ROTATE_180' }
   | { type: 'HOLD' }
-  | { type: 'CLEAR_HOLD' }
   | { type: 'RESET' }
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
   | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
   | { type: 'ANNOTATE_ERASE'; x: number; y: number }
   | { type: 'ANNOTATE_FLOOD_ERASE'; x: number; y: number }
@@ -45,5 +46,8 @@ export interface IEngineCore {
   getState(): EngineState;
   reset(): void;
   setQueue(pieces: PieceType[]): void;
-  clearHold(): void;
+  undo(): boolean;
+  redo(): boolean;
+  canUndo(): boolean;
+  canRedo(): boolean;
 }

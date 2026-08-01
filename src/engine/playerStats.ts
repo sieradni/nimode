@@ -1,6 +1,6 @@
 import { StatsTracker } from './statsTracker';
 import { FinesseTracker, FinesseInputKind } from './finesseTracker';
-import { ActivePiece, GameStats } from './types';
+import { ActivePiece, GameStats, PlayerStatsSnapshot } from './types';
 import { LockResult } from './tSpinDetector';
 
 export class PlayerStats {
@@ -37,6 +37,14 @@ export class PlayerStats {
 
   getStats(): GameStats {
     return this.statsTracker.getStats();
+  }
+
+  getStatsSnapshot(): PlayerStatsSnapshot {
+    return this.statsTracker.getStatsSnapshot();
+  }
+
+  undoRestore(snapshot: PlayerStatsSnapshot): void {
+    this.statsTracker.undoRestore(snapshot);
   }
 
   reset(): void {

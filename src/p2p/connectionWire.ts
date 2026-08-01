@@ -1,7 +1,7 @@
 import type { DataConnection } from 'peerjs';
 import type { PeerMetadata, PresenceMessage } from './types';
 import { isPresenceMessage } from './types';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 
 export interface WireConnectionHandlers {
   onPresence: (metadata: PeerMetadata) => void;

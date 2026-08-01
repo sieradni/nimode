@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { InstanceConfigStore } from '../InstanceConfigStore';
-import { DEFAULT_INSTANCE_CONFIG } from '../../engine/types/game';
+import { DEFAULT_INSTANCE_CONFIG } from '../../engine/types/instance';
 
 const STORAGE_KEY = 'nimode_instance_config';
 

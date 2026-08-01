@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 import type { ConnectedParticipant } from '../discord/types';
 import type { PeerFactory } from './types';
 import type { InstanceConfigStore } from './InstanceConfigStore';

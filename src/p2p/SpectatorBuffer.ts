@@ -1,4 +1,4 @@
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 
 export const INTERPOLATION_DELAY_MS = 20;
 export const MAX_SNAPSHOTS = 128;

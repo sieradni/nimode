@@ -7,12 +7,13 @@ const BINDINGS: KeyBindings = {
   MOVE_RIGHT: 'ArrowRight',
   SOFT_DROP: 'ArrowDown',
   HARD_DROP: 'Space',
-  ROTATE_CW: 'KeyX',
+  ROTATE_CW: 'KeyC',
   ROTATE_CCW: 'KeyZ',
-  ROTATE_180: 'KeyC',
-  HOLD: 'KeyH',
-  CLEAR_HOLD: 'KeyU',
+  ROTATE_180: 'KeyV',
+  HOLD: 'KeyX',
   RESET: 'KeyR',
+  UNDO: 'KeyU',
+  REDO: 'KeyY',
 };
 
 function createResolve(bindings: KeyBindings = BINDINGS) {
@@ -134,11 +135,11 @@ describe('KeyboardInputAdapter', () => {
     expect(onInput).not.toHaveBeenCalled();
   });
 
-  it('resolves actions through the real keybindingsStore by default', () => {
-    const adapter = new KeyboardInputAdapter({ onInput });
-    adapter.attach();
-    dispatchKey('keydown', 'KeyX');
-    expect(onInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
-    adapter.detach();
-  });
+   it('resolves actions through the real keybindingsStore by default', () => {
+     const adapter = new KeyboardInputAdapter({ onInput });
+     adapter.attach();
+     dispatchKey('keydown', 'KeyC');
+     expect(onInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
+     adapter.detach();
+   });
 });

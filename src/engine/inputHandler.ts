@@ -50,11 +50,14 @@ export class InputHandler {
       case 'HOLD':
         this.inputState.hold = true;
         break;
-      case 'CLEAR_HOLD':
-        this.inputState.clearHold = true;
-        break;
       case 'RESET':
         this.inputState.reset = true;
+        break;
+      case 'UNDO':
+        this.inputState.undo = true;
+        break;
+      case 'REDO':
+        this.inputState.redo = true;
         break;
     }
   }
@@ -69,8 +72,9 @@ export class InputHandler {
     ccw: boolean;
     rotate180: boolean;
     hold: boolean;
-    clearHold: boolean;
     reset: boolean;
+    undo: boolean;
+    redo: boolean;
   } {
     const actions = {
       hardDrop: this.inputState.hardDrop,
@@ -78,8 +82,9 @@ export class InputHandler {
       ccw: this.inputState.ccw,
       rotate180: this.inputState.rotate180,
       hold: this.inputState.hold,
-      clearHold: this.inputState.clearHold,
       reset: this.inputState.reset,
+      undo: this.inputState.undo,
+      redo: this.inputState.redo,
     };
 
     this.inputState.hardDrop = false;
@@ -87,8 +92,9 @@ export class InputHandler {
     this.inputState.ccw = false;
     this.inputState.rotate180 = false;
     this.inputState.hold = false;
-    this.inputState.clearHold = false;
     this.inputState.reset = false;
+    this.inputState.undo = false;
+    this.inputState.redo = false;
 
     return actions;
   }

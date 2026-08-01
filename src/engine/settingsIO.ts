@@ -11,7 +11,7 @@ const STORAGE_KEY_CONFIG = 'nimode_config';
 
 const REQUIRED_ACTIONS: (keyof KeyBindings)[] = [
   'MOVE_LEFT', 'MOVE_RIGHT', 'SOFT_DROP', 'HARD_DROP',
-  'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'CLEAR_HOLD', 'RESET',
+  'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'RESET', 'UNDO', 'REDO',
 ];
 
 type NumericConfigKey = Exclude<keyof GameConfig, 'subzero'>;

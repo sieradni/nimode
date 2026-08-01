@@ -10,10 +10,11 @@ import { LockResult } from './tSpinDetector';
 export interface FixedTickCallbacks {
   rotate(direction: 1 | -1 | 2): boolean;
   onReset(): void;
-  onClearHold(): void;
   onLock(result: LockResult, piece: ActivePiece | null): void;
   onKeyPress(): void;
   onHold(): void;
+  onUndo(): void;
+  onRedo(): void;
   rotationOccurred(): boolean;
 }
 
@@ -51,6 +52,13 @@ export function runFixedTick(
     callbacks.onReset();
     return { lockDelayState: createLockDelayState(), gravityTimer: 0 };
   }
+  if (state.gameOver) {
+    if (actions.undo) { callbacks.onUndo(); callbacks.onKeyPress(); }
+    if (actions.redo) { callbacks.onRedo(); callbacks.onKeyPress(); }
+    return { lockDelayState, gravityTimer };
+  }
+  if (actions.undo) { callbacks.onUndo(); callbacks.onKeyPress(); }
+  if (actions.redo) { callbacks.onRedo(); callbacks.onKeyPress(); }
   if (actions.cw) { rotated = callbacks.rotate(1) || rotated; callbacks.onKeyPress(); }
   if (actions.ccw) { rotated = callbacks.rotate(-1) || rotated; callbacks.onKeyPress(); }
   if (actions.rotate180) { rotated = callbacks.rotate(2) || rotated; callbacks.onKeyPress(); }
@@ -60,9 +68,6 @@ export function runFixedTick(
     callbacks.onHold();
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
-  }
-  if (actions.clearHold) {
-    callbacks.onClearHold();
   }
   if (actions.hardDrop) {
     const lockedPiece = state.activePiece ? { ...state.activePiece } : null;

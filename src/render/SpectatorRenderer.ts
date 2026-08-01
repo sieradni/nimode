@@ -2,17 +2,13 @@ import {
   ActivePiece,
   PieceType,
   RotationState,
-  SpectatorPayload,
-  GameStats,
   PIECE_COLORS,
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  VISIBLE_HEIGHT,
   VISIBLE_Y_OFFSET,
 } from '../engine/types';
 import { renderBoard } from './BoardRenderer';
 import { renderQueue, renderHold } from './QueueHoldRenderer';
-import { renderStatsOverlay } from './StatsOverlayRenderer';
 import type { InterpolatedState } from '../p2p/SpectatorBuffer';
 
 export interface SpectatorRenderOptions {
@@ -42,25 +38,6 @@ export function renderAnnotations(
     }
   }
   ctx.globalAlpha = 1;
-}
-
-function toGameStats(stats: SpectatorPayload['stats']): GameStats {
-  return {
-    pps: stats.pps,
-    apm: stats.apm,
-    kpp: stats.kpp,
-    piecesPlaced: stats.piecesPlaced,
-    linesCleared: stats.linesCleared,
-    singles: 0,
-    doubles: 0,
-    triples: 0,
-    quads: 0,
-    tSpins: 0,
-    tSpinMinis: 0,
-    finesse: 0,
-    efficiency: 0,
-    attack: 0,
-  };
 }
 
 export function renderSpectatorState(
@@ -103,8 +80,4 @@ export function renderSpectatorState(
       startY: queueHeight,
     });
   }
-
-  const fullStats = toGameStats(state.stats);
-  const totalWidth = boardWidth + PREVIEW_SLOT * previewCellSize;
-  renderStatsOverlay(ctx, fullStats, totalWidth, VISIBLE_HEIGHT * boardCellSize);
 }

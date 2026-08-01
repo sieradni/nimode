@@ -1,4 +1,4 @@
-import { GameStats } from './types';
+import { GameStats, PlayerStatsSnapshot } from './types';
 
 export class StatsTracker {
   private piecesPlaced = 0;
@@ -78,6 +78,40 @@ export class StatsTracker {
       efficiency,
       attack: this.attack,
     };
+  }
+
+  getStatsSnapshot(): PlayerStatsSnapshot {
+    return {
+      piecesPlaced: this.piecesPlaced,
+      linesCleared: this.linesCleared,
+      singles: this.singles,
+      doubles: this.doubles,
+      triples: this.triples,
+      quads: this.quads,
+      tSpins: this.tSpins,
+      tSpinMinis: this.tSpinMinis,
+      pps: this.elapsedMs > 0 ? this.piecesPlaced / (this.elapsedMs / 1000) : 0,
+      apm: this.elapsedMs > 0 ? this.attack / (this.elapsedMs / 60000) : 0,
+      kpp: this.piecesPlaced > 0 ? this.keyPresses / this.piecesPlaced : 0,
+      finesse: this.finesse,
+      efficiency: this.piecesPlaced > 0 ? this.attack / this.piecesPlaced : 0,
+      attack: this.attack,
+    };
+  }
+
+  undoRestore(snapshot: PlayerStatsSnapshot): void {
+    this.piecesPlaced = snapshot.piecesPlaced;
+    this.linesCleared = snapshot.linesCleared;
+    this.singles = snapshot.singles;
+    this.doubles = snapshot.doubles;
+    this.triples = snapshot.triples;
+    this.quads = snapshot.quads;
+    this.tSpins = snapshot.tSpins;
+    this.tSpinMinis = snapshot.tSpinMinis;
+    this.keyPresses = Math.round(snapshot.kpp * snapshot.piecesPlaced);
+    this.finesse = snapshot.finesse;
+    this.attack = snapshot.attack;
+    this.elapsedMs = snapshot.pps > 0 ? snapshot.piecesPlaced / snapshot.pps * 1000 : 0;
   }
 
   reset(): void {

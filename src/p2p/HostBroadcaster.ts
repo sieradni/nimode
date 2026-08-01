@@ -1,6 +1,6 @@
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
 import type { PeerJSManager } from './PeerJSManager';
-import type { SpectatorPayload } from '../engine/types/game';
+import type { SpectatorPayload } from '../engine/types/instance';
 import type { InstanceConfigStore } from './InstanceConfigStore';
 
 const BROADCAST_INTERVAL_MS = 20;

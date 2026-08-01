@@ -92,7 +92,7 @@ export function holdPiece(
       rotation: spawn.rotation,
     };
   }
-  state.queue.canHold = false;
+  state.queue.canHold = true;
 }
 
 export function hardDrop(

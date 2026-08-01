@@ -92,11 +92,11 @@ describe('App keyboard wiring', () => {
     expect(mockHandleInput).not.toHaveBeenCalled();
   });
 
-  it('routes rotate actions via custom bindings', () => {
-    render(<App />);
-    dispatchKey('keydown', 'KeyX');
-    expect(mockHandleInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
-  });
+   it('routes rotate actions via custom bindings', () => {
+     render(<App />);
+     dispatchKey('keydown', 'KeyC');
+     expect(mockHandleInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
+   });
 
   it('ignores unbound keys', () => {
     render(<App />);

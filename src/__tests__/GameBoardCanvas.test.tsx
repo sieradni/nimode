@@ -5,7 +5,6 @@ import { GameBoardCanvas, BOARD_CELL_SIZE } from '../components/canvas/GameBoard
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 
 vi.mock('../render/BoardRenderer', () => ({ renderBoard: vi.fn() }));
-vi.mock('../render/StatsOverlayRenderer', () => ({ renderStatsOverlay: vi.fn() }));
 
 const baseState = {
   board: Array.from({ length: 40 }, () => Array(BOARD_WIDTH).fill(0)),

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { IEngineCore, EngineState } from '../../engine/interfaces/IEngineCore';
 import { HostBroadcaster } from '../HostBroadcaster';
-import type { SpectatorPayload } from '../../engine/types/game';
+import type { SpectatorPayload } from '../../engine/types/instance';
 import type { PeerJSManager } from '../PeerJSManager';
 import { InstanceConfigStore } from '../InstanceConfigStore';
 

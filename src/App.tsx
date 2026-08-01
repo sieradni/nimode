@@ -17,6 +17,7 @@ import { SpectatorBoardCanvas } from './components/canvas/SpectatorBoardCanvas';
 import { AppHeader } from './components/AppHeader';
 import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
 import { PieceType } from './engine/types/piece';
+import { SpectatorStatsPanel } from './components/SpectatorStatsPanel';
 
 function App() {
   const [engine] = useState(
@@ -70,19 +71,16 @@ function App() {
 
     animationFrameId = requestAnimationFrame(loop);
      return () => cancelAnimationFrame(animationFrameId);
-   }, [engine, peerSession.view]);
+    }, [engine, peerSession.view]);
    useEffect(() => {
-    settingsOpenRef.current = settingsOpen;
-  }, [settingsOpen]);
-
-  useEffect(() => {
-    const adapter = new KeyboardInputAdapter({
-      onInput: (event) => engine.handleInput(event),
-      isEnabled: () => !settingsOpenRef.current && peerSession.view === 'LOCAL_ACTIVE',
-    });
-    adapter.attach();
-    return () => adapter.detach();
-  }, [engine, peerSession.view]);
+     settingsOpenRef.current = settingsOpen;
+     const adapter = new KeyboardInputAdapter({
+       onInput: (event) => engine.handleInput(event),
+       isEnabled: () => !settingsOpenRef.current && peerSession.view === 'LOCAL_ACTIVE',
+     });
+     adapter.attach();
+     return () => adapter.detach();
+   }, [engine, peerSession.view, settingsOpen]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-mono">
@@ -116,11 +114,13 @@ function App() {
               annotationTool={annotationTool}
               annotationPieceType={annotationPieceType}
               autoColor={autoColor}
+              onReset={() => { engine.reset(); setGameState(engine.getState()); }}
             />
           ) : (
             peerSession.spectatorBuffer && (
               <div className="flex gap-8 items-start">
                 <SpectatorBoardCanvas buffer={peerSession.spectatorBuffer} />
+                <SpectatorStatsPanel buffer={peerSession.spectatorBuffer} />
                 <button
                   onClick={peerSession.returnToLocal}
                   className="px-3 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-200"
