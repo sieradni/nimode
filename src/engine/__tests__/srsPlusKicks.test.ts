@@ -78,27 +78,27 @@ describe('srsPlusKicks', () => {
   });
 
   describe('specific kick values', () => {
-    it('JLSTZ 0->1 (CW from spawn) matches standard SRS', () => {
+    it('JLSTZ 0->1 (CW from spawn) matches SRS+ board coords', () => {
       const kicks = getSrsPlusKicks(6, 0, 1);
       expect(kicks).toEqual([
         { x: 0, y: 0 }, { x: -1, y: 0 },
-        { x: -1, y: 1 }, { x: 0, y: -2 }, { x: -1, y: -2 },
+        { x: -1, y: -1 }, { x: 0, y: 2 }, { x: -1, y: 2 },
       ]);
     });
 
-    it('JLSTZ 1->0 (CCW to spawn) matches standard SRS', () => {
+    it('JLSTZ 1->0 (CCW to spawn) matches SRS+ board coords', () => {
       const kicks = getSrsPlusKicks(6, 1, 0);
       expect(kicks).toEqual([
         { x: 0, y: 0 }, { x: 1, y: 0 },
-        { x: 1, y: -1 }, { x: 0, y: 2 }, { x: 1, y: 2 },
+        { x: 1, y: 1 }, { x: 0, y: -2 }, { x: 1, y: -2 },
       ]);
     });
 
-    it('I-piece 0->1 matches TETR.IO I kicks', () => {
+    it('I-piece 0->1 matches TETR.IO I kicks (board coords)', () => {
       const kicks = getSrsPlusKicks(1, 0, 1);
       expect(kicks).toEqual([
         { x: 0, y: 0 }, { x: -2, y: 0 },
-        { x: 1, y: 0 }, { x: -2, y: -1 }, { x: 1, y: 2 },
+        { x: 1, y: 0 }, { x: -2, y: 1 }, { x: 1, y: -2 },
       ]);
     });
 

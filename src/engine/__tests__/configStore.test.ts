@@ -85,6 +85,24 @@ describe('GameConfigStore', () => {
     expect(store2.getConfig().autoColor).toBe(true);
   });
 
+  it('should set handling and persist to localStorage', () => {
+    const store = new GameConfigStore();
+    store.setHandling(140, 45, 60);
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.das).toBe(140);
+    expect(saved.arr).toBe(45);
+    expect(saved.sdf).toBe(60);
+    expect(store.getConfig().das).toBe(140);
+    expect(store.getConfig().arr).toBe(45);
+    expect(store.getConfig().sdf).toBe(60);
+
+    const store2 = new GameConfigStore();
+    expect(store2.getConfig().das).toBe(140);
+    expect(store2.getConfig().arr).toBe(45);
+    expect(store2.getConfig().sdf).toBe(60);
+  });
+
   it('should notify subscribers when gravity changes', () => {
     const store = new GameConfigStore();
     const listener = vi.fn();

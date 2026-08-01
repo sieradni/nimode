@@ -26,7 +26,7 @@ function createMockStats(overrides: Partial<GameStats> = {}): GameStats {
 describe('StatsPanel', () => {
   it('renders stats panel with all stat rows', () => {
     const stats = createMockStats({ pps: 1.5, linesCleared: 10 });
-    render(<StatsPanel stats={stats} />);
+    render(<StatsPanel stats={stats} cellSize={20} />);
     expect(screen.getByText('STATS')).toBeInTheDocument();
     expect(screen.getByText('PPS')).toBeInTheDocument();
     expect(screen.getByText('1.50')).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('StatsPanel', () => {
 
   it('formats decimal stats correctly', () => {
     const stats = createMockStats({ pps: 1.234, apm: 25.6, kpp: 0.8, finesse: 0.95 });
-    render(<StatsPanel stats={stats} />);
+    render(<StatsPanel stats={stats} cellSize={20} />);
     expect(screen.getByText('1.23')).toBeInTheDocument();
     expect(screen.getByText('25.60')).toBeInTheDocument();
     expect(screen.getByText('0.80')).toBeInTheDocument();
@@ -45,13 +45,13 @@ describe('StatsPanel', () => {
 
   it('formats integer stats correctly', () => {
     const stats = createMockStats({ linesCleared: 42, attack: 100 });
-    render(<StatsPanel stats={stats} />);
+    render(<StatsPanel stats={stats} cellSize={20} />);
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.getByText('100')).toBeInTheDocument();
   });
 
   it('renders panel with correct styling', () => {
-    render(<StatsPanel stats={createMockStats()} />);
+    render(<StatsPanel stats={createMockStats()} cellSize={20} />);
     const panel = screen.getByText('STATS').closest('div');
     expect(panel).toHaveClass('bg-slate-900');
     expect(panel).toHaveClass('border-slate-700');

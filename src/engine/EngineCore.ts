@@ -93,7 +93,13 @@ export class EngineCore implements IEngineCore {
         onReset: () => this.reset(),
         onLock: (lockResult, piece) => this.recordLockStats(lockResult, piece),
         onKeyPress: () => this.playerStats.recordKeyPress(),
-        onHold: () => this.playerStats.onPieceSpawn(this.state.activePiece),
+        onHold: () => {
+          this.playerStats.onPieceSpawn(this.state.activePiece);
+          this.saveSnapshot();
+        },
+        onClearHold: () => {
+          this.saveSnapshot();
+        },
         onUndo: () => this.undo(),
         onRedo: () => this.redo(),
         rotationOccurred: () => this.rotationOccurred,

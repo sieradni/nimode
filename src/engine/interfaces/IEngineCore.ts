@@ -23,6 +23,7 @@ export type InputEvent =
   | { type: 'ROTATE_CCW' }
   | { type: 'ROTATE_180' }
   | { type: 'HOLD' }
+  | { type: 'CLEAR_HOLD' }
   | { type: 'RESET' }
   | { type: 'UNDO' }
   | { type: 'REDO' }

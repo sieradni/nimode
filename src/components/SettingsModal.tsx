@@ -7,6 +7,7 @@ import { eventToBindingCode, formatBinding } from '../engine/keybindingCodes';
 import { InstanceConfigStore, instanceConfigStore } from '../p2p/InstanceConfigStore';
 import { PrivateInstanceToggle } from './PrivateInstanceToggle';
 import { GravityConfigControls } from './GravityConfigControls';
+import { HandlingConfigControls } from './HandlingConfigControls';
 import { GameConfigStore, configStore } from '../engine/configStore';
 
 interface SettingsModalProps {
@@ -95,13 +96,20 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-       <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
-         <div className="flex items-center justify-between mb-4 sticky top-0 bg-slate-900 pb-2">
-           <h2 className="text-lg font-bold text-slate-200">Settings</h2>
-           <button onClick={onClose} className="text-slate-400 hover:text-slate-200" aria-label="Close">✕</button>
-         </div>
+      <div className="relative bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+        <button
+          onClick={onClose}
+          className="sticky top-0 float-right -mt-2 -mr-2 text-slate-400 hover:text-slate-200 z-10 bg-slate-900 p-2 rounded-full border border-slate-800 shadow-md flex items-center justify-center w-8 h-8"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div className="mb-4">
+          <h2 className="text-lg font-bold text-slate-200 animate-pulse">Settings</h2>
+        </div>
         <PrivateInstanceToggle configStore={instanceStore} />
         <GravityConfigControls store={gameConfigStore} />
+        <HandlingConfigControls store={gameConfigStore} />
         <div className="space-y-1 mb-4">
           {ALL_ACTIONS.map((action) => {
             const isListening = listeningAction === action;

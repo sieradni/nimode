@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../engine/types';
-import { MIN_CELL_SIZE } from './canvas/useBoardScale';
+import { MIN_CELL_SIZE, computePreviewCellSize } from './canvas/useBoardScale';
 import { renderBoard } from '../render/BoardRenderer';
 import { renderQueue, renderHold } from '../render/QueueHoldRenderer';
 import { GameCanvas } from './GameCanvas';
@@ -66,6 +66,9 @@ function createMockEngine(): IEngineCore {
   };
 }
 
+/** In jsdom containers report zero size so useBoardScale clamps to MIN_CELL_SIZE. */
+const previewCellSize = computePreviewCellSize(MIN_CELL_SIZE);
+
 describe('GameCanvas', () => {
   let mockCtx: CanvasRenderingContext2D;
   const mockEngine = createMockEngine();
@@ -105,14 +108,12 @@ describe('GameCanvas', () => {
          onReset={vi.fn()}
        />
     );
-    // The board fits itself to its container; jsdom reports a zero-sized box,
-    // so it clamps to the minimum readable cell size.
     const canvas = screen.getByTestId('board-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(BOARD_WIDTH * MIN_CELL_SIZE);
     expect(canvas.height).toBe(VISIBLE_HEIGHT * MIN_CELL_SIZE);
   });
 
-  it('sizes the hold canvas to one 4x4 preview slot', () => {
+  it('sizes the hold canvas to one 4x4 preview slot at the preview cell size', () => {
     render(
       <GameCanvas
         state={createState()}
@@ -124,11 +125,11 @@ describe('GameCanvas', () => {
        />
     );
     const canvas = screen.getByTestId('hold-canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBe(4 * 20);
-    expect(canvas.height).toBe(4 * 20);
+    expect(canvas.width).toBe(4 * previewCellSize);
+    expect(canvas.height).toBe(4 * previewCellSize);
   });
 
-  it('sizes the queue canvas to five preview slots plus gaps', () => {
+  it('sizes the queue canvas to five preview slots plus gaps at the preview cell size', () => {
     render(
       <GameCanvas
         state={createState()}
@@ -140,8 +141,8 @@ describe('GameCanvas', () => {
        />
     );
     const canvas = screen.getByTestId('queue-canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBe(4 * 20);
-    expect(canvas.height).toBe(5 * 4 * 20 + 4 * 4);
+    expect(canvas.width).toBe(4 * previewCellSize);
+    expect(canvas.height).toBe(5 * 4 * previewCellSize + 4 * 4);
   });
 
   it('renders the board and active piece on mount', () => {
@@ -174,7 +175,7 @@ describe('GameCanvas', () => {
          onReset={vi.fn()}
        />
     );
-    expect(vi.mocked(renderHold)).toHaveBeenCalledWith(mockCtx, state.hold, { cellSize: 20 });
+    expect(vi.mocked(renderHold)).toHaveBeenCalledWith(mockCtx, state.hold, { cellSize: previewCellSize });
   });
 
   it('renders the queue sliced to 5 previews', () => {
@@ -190,7 +191,7 @@ describe('GameCanvas', () => {
        />
     );
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
-      cellSize: 20,
+      cellSize: previewCellSize,
     });
   });
 
@@ -217,5 +218,50 @@ describe('GameCanvas', () => {
        />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledTimes(2);
+  });
+
+  it('renders a clear-hold button when a piece is held', () => {
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationColor="#ffffff"
+        autoColor={false}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.getByLabelText('Clear hold')).toBeInTheDocument();
+  });
+
+  it('dispatches CLEAR_HOLD when the clear-hold button is clicked', () => {
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationColor="#ffffff"
+        autoColor={false}
+        onReset={vi.fn()}
+      />
+    );
+    screen.getByLabelText('Clear hold').click();
+    expect(mockEngine.handleInput).toHaveBeenCalledWith({ type: 'CLEAR_HOLD' });
+  });
+
+  it('does not render the clear-hold button when nothing is held', () => {
+    const state = createState();
+    state.hold = null;
+    render(
+      <GameCanvas
+        state={state}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationColor="#ffffff"
+        autoColor={false}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.queryByLabelText('Clear hold')).not.toBeInTheDocument();
   });
 });

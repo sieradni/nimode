@@ -13,6 +13,7 @@ export interface FixedTickCallbacks {
   onLock(result: LockResult, piece: ActivePiece | null): void;
   onKeyPress(): void;
   onHold(): void;
+  onClearHold(): void;
   onUndo(): void;
   onRedo(): void;
   rotationOccurred(): boolean;
@@ -68,6 +69,13 @@ export function runFixedTick(
     callbacks.onHold();
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
+  }
+  if (actions.clearHold) {
+    if (state.queue.hold !== null) {
+      state.queue.hold = null;
+      callbacks.onKeyPress();
+      callbacks.onClearHold();
+    }
   }
   if (actions.hardDrop) {
     const lockedPiece = state.activePiece ? { ...state.activePiece } : null;

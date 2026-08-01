@@ -80,4 +80,45 @@ describe('EngineCore', () => {
     expect(state.activePiece).not.toBeNull();
     expect(state.gameOver).toBe(false);
   });
+
+  describe('CLEAR_HOLD', () => {
+    it('empties a held piece', () => {
+      const engine = createEngine();
+      engine.handleInput({ type: 'HOLD' });
+      engine.tick(16.67);
+      expect(engine.getState().hold).not.toBeNull();
+
+      engine.handleInput({ type: 'CLEAR_HOLD' });
+      engine.tick(16.67);
+
+      expect(engine.getState().hold).toBeNull();
+    });
+
+    it('is undoable (restores the held piece)', () => {
+      const engine = createEngine();
+      engine.handleInput({ type: 'HOLD' });
+      engine.tick(16.67);
+      const heldBefore = engine.getState().hold;
+
+      engine.handleInput({ type: 'CLEAR_HOLD' });
+      engine.tick(16.67);
+      expect(engine.getState().hold).toBeNull();
+
+      engine.handleInput({ type: 'UNDO' });
+      engine.tick(16.67);
+
+      expect(engine.getState().hold).toBe(heldBefore);
+    });
+
+    it('is a no-op (and not undoable) when nothing is held', () => {
+      const engine = createEngine();
+      expect(engine.getState().hold).toBeNull();
+
+      engine.handleInput({ type: 'CLEAR_HOLD' });
+      engine.tick(16.67);
+
+      expect(engine.getState().hold).toBeNull();
+      expect(engine.canUndo()).toBe(false);
+    });
+  });
 });

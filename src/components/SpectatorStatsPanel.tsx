@@ -41,5 +41,5 @@ export function SpectatorStatsPanel({ buffer }: { buffer: SpectatorBuffer }) {
     };
   }, [buffer]);
 
-  return <StatsPanel stats={stats} />;
+  return <StatsPanel stats={stats} cellSize={20} />;
 }

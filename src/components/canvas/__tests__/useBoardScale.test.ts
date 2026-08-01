@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { computeCellSize } from '../useBoardScale';
+import {
+  computeCellSize,
+  computeLayoutCellSize,
+  computePreviewCellSize,
+} from '../useBoardScale';
 
 describe('computeCellSize', () => {
   it('fits the board to the available height when height is the constraint', () => {
@@ -32,5 +36,33 @@ describe('computeCellSize', () => {
     const size = computeCellSize(0, 0);
     expect(Number.isFinite(size)).toBe(true);
     expect(size).toBeGreaterThan(0);
+  });
+});
+
+describe('computeLayoutCellSize', () => {
+  it('reserves space for flanking panels in the width budget', () => {
+    // Same height as computeCellSize test, but the layout cell size should be
+    // smaller because horizontal space is consumed by the two side columns.
+    const plain = computeCellSize(2000, 800);
+    const layout = computeLayoutCellSize(2000, 800);
+    expect(layout).toBeLessThanOrEqual(plain);
+  });
+
+  it('clamps to the minimum when the container is tiny', () => {
+    const size = computeLayoutCellSize(10, 10);
+    expect(Number.isFinite(size)).toBe(true);
+    expect(size).toBeGreaterThan(0);
+  });
+});
+
+describe('computePreviewCellSize', () => {
+  it('scales the preview cell size by the preview factor', () => {
+    expect(computePreviewCellSize(30)).toBe(20); // 30 * 2/3
+    expect(computePreviewCellSize(9)).toBe(6); // 9 * 2/3
+  });
+
+  it('floors at the minimum preview cell size', () => {
+    expect(computePreviewCellSize(4)).toBe(4);
+    expect(computePreviewCellSize(2)).toBe(4);
   });
 });

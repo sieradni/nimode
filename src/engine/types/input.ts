@@ -7,6 +7,7 @@ export type InputAction =
   | 'ROTATE_CCW'
   | 'ROTATE_180'
   | 'HOLD'
+  | 'CLEAR_HOLD'
   | 'RESET'
   | 'UNDO'
   | 'REDO';
@@ -20,6 +21,7 @@ export interface InputState {
   ccw: boolean;
   rotate180: boolean;
   hold: boolean;
+  clearHold: boolean;
   reset: boolean;
   undo: boolean;
   redo: boolean;
@@ -34,6 +36,7 @@ export const EMPTY_INPUT_STATE: InputState = {
   ccw: false,
   rotate180: false,
   hold: false,
+  clearHold: false,
   reset: false,
   undo: false,
   redo: false,

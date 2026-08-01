@@ -4,25 +4,26 @@ import { renderQueue, QUEUE_PREVIEW_SIZE, QUEUE_GAP } from '../../render/QueueHo
 import { setupHiDpiCanvas } from './canvasScaling';
 
 const MAX_VISIBLE_QUEUE = 5;
-const QUEUE_CELL_SIZE = 20;
 
-const QUEUE_CANVAS_WIDTH = QUEUE_PREVIEW_SIZE * QUEUE_CELL_SIZE;
-const QUEUE_CANVAS_HEIGHT =
-  MAX_VISIBLE_QUEUE * (QUEUE_PREVIEW_SIZE * QUEUE_CELL_SIZE) +
-  (MAX_VISIBLE_QUEUE - 1) * QUEUE_GAP;
+interface QueueCanvasProps {
+  state: EngineState;
+  cellSize: number;
+}
 
-export function QueueCanvas({ state }: { state: EngineState }) {
+export function QueueCanvas({ state, cellSize }: QueueCanvasProps) {
   const queueRef = useRef<HTMLCanvasElement>(null);
+
+  const canvasWidth = QUEUE_PREVIEW_SIZE * cellSize;
+  const canvasHeight =
+    MAX_VISIBLE_QUEUE * (QUEUE_PREVIEW_SIZE * cellSize) + (MAX_VISIBLE_QUEUE - 1) * QUEUE_GAP;
 
   useEffect(() => {
     const queueCanvas = queueRef.current;
     if (!queueCanvas) return;
-    const queueCtx = setupHiDpiCanvas(queueCanvas, QUEUE_CANVAS_WIDTH, QUEUE_CANVAS_HEIGHT);
+    const queueCtx = setupHiDpiCanvas(queueCanvas, canvasWidth, canvasHeight);
     if (!queueCtx) return;
-    renderQueue(queueCtx, state.queue.slice(0, MAX_VISIBLE_QUEUE), {
-      cellSize: QUEUE_CELL_SIZE,
-    });
-  }, [state]);
+    renderQueue(queueCtx, state.queue.slice(0, MAX_VISIBLE_QUEUE), { cellSize });
+  }, [state, cellSize, canvasWidth, canvasHeight]);
 
   return (
     <div className="flex flex-col items-center">
@@ -30,8 +31,8 @@ export function QueueCanvas({ state }: { state: EngineState }) {
       <canvas
         ref={queueRef}
         data-testid="queue-canvas"
-        width={QUEUE_CANVAS_WIDTH}
-        height={QUEUE_CANVAS_HEIGHT}
+        width={canvasWidth}
+        height={canvasHeight}
         className="rounded-lg border border-slate-800"
       />
     </div>

@@ -78,6 +78,7 @@ describe('importSettingsFromJson', () => {
       ROTATE_CCW: 'KeyZ',
       ROTATE_180: 'KeyC',
       HOLD: 'ShiftLeft',
+      CLEAR_HOLD: 'Shift+KeyC',
       RESET: 'KeyR',
       UNDO: 'KeyU',
       REDO: 'KeyY',

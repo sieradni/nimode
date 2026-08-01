@@ -154,3 +154,24 @@ describe('InputHandler movement (DAS/ARR/SDF)', () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 });
+
+describe('InputHandler one-time inputs (CLEAR_HOLD)', () => {
+  it('queues clearHold on press and consumes it exactly once', () => {
+    const handler = new InputHandler();
+    handler.handleInput({ type: 'CLEAR_HOLD' });
+
+    const first = handler.consumeOneTimeInputs();
+    expect(first.clearHold).toBe(true);
+
+    const second = handler.consumeOneTimeInputs();
+    expect(second.clearHold).toBe(false);
+  });
+
+  it('reset() clears a pending clearHold', () => {
+    const handler = new InputHandler();
+    handler.handleInput({ type: 'CLEAR_HOLD' });
+    handler.reset();
+
+    expect(handler.consumeOneTimeInputs().clearHold).toBe(false);
+  });
+});

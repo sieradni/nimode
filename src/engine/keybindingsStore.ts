@@ -20,7 +20,8 @@ function loadFromStorage(): KeyBindings {
     const parsed: Record<string, unknown> = JSON.parse(raw);
     const actions: InputAction[] = [
       'MOVE_LEFT', 'MOVE_RIGHT', 'SOFT_DROP', 'HARD_DROP',
-      'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'RESET', 'UNDO', 'REDO',
+      'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'CLEAR_HOLD',
+      'RESET', 'UNDO', 'REDO',
     ];
     for (const action of actions) {
       if (typeof parsed[action] !== 'string') {

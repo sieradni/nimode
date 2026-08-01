@@ -35,14 +35,14 @@ export function FloatingControls({
         <button
           onClick={onOpenAnnotationToolbar}
           aria-label="Annotation Toolbar"
-          className="rounded p-2 text-slate-500 transition-colors hover:bg-slate-900/80 hover:text-slate-200"
+          className="rounded-md bg-slate-900 p-2 text-slate-400 shadow-sm border border-slate-700 transition-colors hover:bg-slate-800 hover:text-slate-200"
         >
           ✏
         </button>
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
-          className="rounded p-2 text-slate-500 transition-colors hover:bg-slate-900/80 hover:text-slate-200"
+          className="rounded-md bg-slate-900 p-2 text-slate-400 shadow-sm border border-slate-700 transition-colors hover:bg-slate-800 hover:text-slate-200"
         >
           ⚙
         </button>

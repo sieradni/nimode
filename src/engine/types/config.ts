@@ -7,6 +7,7 @@ export interface KeyBindings {
   ROTATE_CCW: string;
   ROTATE_180: string;
   HOLD: string;
+  CLEAR_HOLD: string;
   RESET: string;
   UNDO: string;
   REDO: string;
@@ -26,6 +27,7 @@ export const DEFAULT_KEYBINDINGS: KeyBindings = {
   ROTATE_CCW: 'KeyZ',
   ROTATE_180: 'KeyV',
   HOLD: 'KeyC',
+  CLEAR_HOLD: 'Shift+KeyC',
   RESET: 'KeyR',
   UNDO: 'Ctrl+KeyZ',
   REDO: 'Ctrl+KeyY',

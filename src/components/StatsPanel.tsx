@@ -20,9 +20,18 @@ const STAT_ROWS: StatRow[] = [
   { label: 'Finesse', getValue: (s) => s.finesse.toFixed(2) },
 ];
 
-export function StatsPanel({ stats }: { stats: GameStats }) {
+interface StatsPanelProps {
+  stats: GameStats;
+  /** Board cell size; the panel width tracks the flanking column width. */
+  cellSize: number;
+}
+
+export function StatsPanel({ stats, cellSize }: StatsPanelProps) {
   return (
-    <div className="w-40 flex-shrink-0 bg-slate-900 border border-slate-700 rounded-lg p-3">
+    <div
+      className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-lg p-3"
+      style={{ width: `${cellSize * 4}px` }}
+    >
       <h2 className="text-sm font-semibold mb-2 text-slate-400">STATS</h2>
       <div className="space-y-1">
         {STAT_ROWS.map((row) => (

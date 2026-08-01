@@ -53,12 +53,12 @@ describe('QueueCanvas', () => {
   });
 
   it('renders queue canvas', () => {
-    render(<QueueCanvas state={createState()} />);
+    render(<QueueCanvas state={createState()} cellSize={20} />);
     expect(screen.getByTestId('queue-canvas')).toBeInTheDocument();
   });
 
   it('sizes the queue canvas to five preview slots plus gaps', () => {
-    render(<QueueCanvas state={createState()} />);
+    render(<QueueCanvas state={createState()} cellSize={20} />);
     const canvas = screen.getByTestId('queue-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
     expect(canvas.height).toBe(5 * 4 * 20 + 4 * 4);
@@ -66,16 +66,16 @@ describe('QueueCanvas', () => {
 
   it('renders the queue sliced to 5 previews', () => {
     const state = createState();
-    render(<QueueCanvas state={state} />);
+    render(<QueueCanvas state={state} cellSize={20} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
       cellSize: 20,
     });
   });
 
   it('redraws when a new state object is provided', () => {
-    const { rerender } = render(<QueueCanvas state={createState()} />);
+    const { rerender } = render(<QueueCanvas state={createState()} cellSize={20} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledTimes(1);
-    rerender(<QueueCanvas state={createState()} />);
+    rerender(<QueueCanvas state={createState()} cellSize={20} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledTimes(2);
   });
 });
