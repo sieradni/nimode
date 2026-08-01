@@ -29,7 +29,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_BASE_PATH: '/nimode/'
+          VITE_BASE_PATH: './'
           VITE_DISCORD_CLIENT_ID: ${{ secrets.VITE_DISCORD_CLIENT_ID }}
 
       - name: Deploy to GitHub Pages
