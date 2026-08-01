@@ -1,9 +1,6 @@
 import { BOARD_HEIGHT, BOARD_WIDTH } from './types/board';
 import type { AnnotationMatrix } from './types/annotations';
-import type { PieceType } from './types/piece';
-import { getPieceMatrix } from './systems/SrsPlusRotationSystem';
-
-type Position = { x: number; y: number };
+import { matchTetromino, type Position } from './autoColorShapes';
 
 function tryEnqueueNeighbor(
   queue: Position[],
@@ -71,76 +68,71 @@ function floodFillComponents(annotations: AnnotationMatrix): Position[][] {
   return components;
 }
 
-function normalizePositions(positions: Position[]): string {
-  if (positions.length === 0) return '';
-
-  let minX = Infinity;
-  let minY = Infinity;
-  for (const p of positions) {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-  }
-
-  const normalized = positions
-    .map(p => ({ x: p.x - minX, y: p.y - minY }))
-    .sort((a, b) => a.y - b.y || a.x - b.x);
-
-  return normalized.map(p => `${p.x},${p.y}`).join(';');
-}
-
-function buildCanonicalShapeKeys(): Map<string, PieceType> {
-  const map = new Map<string, PieceType>();
-  const pieceTypes: PieceType[] = [1, 2, 3, 4, 5, 6, 7];
-
-  const rotations: Array<0 | 1 | 2 | 3> = [0, 1, 2, 3];
-  for (const type of pieceTypes) {
-    for (const rotation of rotations) {
-      const matrix = getPieceMatrix(type, rotation);
-      const cells: Position[] = [];
-
-      for (let y = 0; y < matrix.length; y++) {
-        const row = matrix[y];
-        if (!row) continue;
-        for (let x = 0; x < row.length; x++) {
-          if (row[x] !== 0) {
-            cells.push({ x, y });
-          }
-        }
-      }
-
-      const key = normalizePositions(cells);
-      if (!map.has(key)) {
-        map.set(key, type);
-      }
-    }
-  }
-
-  return map;
-}
-
-const canonicalKeys = buildCanonicalShapeKeys();
-
-export function autoColorAnnotations(annotations: AnnotationMatrix): AnnotationMatrix {
-  const components = floodFillComponents(annotations);
-
+function copyAnnotations(annotations: AnnotationMatrix): AnnotationMatrix {
   const result: AnnotationMatrix = [];
   for (let y = 0; y < BOARD_HEIGHT; y++) {
     const row = annotations[y];
     result.push(row ? [...row] : []);
   }
+  return result;
+}
+
+/**
+ * Colors the cells drawn in a single stroke, matched on the stroke's own shape.
+ *
+ * Unlike `autoColorAnnotations`, this never flood-fills across the board, so a
+ * stroke drawn immediately adjacent to an already-annotated piece is still
+ * recognised instead of merging into one oversized component (US-7.5).
+ *
+ * Stroke cells that are no longer filled (drawn then erased before the stroke
+ * ended) and duplicates from overlapping pointer moves are ignored.
+ */
+export function autoColorStroke(
+  annotations: AnnotationMatrix,
+  stroke: ReadonlyArray<Position>,
+): AnnotationMatrix {
+  const result = copyAnnotations(annotations);
+
+  const seen = new Set<string>();
+  const cells: Position[] = [];
+  for (const cell of stroke) {
+    const key = `${cell.x},${cell.y}`;
+    if (seen.has(key)) continue;
+    if (!annotations[cell.y]?.[cell.x]) continue;
+    seen.add(key);
+    cells.push(cell);
+  }
+
+  const matchedType = matchTetromino(cells);
+  if (matchedType === undefined) return result;
+
+  for (const cell of cells) {
+    const row = result[cell.y];
+    if (row) {
+      row[cell.x] = matchedType;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Colors every isolated 4-cell annotation component on the board. Retained for
+ * the explicit "auto-color whole board" action; per-stroke drawing uses
+ * `autoColorStroke`.
+ */
+export function autoColorAnnotations(annotations: AnnotationMatrix): AnnotationMatrix {
+  const components = floodFillComponents(annotations);
+  const result = copyAnnotations(annotations);
 
   for (const component of components) {
-    if (component.length !== 4) continue;
+    const matchedType = matchTetromino(component);
+    if (matchedType === undefined) continue;
 
-    const key = normalizePositions(component);
-    const matchedType = canonicalKeys.get(key);
-
-    if (matchedType !== undefined) {
-      for (const cell of component) {
-        const row = result[cell.y];
-        if (row) {
-          row[cell.x] = matchedType;
-        }
+    for (const cell of component) {
+      const row = result[cell.y];
+      if (row) {
+        row[cell.x] = matchedType;
       }
     }
   }

@@ -79,43 +79,40 @@ describe('AnnotationToolbar', () => {
     expect(onAutoColorToggle).toHaveBeenCalledWith(true);
   });
 
-  it('should render piece type selector for pen tool', () => {
+  it('should render the colour picker for the pen tool', () => {
     render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
-    expect(screen.getByRole('combobox', { name: /piece type/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/annotation colour/i)).toBeInTheDocument();
   });
 
-  it('should call onPieceTypeChange when piece type changes', () => {
-    const onPieceTypeChange = vi.fn();
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} onPieceTypeChange={onPieceTypeChange} />);
-    const select = screen.getByRole('combobox', { name: /piece type/i });
-    fireEvent.change(select, { target: { value: '1' } });
-    expect(onPieceTypeChange).toHaveBeenCalledWith(1);
-  });
-
-  it('should show piece names in selector (I, J, L, O, S, T, Z)', () => {
+  it('should default the annotation colour to white', () => {
     render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
-    const select = screen.getByRole('combobox', { name: /piece type/i });
-    const options = select.querySelectorAll('option');
-    expect(options).toHaveLength(7);
-    expect(screen.getByText('I')).toBeInTheDocument();
-    expect(screen.getByText('J')).toBeInTheDocument();
-    expect(screen.getByText('L')).toBeInTheDocument();
-    expect(screen.getByText('O')).toBeInTheDocument();
-    expect(screen.getByText('S')).toBeInTheDocument();
-    expect(screen.getByText('T')).toBeInTheDocument();
-    expect(screen.getByText('Z')).toBeInTheDocument();
+    expect(screen.getByLabelText(/annotation colour/i)).toHaveValue('#ffffff');
   });
 
-  it('should hide piece type selector when eraser is selected', () => {
+  it('should call onColorChange when the colour changes', () => {
+    const onColorChange = vi.fn();
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} onColorChange={onColorChange} />);
+    fireEvent.change(screen.getByLabelText(/annotation colour/i), { target: { value: '#ff0000' } });
+    expect(onColorChange).toHaveBeenCalledWith('#ff0000');
+  });
+
+  it('should offer quick colour swatches', () => {
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
+    expect(screen.getByRole('button', { name: /^white$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^red$/i })).toBeInTheDocument();
+  });
+
+  it('should select a colour from a swatch', () => {
+    const onColorChange = vi.fn();
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} onColorChange={onColorChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /^red$/i }));
+    expect(onColorChange).toHaveBeenCalledWith('#f87171');
+  });
+
+  it('should hide the colour picker when eraser is selected', () => {
     render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /eraser/i }));
-    expect(screen.queryByRole('combobox', { name: /piece type/i })).not.toBeInTheDocument();
-  });
-
-  it('should hide piece type selector when rect fill is selected', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /rect fill/i }));
-    expect(screen.queryByRole('combobox', { name: /piece type/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/annotation colour/i)).not.toBeInTheDocument();
   });
 
   it('should reflect initial tool prop', () => {
@@ -128,9 +125,8 @@ describe('AnnotationToolbar', () => {
     expect(screen.getByRole('checkbox', { name: /auto-color/i })).toBeChecked();
   });
 
-  it('should reflect initial pieceType prop', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} pieceType={3} />);
-    const select = screen.getByRole('combobox', { name: /piece type/i });
-    expect(select).toHaveValue('3');
+  it('should reflect the initial colour prop', () => {
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} color="#00ff00" />);
+    expect(screen.getByLabelText(/annotation colour/i)).toHaveValue('#00ff00');
   });
 });

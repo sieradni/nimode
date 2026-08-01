@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { PieceType } from '../engine/types/piece';
 import { AnnotationToolbarControls } from './AnnotationToolbarControls';
+import { DEFAULT_ANNOTATION_COLOR } from '../render/annotationColors';
 import type { AnnotationTool } from './canvas/canvasConstants';
 
 export type { AnnotationTool } from './canvas/canvasConstants';
@@ -14,8 +14,8 @@ export interface AnnotationToolbarProps {
   onResetBoard?: () => void;
   autoColor?: boolean;
   onAutoColorToggle?: (enabled: boolean) => void;
-  pieceType?: PieceType;
-  onPieceTypeChange?: (pieceType: PieceType) => void;
+  color?: string;
+  onColorChange?: (color: string) => void;
 }
 
 const TOOL_LABELS: Record<AnnotationTool, string> = {
@@ -34,12 +34,12 @@ export function AnnotationToolbar({
   onResetBoard,
   autoColor: initialAutoColor = false,
   onAutoColorToggle,
-  pieceType: initialPieceType = 1,
-  onPieceTypeChange,
+  color: initialColor = DEFAULT_ANNOTATION_COLOR,
+  onColorChange,
 }: AnnotationToolbarProps) {
   const [tool, setTool] = useState<AnnotationTool>(initialTool);
   const [autoColor, setAutoColor] = useState<boolean>(initialAutoColor);
-  const [pieceType, setPieceType] = useState<PieceType>(initialPieceType);
+  const [color, setColor] = useState<string>(initialColor);
 
   const handleToolChange = (newTool: AnnotationTool) => {
     setTool(newTool);
@@ -51,9 +51,9 @@ export function AnnotationToolbar({
     onAutoColorToggle?.(enabled);
   };
 
-  const handlePieceTypeChange = (newPieceType: PieceType) => {
-    setPieceType(newPieceType);
-    onPieceTypeChange?.(newPieceType);
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+    onColorChange?.(newColor);
   };
 
   if (!isOpen) return null;
@@ -83,9 +83,9 @@ export function AnnotationToolbar({
         <AnnotationToolbarControls
           tool={tool}
           autoColor={autoColor}
-          pieceType={pieceType}
+          color={color}
           onAutoColorToggle={handleAutoColorToggle}
-          onPieceTypeChange={handlePieceTypeChange}
+          onColorChange={handleColorChange}
         />
 
         <div className="h-px w-20 bg-slate-700 my-1" />

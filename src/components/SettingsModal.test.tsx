@@ -6,6 +6,7 @@ import { GameConfigStore } from '../engine/configStore';
 import { keybindingsStore } from '../engine/keybindingsStore';
 import { DEFAULT_KEYBINDINGS } from '../engine/types';
 import { ACTION_LABELS } from '../engine/settingsConstants';
+import { formatBinding } from '../engine/keybindingCodes';
 
 function createMockStorage(): Storage {
   const store: Record<string, string> = {};
@@ -46,7 +47,7 @@ describe('SettingsModal', () => {
     render(<SettingsModal isOpen={true} onClose={() => {}} />);
     const keys = Object.values(DEFAULT_KEYBINDINGS);
     for (const key of keys) {
-      const matches = screen.getAllByText(key);
+      const matches = screen.getAllByText(formatBinding(key));
       expect(matches.length).toBeGreaterThanOrEqual(1);
     }
   });
@@ -90,14 +91,16 @@ describe('SettingsModal', () => {
     const moveLeftText = screen.getByText(ACTION_LABELS.MOVE_LEFT);
     fireEvent.click(moveLeftText);
     fireEvent.keyDown(window, { code: 'KeyA' });
-    expect(screen.getByText('KeyA')).toBeInTheDocument();
+    // Bindings render as friendly labels rather than raw key codes.
+    expect(screen.getByText('A')).toBeInTheDocument();
     expect(keybindingsStore.getBinding('MOVE_LEFT')).toBe('KeyA');
   });
 
   it('should show error when duplicate key is assigned', () => {
     render(<SettingsModal isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByText(ACTION_LABELS.MOVE_LEFT));
-    fireEvent.keyDown(window, { code: 'ArrowUp' });
+    // Space is the default hard-drop binding, so reusing it must be rejected.
+    fireEvent.keyDown(window, { code: 'Space' });
     expect(screen.getByText(/already bound/i)).toBeInTheDocument();
   });
 

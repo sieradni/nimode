@@ -138,7 +138,7 @@ describe('KeyboardInputAdapter', () => {
    it('resolves actions through the real keybindingsStore by default', () => {
      const adapter = new KeyboardInputAdapter({ onInput });
      adapter.attach();
-     dispatchKey('keydown', 'KeyC');
+     dispatchKey('keydown', 'KeyX');
      expect(onInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
      adapter.detach();
    });

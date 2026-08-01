@@ -3,6 +3,7 @@ import { keybindingsStore } from '../engine/keybindingsStore';
 import { InputAction } from '../engine/types';
 import { exportSettingsAsJson, downloadSettingsBlob, importSettingsFromJson } from '../engine/settingsIO';
 import { ACTION_LABELS, ALL_ACTIONS } from '../engine/settingsConstants';
+import { eventToBindingCode, formatBinding } from '../engine/keybindingCodes';
 import { InstanceConfigStore, instanceConfigStore } from '../p2p/InstanceConfigStore';
 import { PrivateInstanceToggle } from './PrivateInstanceToggle';
 import { GravityConfigControls } from './GravityConfigControls';
@@ -30,8 +31,11 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!listeningAction) return;
     e.preventDefault();
+    // Wait for a real key so modifiers can be held while choosing a combination.
+    const binding = eventToBindingCode(e);
+    if (binding === null) return;
     try {
-      keybindingsStore.setBinding(listeningAction, e.code);
+      keybindingsStore.setBinding(listeningAction, binding);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -110,7 +114,7 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
               >
                 <span className="text-sm text-slate-300">{ACTION_LABELS[action]}</span>
                 <span className={`text-sm font-mono ${isListening ? 'text-slate-200 animate-pulse' : 'text-slate-300'}`}>
-                  {isListening ? 'Press a key...' : key}
+                  {isListening ? 'Press a key...' : formatBinding(key)}
                 </span>
               </div>
             );

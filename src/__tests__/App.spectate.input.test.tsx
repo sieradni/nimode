@@ -92,20 +92,20 @@ describe('App keyboard gating by view', () => {
     mockView.current = 'SPECTATING_TARGET';
     render(<App />);
     dispatchKey('keydown', 'ArrowLeft');
-    dispatchKey('keydown', 'ArrowUp');
+    dispatchKey('keydown', 'Space');
     expect(mockHandleInput).not.toHaveBeenCalled();
   });
 
   it('forwards keydown again after returning to the local board', () => {
     mockView.current = 'SPECTATING_TARGET';
     const { unmount } = render(<App />);
-    dispatchKey('keydown', 'ArrowUp');
+    dispatchKey('keydown', 'Space');
     expect(mockHandleInput).not.toHaveBeenCalled();
     unmount();
 
     mockView.current = 'LOCAL_ACTIVE';
     render(<App />);
-    dispatchKey('keydown', 'ArrowUp');
+    dispatchKey('keydown', 'Space');
     expect(mockHandleInput).toHaveBeenCalledWith({ type: 'HARD_DROP' });
   });
 });

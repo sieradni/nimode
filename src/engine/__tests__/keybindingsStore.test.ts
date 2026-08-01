@@ -35,7 +35,7 @@ describe('KeybindingsStore', () => {
 
   it('should get a specific binding', () => {
     const store = new KeybindingsStore();
-    expect(store.getBinding('HARD_DROP')).toBe('ArrowUp');
+    expect(store.getBinding('HARD_DROP')).toBe('Space');
   });
 
   it('should set a binding and persist it to localStorage', () => {
