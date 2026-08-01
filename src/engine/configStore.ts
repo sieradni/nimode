@@ -25,6 +25,12 @@ export class GameConfigStore {
     this.notify();
   }
 
+  setAutoColor(autoColor: boolean): void {
+    this.config = { ...this.config, autoColor };
+    saveConfigToStorage(this.config);
+    this.notify();
+  }
+
   setConfig(config: GameConfig): void {
     this.config = { ...config };
     saveConfigToStorage(this.config);

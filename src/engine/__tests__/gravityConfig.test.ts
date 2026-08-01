@@ -3,8 +3,12 @@ import { DEFAULT_CONFIG, DEFAULT_KEYBINDINGS, GameConfig } from '../types';
 import { validateSettingsJson, importSettingsFromJson, loadConfigFromStorage } from '../settingsIO';
 
 describe('GameConfig gravity & subzero fields', () => {
-  it('DEFAULT_CONFIG should include gravity defaulting to 1', () => {
-    expect(DEFAULT_CONFIG.gravity).toBe(1);
+  it('DEFAULT_CONFIG should include gravity defaulting to 0 (0G)', () => {
+    expect(DEFAULT_CONFIG.gravity).toBe(0);
+  });
+
+  it('DEFAULT_CONFIG should include autoColor defaulting to true', () => {
+    expect(DEFAULT_CONFIG.autoColor).toBe(true);
   });
 
   it('DEFAULT_CONFIG should include subzero defaulting to false', () => {
@@ -57,7 +61,7 @@ describe('GameConfig gravity & subzero fields', () => {
     const json = JSON.stringify({
       version: 1,
       keybindings: DEFAULT_KEYBINDINGS,
-      config: { ...DEFAULT_CONFIG, gravity: 15, subzero: true },
+      config: { ...DEFAULT_CONFIG, gravity: 15, subzero: true, autoColor: true },
     });
     const result = importSettingsFromJson(json);
     expect(result).not.toBeNull();

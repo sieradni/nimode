@@ -47,6 +47,10 @@ export class EngineCore implements IEngineCore {
   updateConfig(config: GameConfig): void {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
+
+  isAutoColorEnabled(): boolean {
+    return this.config.autoColor;
+  }
   handleInput(input: InputEvent): void {
     if (isAnnotationEvent(input)) {
       this.state.annotations = reduceAnnotationEvent(this.state.annotations, input);

@@ -37,6 +37,18 @@ describe('GameConfigStore', () => {
     expect(store.getConfig()).toEqual(DEFAULT_CONFIG);
   });
 
+  it('should set autoColor and persist to localStorage', () => {
+    const store = new GameConfigStore();
+    store.setAutoColor(true);
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.autoColor).toBe(true);
+    expect(store.getConfig().autoColor).toBe(true);
+
+    const store2 = new GameConfigStore();
+    expect(store2.getConfig().autoColor).toBe(true);
+  });
+
   it('should set gravity and persist to localStorage', () => {
     const store = new GameConfigStore();
     store.setGravity(15);
@@ -59,6 +71,18 @@ describe('GameConfigStore', () => {
 
     const store2 = new GameConfigStore();
     expect(store2.getConfig().subzero).toBe(true);
+  });
+
+  it('should set autoColor and persist to localStorage', () => {
+    const store = new GameConfigStore();
+    store.setAutoColor(true);
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.autoColor).toBe(true);
+    expect(store.getConfig().autoColor).toBe(true);
+
+    const store2 = new GameConfigStore();
+    expect(store2.getConfig().autoColor).toBe(true);
   });
 
   it('should notify subscribers when gravity changes', () => {

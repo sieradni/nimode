@@ -40,15 +40,17 @@ export interface GameConfig {
   maxLockResets: number;
   gravity: number;
   subzero: boolean;
+  autoColor: boolean;
 }
 
 export const DEFAULT_CONFIG: GameConfig = {
   das: 133,
   arr: 33,
   sdf: 50,
-  sdfFactor: 20,
+  sdfFactor: 0,
   lockDelay: 500,
   maxLockResets: 15,
-  gravity: 1,
+  gravity: 0,
   subzero: false,
+  autoColor: true,
 };

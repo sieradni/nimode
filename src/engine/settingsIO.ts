@@ -14,7 +14,7 @@ const REQUIRED_ACTIONS: (keyof KeyBindings)[] = [
   'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'RESET', 'UNDO', 'REDO',
 ];
 
-type NumericConfigKey = Exclude<keyof GameConfig, 'subzero'>;
+type NumericConfigKey = Exclude<keyof GameConfig, 'subzero' | 'autoColor'>;
 const CONFIG_NUMERIC_KEYS: NumericConfigKey[] = [
   'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets', 'gravity',
 ];
@@ -62,6 +62,7 @@ function mergeConfig(imported: GameConfig): GameConfig {
     result[key] = imported[key];
   }
   result.subzero = imported.subzero;
+  result.autoColor = imported.autoColor;
   return result;
 }
 

@@ -16,7 +16,7 @@ export function createLockDelayState(): LockDelayState {
 
 export function stepLockDelay(
   state: LockDelayState,
-  config: Pick<GameConfig, 'lockDelay' | 'maxLockResets' | 'gravity' | 'subzero'>,
+  config: Pick<GameConfig, 'lockDelay' | 'maxLockResets' | 'gravity' | 'subzero' | 'autoColor'>,
   dt: number,
   grounded: boolean,
   activity: LockActivity,

@@ -53,7 +53,7 @@ describe('importSettingsFromJson', () => {
     const json = JSON.stringify({
       version: 1,
       keybindings: DEFAULT_KEYBINDINGS,
-      config: { ...DEFAULT_CONFIG, arr: 0 },
+      config: { ...DEFAULT_CONFIG, arr: 0, gravity: 15, subzero: true, autoColor: true },
     });
     importSettingsFromJson(json);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_CONFIG) ?? '{}');
@@ -84,7 +84,7 @@ describe('importSettingsFromJson', () => {
     };
     const customConfig: GameConfig = {
       das: 150, arr: 25, sdf: 60, sdfFactor: 15, lockDelay: 400, maxLockResets: 10,
-      gravity: 15, subzero: true,
+      gravity: 15, subzero: true, autoColor: true,
     };
     const json = JSON.stringify({
       version: 1, keybindings: customBindings, config: customConfig,

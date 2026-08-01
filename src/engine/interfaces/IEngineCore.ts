@@ -51,4 +51,5 @@ export interface IEngineCore {
   redo(): boolean;
   canUndo(): boolean;
   canRedo(): boolean;
+  isAutoColorEnabled(): boolean;
 }

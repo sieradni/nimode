@@ -62,6 +62,7 @@ function createMockEngine(): IEngineCore {
     redo: vi.fn().mockReturnValue(true),
     canUndo: vi.fn().mockReturnValue(true),
     canRedo: vi.fn().mockReturnValue(true),
+    isAutoColorEnabled: vi.fn().mockReturnValue(true),
   };
 }
 
