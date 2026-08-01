@@ -1,16 +1,38 @@
 import { BoardMatrix, ActivePiece, PIECE_COLORS, BOARD_WIDTH, VISIBLE_HEIGHT, VISIBLE_Y_OFFSET, BOARD_HEIGHT, AnnotationMatrix } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
 import { checkCollision } from '../engine/boardUtils';
+import {
+  BOARD_BACKGROUND, GHOST_COLOR, GHOST_LINE_WIDTH, GRID_COLOR, GRID_LINE_WIDTH,
+  CELL_BORDER_COLOR, CELL_BORDER_WIDTH, ANNOTATION_ALPHA, ANNOTATION_BORDER_COLOR,
+  ANNOTATION_BORDER_WIDTH, crisp,
+} from './renderConstants';
+import { resolveAnnotationColor } from './annotationColors';
 
 export interface RenderOptions {
   cellSize?: number;
+  /** Colour used for annotation cells that carry no recognised piece type. */
+  annotationColor?: string;
+}
+
+function drawCell(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  cellSize: number,
+  color: string,
+): void {
+  ctx.fillStyle = color;
+  ctx.fillRect(sx, sy, cellSize, cellSize);
+  ctx.strokeStyle = CELL_BORDER_COLOR;
+  ctx.lineWidth = CELL_BORDER_WIDTH;
+  ctx.strokeRect(crisp(sx), crisp(sy), cellSize - 1, cellSize - 1);
 }
 
 function drawPieceShape(
   ctx: CanvasRenderingContext2D,
   piece: ActivePiece,
   cellSize: number,
-  ghost: boolean
+  ghost: boolean,
 ): void {
   const matrix = getPieceMatrix(piece.type, piece.rotation);
   const color = PIECE_COLORS[piece.type] ?? '#888';
@@ -24,16 +46,14 @@ function drawPieceShape(
       if (sy < -cellSize || sy >= VISIBLE_HEIGHT * cellSize) continue;
 
       if (ghost) {
-        ctx.globalAlpha = 0.25;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sx, sy, cellSize, cellSize);
-        ctx.globalAlpha = 1;
+        // A thick white outline reads as a shadow without borrowing the
+        // piece's own colour.
+        ctx.strokeStyle = GHOST_COLOR;
+        ctx.lineWidth = GHOST_LINE_WIDTH;
+        const inset = GHOST_LINE_WIDTH / 2;
+        ctx.strokeRect(sx + inset, sy + inset, cellSize - GHOST_LINE_WIDTH, cellSize - GHOST_LINE_WIDTH);
       } else {
-        ctx.fillStyle = color;
-        ctx.fillRect(sx, sy, cellSize, cellSize);
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.strokeRect(sx, sy, cellSize, cellSize);
+        drawCell(ctx, sx, sy, cellSize, color);
       }
     }
   }
@@ -47,37 +67,55 @@ function computeGhostY(board: BoardMatrix, piece: ActivePiece): number {
   return y;
 }
 
+function drawGrid(ctx: CanvasRenderingContext2D, cellSize: number, width: number, height: number): void {
+  ctx.strokeStyle = GRID_COLOR;
+  ctx.lineWidth = GRID_LINE_WIDTH;
+  for (let x = 0; x <= BOARD_WIDTH; x++) {
+    const gx = crisp(x * cellSize);
+    ctx.beginPath();
+    ctx.moveTo(gx, 0);
+    ctx.lineTo(gx, height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= VISIBLE_HEIGHT; y++) {
+    const gy = crisp(y * cellSize);
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(width, gy);
+    ctx.stroke();
+  }
+}
+
 export function renderBoard(
   ctx: CanvasRenderingContext2D,
   board: BoardMatrix,
   activePiece: ActivePiece | null,
   annotations: AnnotationMatrix,
-  options: RenderOptions = {}
+  options: RenderOptions = {},
 ): void {
   const cellSize = options.cellSize ?? 30;
   const width = BOARD_WIDTH * cellSize;
   const height = VISIBLE_HEIGHT * cellSize;
 
-  ctx.fillStyle = '#1a1a2e';
+  ctx.fillStyle = BOARD_BACKGROUND;
   ctx.fillRect(0, 0, width, height);
 
-  // Render board cells
   for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
     const row = board[by];
     if (!row) continue;
     for (let bx = 0; bx < BOARD_WIDTH; bx++) {
       const cell = row[bx];
       if (!cell || cell === 0) continue;
-      const sx = bx * cellSize;
-      const sy = (by - VISIBLE_Y_OFFSET) * cellSize;
-      ctx.fillStyle = PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888';
-      ctx.fillRect(sx, sy, cellSize, cellSize);
-      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-      ctx.strokeRect(sx, sy, cellSize, cellSize);
+      drawCell(
+        ctx,
+        bx * cellSize,
+        (by - VISIBLE_Y_OFFSET) * cellSize,
+        cellSize,
+        PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888',
+      );
     }
   }
 
-  // Render annotations (visible portion only)
   for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
     const row = annotations[by];
     if (!row) continue;
@@ -86,13 +124,13 @@ export function renderBoard(
       if (!cell || cell === 0) continue;
       const sx = bx * cellSize;
       const sy = (by - VISIBLE_Y_OFFSET) * cellSize;
-      ctx.fillStyle = PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888';
-      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = resolveAnnotationColor(cell, options.annotationColor);
+      ctx.globalAlpha = ANNOTATION_ALPHA;
       ctx.fillRect(sx, sy, cellSize, cellSize);
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sx, sy, cellSize, cellSize);
+      ctx.strokeStyle = ANNOTATION_BORDER_COLOR;
+      ctx.lineWidth = ANNOTATION_BORDER_WIDTH;
+      ctx.strokeRect(crisp(sx), crisp(sy), cellSize - 1, cellSize - 1);
     }
   }
 
@@ -104,18 +142,5 @@ export function renderBoard(
     drawPieceShape(ctx, activePiece, cellSize, false);
   }
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x <= BOARD_WIDTH; x++) {
-    ctx.beginPath();
-    ctx.moveTo(x * cellSize, 0);
-    ctx.lineTo(x * cellSize, height);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= VISIBLE_HEIGHT; y++) {
-    ctx.beginPath();
-    ctx.moveTo(0, y * cellSize);
-    ctx.lineTo(width, y * cellSize);
-    ctx.stroke();
-  }
+  drawGrid(ctx, cellSize, width, height);
 }

@@ -1,6 +1,15 @@
 import { InputAction, KeyBindings, DEFAULT_KEYBINDINGS } from './types';
+import { eventToBindingCode } from './keybindingCodes';
 
 const STORAGE_KEY = 'nimode_keybindings';
+
+export interface ResolvableKeyEvent {
+  code: string;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
+}
 
 function loadFromStorage(): KeyBindings {
   try {
@@ -86,10 +95,24 @@ export class KeybindingsStore {
     saveToStorage(this.bindings);
   }
 
-  resolveAction(event: { code: string }): InputAction | null {
+  /**
+   * Resolves a key event to an action. Bindings are compared on their full
+   * modifier combination, so `Ctrl+Z` (undo) and a bare `Z` (rotate CCW) stay
+   * distinct rather than both firing.
+   */
+  resolveAction(event: ResolvableKeyEvent): InputAction | null {
+    const pressed = eventToBindingCode({
+      code: event.code,
+      ctrlKey: event.ctrlKey ?? false,
+      shiftKey: event.shiftKey ?? false,
+      altKey: event.altKey ?? false,
+      metaKey: event.metaKey ?? false,
+    });
+    if (pressed === null) return null;
+
     const entries = Object.entries(this.bindings) as [InputAction, string][];
-    for (const [action, code] of entries) {
-      if (code === event.code) {
+    for (const [action, binding] of entries) {
+      if (binding === pressed) {
         return action;
       }
     }

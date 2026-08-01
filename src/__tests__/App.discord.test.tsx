@@ -42,19 +42,21 @@ describe('App Discord integration', () => {
   it('shows connecting status before authentication resolves', () => {
     mockInit.mockReturnValue(new Promise<DiscordAuth>(() => {}));
     render(<App />);
-    expect(screen.getByText(/Connecting to Discord/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connecting/i)).toBeInTheDocument();
   });
 
   it('shows the connected user when authentication succeeds', async () => {
     mockInit.mockResolvedValue(AUTH);
     render(<App />);
-    expect(await screen.findByText(/Connected: user-123/i)).toBeInTheDocument();
+    expect(await screen.findByText(/user-123/i)).toBeInTheDocument();
   });
 
-  it('shows standalone mode and does not crash when authentication fails', async () => {
+  it('renders the board and no connection chrome when authentication fails', async () => {
     mockInit.mockRejectedValue(new Error('Not inside Discord iframe'));
     render(<App />);
-    expect(await screen.findByText(/Standalone mode/i)).toBeInTheDocument();
-    expect(screen.getByText(/Modern Tetris Engine Active/i)).toBeInTheDocument();
+    // Standalone mode is the minimal case: the board renders and the UI shows
+    // no connection banner at all (US-6.1).
+    expect(await screen.findByTestId('board-canvas')).toBeInTheDocument();
+    expect(screen.queryByText(/Connecting/i)).not.toBeInTheDocument();
   });
 });

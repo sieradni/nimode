@@ -1,6 +1,6 @@
 import { InputAction } from './types';
 import { InputEvent } from './interfaces/IEngineCore';
-import { keybindingsStore } from './keybindingsStore';
+import { keybindingsStore, ResolvableKeyEvent } from './keybindingsStore';
 
 const HELD_ACTIONS: InputAction[] = ['MOVE_LEFT', 'MOVE_RIGHT', 'SOFT_DROP'];
 
@@ -37,7 +37,7 @@ export function actionToInputEvent(action: InputAction, pressed: boolean): Input
   }
 }
 
-export type ResolveAction = (event: { code: string }) => InputAction | null;
+export type ResolveAction = (event: ResolvableKeyEvent) => InputAction | null;
 
 export interface KeyboardInputAdapterOptions {
   onInput: (event: InputEvent) => void;
@@ -74,6 +74,9 @@ export class KeyboardInputAdapter {
     if (!this.isEnabled()) return;
     const action = this.resolveAction(event);
     if (action === null) return;
+    // A bound key must not also trigger the browser's own shortcut
+    // (Ctrl+Z undo, Space scroll, arrow-key scrolling).
+    event.preventDefault();
     if (event.repeat && !isHeldAction(action)) return;
     const inputEvent = actionToInputEvent(action, pressed);
     if (inputEvent !== null) {

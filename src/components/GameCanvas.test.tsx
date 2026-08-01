@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../engine/types';
+import { MIN_CELL_SIZE } from './canvas/useBoardScale';
 import { renderBoard } from '../render/BoardRenderer';
 import { renderQueue, renderHold } from '../render/QueueHoldRenderer';
 import { GameCanvas } from './GameCanvas';
@@ -82,7 +83,7 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -98,14 +99,16 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
     );
+    // The board fits itself to its container; jsdom reports a zero-sized box,
+    // so it clamps to the minimum readable cell size.
     const canvas = screen.getByTestId('board-canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBe(BOARD_WIDTH * 30);
-    expect(canvas.height).toBe(VISIBLE_HEIGHT * 30);
+    expect(canvas.width).toBe(BOARD_WIDTH * MIN_CELL_SIZE);
+    expect(canvas.height).toBe(VISIBLE_HEIGHT * MIN_CELL_SIZE);
   });
 
   it('sizes the hold canvas to one 4x4 preview slot', () => {
@@ -114,7 +117,7 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -130,7 +133,7 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -147,13 +150,14 @@ describe('GameCanvas', () => {
         state={state}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledWith(mockCtx, state.board, state.activePiece, state.annotations, {
-      cellSize: 30,
+      cellSize: MIN_CELL_SIZE,
+      annotationColor: '#ffffff',
     });
   });
 
@@ -164,7 +168,7 @@ describe('GameCanvas', () => {
         state={state}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -179,7 +183,7 @@ describe('GameCanvas', () => {
         state={state}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -195,7 +199,7 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />
@@ -206,7 +210,7 @@ describe('GameCanvas', () => {
         state={createState()}
         engine={mockEngine}
         annotationTool="pen"
-        annotationPieceType={1}
+        annotationColor="#ffffff"
          autoColor={false}
          onReset={vi.fn()}
        />

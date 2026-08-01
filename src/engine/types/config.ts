@@ -12,18 +12,23 @@ export interface KeyBindings {
   REDO: string;
 }
 
+/**
+ * Standard Tetris layout: Z rotates counter-clockwise, X rotates clockwise and
+ * C holds. Undo/redo use the conventional Ctrl+Z / Ctrl+Y combinations.
+ * Binding values are canonical binding codes (see `keybindingCodes.ts`).
+ */
 export const DEFAULT_KEYBINDINGS: KeyBindings = {
   MOVE_LEFT: 'ArrowLeft',
   MOVE_RIGHT: 'ArrowRight',
   SOFT_DROP: 'ArrowDown',
-  HARD_DROP: 'ArrowUp',
-  ROTATE_CW: 'KeyC',
+  HARD_DROP: 'Space',
+  ROTATE_CW: 'KeyX',
   ROTATE_CCW: 'KeyZ',
   ROTATE_180: 'KeyV',
-  HOLD: 'KeyX',
+  HOLD: 'KeyC',
   RESET: 'KeyR',
-  UNDO: 'KeyU',
-  REDO: 'KeyY',
+  UNDO: 'Ctrl+KeyZ',
+  REDO: 'Ctrl+KeyY',
 };
 
 export interface GameConfig {

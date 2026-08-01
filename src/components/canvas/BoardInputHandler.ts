@@ -1,7 +1,10 @@
 import { RefObject, useState, useRef } from 'react';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
-import { VISIBLE_HEIGHT } from '../../engine/types';
 import { walkLineCells } from '../../utils/walkLineCells';
+import { getCanvasCoordinates, isRightButton, type BoardCoord } from './boardPointerTools';
+
+export { getCanvasCoordinates };
+export type { BoardCoord };
 
 export interface BoardInputCallbacks {
   onAnnotationPen?: (x: number, y: number, pieceType: number) => void;
@@ -19,36 +22,14 @@ export interface BoardInputCallbacks {
   isDrawing: boolean;
   onDrawingStart?: () => void;
   onDrawingEnd?: () => void;
+  /** Reports each cell painted by the current stroke, for stroke auto-color. */
+  onStrokeCell?: (x: number, y: number) => void;
+  cellSize?: number;
 }
 
-export interface BoardCoord {
-  x: number;
-  y: number;
-}
-
-export function getCanvasCoordinates(
-  canvas: HTMLCanvasElement,
-  e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
-): BoardCoord | null {
-  const rect = canvas.getBoundingClientRect();
-  let clientX: number;
-  let clientY: number;
-  const touches = 'touches' in e ? e.touches : undefined;
-  if (touches && touches.length > 0) {
-    const touch = touches[0];
-    if (!touch) return null;
-    clientX = touch.clientX;
-    clientY = touch.clientY;
-  } else if ('clientX' in e) {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  } else {
-    return null;
-  }
-  const x = Math.floor((clientX - rect.left) / BOARD_CELL_SIZE);
-  const y = Math.floor((clientY - rect.top) / BOARD_CELL_SIZE) + (40 - VISIBLE_HEIGHT);
-  return { x, y };
-}
+type PointerEvt =
+  | React.MouseEvent<HTMLCanvasElement>
+  | React.TouchEvent<HTMLCanvasElement>;
 
 export function useBoardInput(
   canvasRef: RefObject<HTMLCanvasElement>,
@@ -56,85 +37,93 @@ export function useBoardInput(
 ) {
   const [rectStart, setRectStart] = useState<BoardCoord | null>(null);
   const lastCell = useRef<BoardCoord | null>(null);
+  // Right-drag erases regardless of the selected tool; latched on press so the
+  // whole drag keeps erasing even though mousemove reports no button.
+  const erasing = useRef(false);
 
-  const handleMouseDown = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
-  ) => {
-    const { onAnnotationPen, onAnnotationErase, onAnnotationFloodErase, onAnnotationRectFill } = callbacks;
-    if (!onAnnotationPen && !onAnnotationErase && !onAnnotationFloodErase && !onAnnotationRectFill) return;
+  const cellSize = callbacks.cellSize ?? BOARD_CELL_SIZE;
+
+  const coordsOf = (e: PointerEvt): BoardCoord | null => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const coords = getCanvasCoordinates(canvas, e);
-    if (!coords) return;
-    lastCell.current = coords;
-
-    if (callbacks.annotationTool === 'pen' && onAnnotationPen) {
-      onAnnotationPen(coords.x, coords.y, callbacks.annotationPieceType);
-      callbacks.onDrawingStart?.();
-    } else if (callbacks.annotationTool === 'erase' && onAnnotationErase) {
-      onAnnotationErase(coords.x, coords.y);
-      callbacks.onDrawingStart?.();
-    } else if (callbacks.annotationTool === 'floodErase' && onAnnotationFloodErase) {
-      onAnnotationFloodErase(coords.x, coords.y);
-      callbacks.onDrawingStart?.();
-    } else if (callbacks.annotationTool === 'rect' && onAnnotationRectFill) {
-      setRectStart(coords);
-      callbacks.onDrawingStart?.();
-    }
+    if (!canvas) return null;
+    return getCanvasCoordinates(canvas, e, cellSize);
   };
 
-  const handleMouseMove = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
-  ) => {
+  const paint = (x: number, y: number) => {
+    callbacks.onAnnotationPen?.(x, y, callbacks.annotationPieceType);
+    callbacks.onStrokeCell?.(x, y);
+  };
+
+  const handleMouseDown = (e: PointerEvt) => {
+    const { onAnnotationPen, onAnnotationErase, onAnnotationFloodErase, onAnnotationRectFill } = callbacks;
+    if (!onAnnotationPen && !onAnnotationErase && !onAnnotationFloodErase && !onAnnotationRectFill) return;
+    const coords = coordsOf(e);
+    if (!coords) return;
+    lastCell.current = coords;
+    erasing.current = isRightButton(e);
+
+    if (erasing.current) {
+      onAnnotationErase?.(coords.x, coords.y);
+      callbacks.onDrawingStart?.();
+      return;
+    }
+
+    if (callbacks.annotationTool === 'pen' && onAnnotationPen) {
+      paint(coords.x, coords.y);
+    } else if (callbacks.annotationTool === 'erase' && onAnnotationErase) {
+      onAnnotationErase(coords.x, coords.y);
+    } else if (callbacks.annotationTool === 'floodErase' && onAnnotationFloodErase) {
+      onAnnotationFloodErase(coords.x, coords.y);
+    } else if (callbacks.annotationTool === 'rect' && onAnnotationRectFill) {
+      setRectStart(coords);
+    } else {
+      return;
+    }
+    callbacks.onDrawingStart?.();
+  };
+
+  const handleMouseMove = (e: PointerEvt) => {
     if (!callbacks.isDrawing || !lastCell.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const coords = getCanvasCoordinates(canvas, e);
+    const coords = coordsOf(e);
     if (!coords) return;
     const from = lastCell.current;
     const { annotationTool, annotationPieceType } = callbacks;
 
-    if (annotationTool === 'pen' && callbacks.onAnnotationPen) {
+    const eraseAlong = (fn: (x: number, y: number) => void) => {
       for (const [cx, cy] of walkLineCells(from.x, from.y, coords.x, coords.y)) {
-        callbacks.onAnnotationPen(cx, cy, annotationPieceType);
+        fn(cx, cy);
       }
+    };
+
+    if (erasing.current && callbacks.onAnnotationErase) {
+      eraseAlong(callbacks.onAnnotationErase);
+    } else if (annotationTool === 'pen' && callbacks.onAnnotationPen) {
+      eraseAlong(paint);
     } else if (annotationTool === 'erase' && callbacks.onAnnotationErase) {
-      for (const [cx, cy] of walkLineCells(from.x, from.y, coords.x, coords.y)) {
-        callbacks.onAnnotationErase(cx, cy);
-      }
+      eraseAlong(callbacks.onAnnotationErase);
     } else if (annotationTool === 'rect' && rectStart && callbacks.onAnnotationRectFill) {
-      callbacks.onAnnotationRectFill(
-        rectStart.x,
-        rectStart.y,
-        coords.x,
-        coords.y,
-        annotationPieceType,
-      );
+      callbacks.onAnnotationRectFill(rectStart.x, rectStart.y, coords.x, coords.y, annotationPieceType);
     }
     lastCell.current = coords;
   };
 
-  const handleMouseUp = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
-  ) => {
+  const handleMouseUp = (e: PointerEvt) => {
     if (!callbacks.isDrawing) return;
-    if (callbacks.annotationTool === 'rect' && rectStart && callbacks.onAnnotationRectFill) {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const coords = getCanvasCoordinates(canvas, e);
-        if (coords) {
-          callbacks.onAnnotationRectFill(
-            rectStart.x,
-            rectStart.y,
-            coords.x,
-            coords.y,
-            callbacks.annotationPieceType,
-          );
-        }
+    if (!erasing.current && callbacks.annotationTool === 'rect' && rectStart && callbacks.onAnnotationRectFill) {
+      const coords = coordsOf(e);
+      if (coords) {
+        callbacks.onAnnotationRectFill(
+          rectStart.x,
+          rectStart.y,
+          coords.x,
+          coords.y,
+          callbacks.annotationPieceType,
+        );
       }
       setRectStart(null);
     }
     lastCell.current = null;
+    erasing.current = false;
     callbacks.onDrawingEnd?.();
   };
 

@@ -54,6 +54,22 @@
 - **US-7.11:** As a player, I want to undo past top-outs, so I can recover from a game over and continue playing.
 - **US-7.12:** As a player, I want the annotation toolbar toggle to be shown on the side of the board rather than covering it, so the board remains visible when tools are open.
 - **US-7.13:** As a developer, I want all UI/UX fixes and quality-of-life improvements documented in the requirements specification.
+
+### Rotation, Controls & Annotation Corrections
+- **US-8.1:** As a player, I want the rotate-clockwise key to rotate pieces clockwise on screen and rotate-counter-clockwise to rotate them counter-clockwise, using the standard layout (`Z` = CCW, `X` = CW, `C` = Hold) so rotation matches muscle memory from other clients.
+- **US-8.2:** As a player, I want undo and redo bound to combination keys — `Ctrl+Z` and `Ctrl+Y` by default — and I want to be able to bind any action to a modifier combination, so control bindings are not restricted to single keys.
+- **US-8.3:** As a player, I want a bound key to suppress the browser's own shortcut for that combination, so `Ctrl+Z` undoes in-game rather than in the browser.
+- **US-8.4:** As a player, I want the right mouse button to erase annotations regardless of the selected tool, so erasing never requires switching tools.
+- **US-8.5:** As a player, I want auto-color to evaluate only the shape I just drew, so a piece drawn adjacent to an existing piece is still recognised instead of merging with its neighbour.
+- **US-8.6:** As a player, I want drawn cells to default to white and take their colour from a colour picker rather than a preset tetromino selector, so annotation colour is a free choice and not tied to piece identity.
+
+### Layout & Presentation Corrections
+- **US-9.1:** As a player, I want the upcoming queue positioned at the top right of the board, not below it, so it reads naturally alongside the playfield.
+- **US-9.2:** As a player, I want the statistics panel on the left of the board, so stats and queue are balanced on opposite sides.
+- **US-9.3:** As a player, I want no top navigation bar; any controls or status must float in their own corner of the view so the design stays minimal and nothing consumes vertical space.
+- **US-9.4:** As a player, I want the board and all rendered text and lines to appear crisp on high-DPI displays, so nothing looks blurry.
+- **US-9.5:** As a player, I want the ghost/landing indicator drawn as a thick white outline rather than a tinted copy of the piece colour, so it reads clearly as a shadow.
+- **US-9.6:** As a player, I want the playfield to resize to fit the actual viewport, so the board always fills the available space without clipping or scrolling.
 - **US-5.1:** As a developer, I want the rotation system to be modular so that ARS, Standard SRS, or Custom Rotation Systems can be selected in future updates.
 - **US-5.2:** As a developer, I want the bag system to be modular so that 14-Bag, Memoryless, or Custom Bag generators can be swapped cleanly.
 - **US-5.3:** As a developer, I want an event-driven stats system to calculate PPS, APM, KPP, Finesse, Quad/T-Spin counts, Attack, and Efficiency.
@@ -65,4 +81,6 @@
 2. **Performance:** Solid 60 FPS rendering on Canvas 2D with engine tick isolated from React re-render cycles.
 3. **Modularity Constraint:** No source code file shall exceed 150 lines of code.
 4. **Type Safety:** 100% strict TypeScript compliance with zero explicit or implicit `any` types.
-5. **UI Aesthetic:** The interface must be minimal, purely functional, and monochrome — no decorative elements, and chromatic color is reserved exclusively for tetromino representation.
+5. **UI Aesthetic:** The interface must be minimal, purely functional, and monochrome — no decorative elements, and chromatic color is reserved exclusively for tetromino representation. There is no persistent navigation chrome; controls and status float over the corners of the view.
+6. **Rendering Fidelity:** All canvases must size their backing store by `devicePixelRatio` and draw single-pixel strokes on half-pixel centres, so output is crisp at any display scale.
+7. **Responsive Viewport:** The playfield must scale to the available viewport rather than a fixed pixel size, and the app must never scroll.

@@ -85,16 +85,16 @@ describe('App keyboard wiring', () => {
 
   it('routes one-time actions only on keydown', () => {
     render(<App />);
-    dispatchKey('keydown', 'ArrowUp');
+    dispatchKey('keydown', 'Space');
     expect(mockHandleInput).toHaveBeenCalledWith({ type: 'HARD_DROP' });
     mockHandleInput.mockClear();
-    dispatchKey('keyup', 'ArrowUp');
+    dispatchKey('keyup', 'Space');
     expect(mockHandleInput).not.toHaveBeenCalled();
   });
 
    it('routes rotate actions via custom bindings', () => {
      render(<App />);
-     dispatchKey('keydown', 'KeyC');
+     dispatchKey('keydown', 'KeyX');
      expect(mockHandleInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
    });
 

@@ -4,6 +4,7 @@ import { EngineState } from '../../engine/interfaces/IEngineCore';
 import { renderBoard } from '../../render/BoardRenderer';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
 import { useBoardInput } from './BoardInputHandler';
+import { setupHiDpiCanvas } from './canvasScaling';
 
 export { BOARD_CELL_SIZE };
 export type { AnnotationTool };
@@ -16,9 +17,12 @@ interface GameBoardCanvasProps {
   onAnnotationRectFill?: (x1: number, y1: number, x2: number, y2: number, pieceType: number) => void;
   annotationTool?: AnnotationTool;
   annotationPieceType?: number;
+  annotationColor?: string;
   isDrawing?: boolean;
   onDrawingStart?: () => void;
   onDrawingEnd?: () => void;
+  onStrokeCell?: (x: number, y: number) => void;
+  cellSize?: number;
 }
 
 export function GameBoardCanvas({
@@ -29,9 +33,12 @@ export function GameBoardCanvas({
   onAnnotationRectFill,
   annotationTool = 'pen',
   annotationPieceType = 1,
+  annotationColor,
   isDrawing = false,
   onDrawingStart,
   onDrawingEnd,
+  onStrokeCell,
+  cellSize = BOARD_CELL_SIZE,
 }: GameBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useBoardInput(canvasRef, {
@@ -44,16 +51,23 @@ export function GameBoardCanvas({
     isDrawing,
     onDrawingStart,
     onDrawingEnd,
+    onStrokeCell,
+    cellSize,
   });
+
+  const width = BOARD_WIDTH * cellSize;
+  const height = VISIBLE_HEIGHT * cellSize;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = setupHiDpiCanvas(canvas, width, height);
     if (!ctx) return;
-    ctx.imageSmoothingEnabled = false;
-    renderBoard(ctx, state.board, state.activePiece, state.annotations, { cellSize: BOARD_CELL_SIZE });
-  }, [state]);
+    renderBoard(ctx, state.board, state.activePiece, state.annotations, {
+      cellSize,
+      annotationColor,
+    });
+  }, [state, cellSize, width, height, annotationColor]);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -72,13 +86,15 @@ export function GameBoardCanvas({
     <canvas
       ref={canvasRef}
       data-testid="board-canvas"
-      width={BOARD_WIDTH * BOARD_CELL_SIZE}
-      height={VISIBLE_HEIGHT * BOARD_CELL_SIZE}
+      width={width}
+      height={height}
       className="rounded-lg border border-slate-800 touch-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      // The right mouse button is the eraser, so suppress the browser menu.
+      onContextMenu={(e) => e.preventDefault()}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
