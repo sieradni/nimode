@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { PeerJSManager } from '../PeerJSManager';
 import type { PeerMetadata } from '../types';
 import type { SpectatorPayload } from '../../engine/types/instance';
+import { DEFAULT_GAME_STATS } from '../../engine/types';
 import { PresenceRoster } from '../PresenceRoster';
 
 function createMockPeerManager() {
@@ -43,7 +44,7 @@ function makePayload(overrides: Partial<SpectatorPayload> = {}): SpectatorPayloa
     hold: null,
     annotations: [],
     userPalette: ['#ffffff'],
-    stats: { pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 },
+    stats: { ...DEFAULT_GAME_STATS },
     ...overrides,
   };
 }
@@ -111,7 +112,7 @@ describe('PresenceRoster', () => {
     joined(makeMetadata({ userId: 'user-1', displayName: 'Alice' }));
 
     const data = getHandler(mockPeerManager, 'data');
-    data(makePayload({ userId: 'user-1', stats: { pps: 2.5, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 } }));
+    data(makePayload({ userId: 'user-1', stats: { ...DEFAULT_GAME_STATS, pps: 2.5 } }));
 
     const entries = roster.getEntries();
     expect(entries[0]!.pps).toBe(2.5);
@@ -188,7 +189,7 @@ describe('PresenceRoster', () => {
     const joined = getHandler(mockPeerManager, 'peerJoined');
     joined(makeMetadata({ userId: 'user-1', displayName: 'Alice' }));
     const data = getHandler(mockPeerManager, 'data');
-    data(makePayload({ userId: 'user-1', stats: { pps: 3.1, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 } }));
+    data(makePayload({ userId: 'user-1', stats: { ...DEFAULT_GAME_STATS, pps: 3.1 } }));
 
     const presence = getHandler(mockPeerManager, 'presence');
     presence(makeMetadata({ userId: 'user-1', displayName: 'Alice', isPrivate: true }));

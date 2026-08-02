@@ -1,4 +1,5 @@
 import { GameStats, PlayerStatsSnapshot } from './types';
+import { computeAttack } from './attackTable';
 
 export class StatsTracker {
   private piecesPlaced = 0;
@@ -26,25 +27,16 @@ export class StatsTracker {
       case 3: this.triples++; break;
       case 4: this.quads++; break;
     }
-    if (tSpin) this.tSpins++;
-    if (tSpinMini) this.tSpinMinis++;
-    let lineAttack = 0;
-    switch (linesCleared) {
-      case 1: lineAttack = 0; break;
-      case 2: lineAttack = 1; break;
-      case 3: lineAttack = 2; break;
-      case 4: lineAttack = 4; break;
+    if (tSpinMini) {
+      this.tSpinMinis++;
+    } else if (tSpin) {
+      this.tSpins++;
     }
-    if (tSpin) lineAttack += 1;
-    this.attack += lineAttack;
+    this.attack += computeAttack(linesCleared, tSpin, tSpinMini);
   }
 
   recordKeyPress(): void {
     this.keyPresses++;
-  }
-
-  recordFinesse(): void {
-    this.finesse++;
   }
 
   recordFinesseErrors(count: number): void {
@@ -77,10 +69,17 @@ export class StatsTracker {
       finesse: this.finesse,
       efficiency,
       attack: this.attack,
+      time: Math.floor(elapsedSec),
     };
   }
 
   getStatsSnapshot(): PlayerStatsSnapshot {
+    const elapsedSec = this.elapsedMs / 1000;
+    const elapsedMin = this.elapsedMs / 60000;
+    const pps = elapsedSec > 0 ? this.piecesPlaced / elapsedSec : 0;
+    const apm = elapsedMin > 0 ? this.attack / elapsedMin : 0;
+    const kpp = this.piecesPlaced > 0 ? this.keyPresses / this.piecesPlaced : 0;
+    const efficiency = this.piecesPlaced > 0 ? this.attack / this.piecesPlaced : 0;
     return {
       piecesPlaced: this.piecesPlaced,
       linesCleared: this.linesCleared,
@@ -90,12 +89,15 @@ export class StatsTracker {
       quads: this.quads,
       tSpins: this.tSpins,
       tSpinMinis: this.tSpinMinis,
-      pps: this.elapsedMs > 0 ? this.piecesPlaced / (this.elapsedMs / 1000) : 0,
-      apm: this.elapsedMs > 0 ? this.attack / (this.elapsedMs / 60000) : 0,
-      kpp: this.piecesPlaced > 0 ? this.keyPresses / this.piecesPlaced : 0,
+      keyPresses: this.keyPresses,
+      elapsedMs: this.elapsedMs,
       finesse: this.finesse,
-      efficiency: this.piecesPlaced > 0 ? this.attack / this.piecesPlaced : 0,
       attack: this.attack,
+      time: Math.floor(elapsedSec),
+      pps,
+      apm,
+      kpp,
+      efficiency,
     };
   }
 
@@ -108,10 +110,10 @@ export class StatsTracker {
     this.quads = snapshot.quads;
     this.tSpins = snapshot.tSpins;
     this.tSpinMinis = snapshot.tSpinMinis;
-    this.keyPresses = Math.round(snapshot.kpp * snapshot.piecesPlaced);
+    this.keyPresses = snapshot.keyPresses;
     this.finesse = snapshot.finesse;
     this.attack = snapshot.attack;
-    this.elapsedMs = snapshot.pps > 0 ? snapshot.piecesPlaced / snapshot.pps * 1000 : 0;
+    this.elapsedMs = snapshot.elapsedMs;
   }
 
   reset(): void {

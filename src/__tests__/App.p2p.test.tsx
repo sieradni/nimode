@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { DiscordAuth } from '../discord/types';
 import type { SpectatorPayload } from '../engine/types/instance';
+import { DEFAULT_GAME_STATS } from '../engine/types';
 import { instanceConfigStore } from '../p2p/InstanceConfigStore';
 
 const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers } =
@@ -80,7 +81,7 @@ function makePayload(): SpectatorPayload {
     hold: null,
     annotations: [],
     userPalette: ['#ffffff'],
-    stats: { pps: 3.2, apm: 40, kpp: 1.5, piecesPlaced: 10, linesCleared: 2 },
+    stats: { ...DEFAULT_GAME_STATS, pps: 3.2, apm: 40, kpp: 1.5, piecesPlaced: 10, linesCleared: 2 },
   };
 }
 

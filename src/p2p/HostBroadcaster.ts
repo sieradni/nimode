@@ -58,14 +58,8 @@ export class HostBroadcaster {
       queue: state.queue,
       hold: state.hold,
       annotations: state.annotations,
-      userPalette: state.userPalette,
-      stats: {
-        pps: state.stats.pps,
-        apm: state.stats.apm,
-        kpp: state.stats.kpp,
-        piecesPlaced: state.stats.piecesPlaced,
-        linesCleared: state.stats.linesCleared,
-      },
-    };
+       userPalette: state.userPalette,
+       stats: state.stats,
+     };
   }
 }

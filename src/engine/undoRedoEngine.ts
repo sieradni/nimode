@@ -1,4 +1,4 @@
-import { GameState } from './types';
+import { GameState, PlayerStatsSnapshot } from './types';
 import { BagState } from './interfaces/IBagRandomizer';
 import { LockDelayState } from './lockDelayEngine';
 
@@ -16,22 +16,7 @@ export interface StateSnapshot {
   bagState: BagState;
 }
 
-export interface PlayerStatsSnapshot {
-  pps: number;
-  apm: number;
-  kpp: number;
-  piecesPlaced: number;
-  linesCleared: number;
-  singles: number;
-  doubles: number;
-  triples: number;
-  quads: number;
-  tSpins: number;
-  tSpinMinis: number;
-  finesse: number;
-  efficiency: number;
-  attack: number;
-}
+export type { PlayerStatsSnapshot };
 
 export interface FullSnapshot {
   state: StateSnapshot;

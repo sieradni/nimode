@@ -39,6 +39,7 @@ function makeEngineState(overrides: Partial<EngineState> = {}): EngineState {
       finesse: 0,
       efficiency: 0,
       attack: 0,
+      time: 0,
     },
     gameOver: false,
     paused: false,
@@ -253,7 +254,7 @@ describe('HostBroadcaster', () => {
   });
 
   it('payload maps stats fields correctly', () => {
-    const engine = makeMockEngine(
+    const     engine = makeMockEngine(
       makeEngineState({
         stats: {
           piecesPlaced: 42,
@@ -270,6 +271,7 @@ describe('HostBroadcaster', () => {
           finesse: 0,
           efficiency: 0,
           attack: 0,
+          time: 5,
         },
       })
     );
@@ -291,6 +293,7 @@ describe('HostBroadcaster', () => {
     expect(call.stats.kpp).toBe(1.2);
     expect(call.stats.piecesPlaced).toBe(42);
     expect(call.stats.linesCleared).toBe(7);
+    expect(call.stats.time).toBe(5);
     broadcaster.stop();
   });
 

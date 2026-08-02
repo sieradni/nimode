@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderSpectatorState } from '../SpectatorRenderer';
 import type { InterpolatedState } from '../../p2p/SpectatorBuffer';
-import { PIECE_COLORS } from '../../engine/types';
+import { PIECE_COLORS, DEFAULT_GAME_STATS } from '../../engine/types';
 
 function createMockCtx() {
   const calls: Record<string, unknown[]> = {};
@@ -37,7 +37,7 @@ function makeEmptyState(overrides: Partial<InterpolatedState> = {}): Interpolate
     hold: null,
     annotations: [],
     userPalette: ['#ffffff'],
-    stats: { pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 },
+    stats: { ...DEFAULT_GAME_STATS },
     hasData: false,
     ...overrides,
   };
@@ -62,7 +62,7 @@ describe('SpectatorRenderer', () => {
       activePiece: { type: 6, x: 3, y: 36, r: 0 },
       queue: [1, 2],
       hold: 3,
-      stats: { pps: 1.5, apm: 25, kpp: 1.2, piecesPlaced: 42, linesCleared: 7 },
+      stats: { ...DEFAULT_GAME_STATS, pps: 1.5, apm: 25, kpp: 1.2, piecesPlaced: 42, linesCleared: 7 },
     });
     expect(() => renderSpectatorState(ctx, state)).not.toThrow();
   });

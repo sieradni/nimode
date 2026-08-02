@@ -1,43 +1,25 @@
 import { GameStats } from '../engine/types';
-
-interface StatRow {
-  label: string;
-  getValue: (stats: GameStats) => string;
-}
-
-const STAT_ROWS: StatRow[] = [
-  { label: 'PPS', getValue: (s) => s.pps.toFixed(2) },
-  { label: 'APM', getValue: (s) => s.apm.toFixed(2) },
-  { label: 'KPP', getValue: (s) => s.kpp.toFixed(2) },
-  { label: 'Lines', getValue: (s) => Math.round(s.linesCleared).toString() },
-  { label: 'Singles', getValue: (s) => Math.round(s.singles).toString() },
-  { label: 'Doubles', getValue: (s) => Math.round(s.doubles).toString() },
-  { label: 'Triples', getValue: (s) => Math.round(s.triples).toString() },
-  { label: 'Quads', getValue: (s) => Math.round(s.quads).toString() },
-  { label: 'T-Spins', getValue: (s) => Math.round(s.tSpins).toString() },
-  { label: 'T-Minis', getValue: (s) => Math.round(s.tSpinMinis).toString() },
-  { label: 'Attack', getValue: (s) => Math.round(s.attack).toString() },
-  { label: 'Finesse', getValue: (s) => s.finesse.toFixed(2) },
-];
+import { STAT_ROWS } from '../render/statsDisplay';
 
 interface StatsPanelProps {
   stats: GameStats;
-  /** Board cell size; the panel width tracks the flanking column width. */
-  cellSize: number;
+  cellSize?: number;
 }
 
-export function StatsPanel({ stats, cellSize }: StatsPanelProps) {
+function computeFontSize(cellSize: number): number {
+  return Math.max(8, Math.min(22, cellSize * 0.7));
+}
+
+export function StatsPanel({ stats, cellSize = 30 }: StatsPanelProps) {
+  const fontSize = computeFontSize(cellSize);
+
   return (
-    <div
-      className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-lg p-3"
-      style={{ width: `${cellSize * 4}px` }}
-    >
-      <h2 className="text-sm font-semibold mb-2 text-slate-400">STATS</h2>
+    <div data-testid="stats-panel" style={{ fontSize: `${fontSize}px` }}>
       <div className="space-y-1">
         {STAT_ROWS.map((row) => (
-          <div key={row.label} className="flex justify-between text-xs">
-            <span className="text-slate-400">{row.label}</span>
-            <span className="text-slate-200 font-mono">{row.getValue(stats)}</span>
+          <div key={row.label} className="flex justify-between">
+            <span className="truncate">{row.label}</span>
+            <span className="font-mono truncate ml-2">{row.getValue(stats)}</span>
           </div>
         ))}
       </div>

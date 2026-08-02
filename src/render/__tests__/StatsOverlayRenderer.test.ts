@@ -1,25 +1,25 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderStatsOverlay } from '../StatsOverlayRenderer';
-import { GameStats } from '../../engine/types';
+import { GameStats, DEFAULT_GAME_STATS } from '../../engine/types';
 
 const MOCK_STATS: GameStats = {
+  ...DEFAULT_GAME_STATS,
   piecesPlaced: 42,
-  linesCleared: 10,
-  singles: 4,
-  doubles: 3,
-  triples: 2,
-  quads: 1,
-  tSpins: 2,
-  tSpinMinis: 1,
   pps: 1.5,
   apm: 25.3,
   kpp: 0.8,
-  finesse: 0.95,
   efficiency: 0.45,
   attack: 15,
+  time: 125,
 };
 
-function createMockCtx() {
+type MockCtx = CanvasRenderingContext2D & {
+  fillRect: ReturnType<typeof vi.fn>;
+  strokeRect: ReturnType<typeof vi.fn>;
+  fillText: ReturnType<typeof vi.fn>;
+};
+
+function createMockCtx(): MockCtx {
   return {
     fillStyle: '',
     strokeStyle: '',
@@ -30,7 +30,7 @@ function createMockCtx() {
     fillRect: vi.fn(),
     strokeRect: vi.fn(),
     fillText: vi.fn(),
-  } as unknown as CanvasRenderingContext2D;
+  } as unknown as MockCtx;
 }
 
 describe('StatsOverlayRenderer', () => {
@@ -39,9 +39,46 @@ describe('StatsOverlayRenderer', () => {
     expect(() => renderStatsOverlay(ctx, MOCK_STATS, 400, 300)).not.toThrow();
   });
 
-  it('should draw text on the canvas', () => {
+  it('should render a panel with fillRect and strokeRect', () => {
     const ctx = createMockCtx();
     renderStatsOverlay(ctx, MOCK_STATS, 400, 300);
-    expect(ctx.fillText).toHaveBeenCalled();
+    expect(ctx.fillRect).toHaveBeenCalledTimes(1);
+    expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render stat rows with labels and values', () => {
+    const ctx = createMockCtx();
+    renderStatsOverlay(ctx, MOCK_STATS, 400, 300);
+    const texts = ctx.fillText.mock.calls.map((call: unknown[]) => call[0] as string);
+
+    expect(texts).toContain('PPS:');
+    expect(texts).toContain('APM:');
+    expect(texts).toContain('KPP:');
+    expect(texts).toContain('APP:');
+    expect(texts).toContain('TIME:');
+    expect(texts).toContain('Pieces:');
+    expect(texts).toContain('Finesse:');
+  });
+
+  it('should not render old removed stats', () => {
+    const ctx = createMockCtx();
+    renderStatsOverlay(ctx, MOCK_STATS, 400, 300);
+    const texts = ctx.fillText.mock.calls.map((call: unknown[]) => call[0] as string);
+
+    expect(texts).not.toContain('Lines:');
+    expect(texts).not.toContain('Singles:');
+    expect(texts).not.toContain('Doubles:');
+    expect(texts).not.toContain('Triples:');
+    expect(texts).not.toContain('Quads:');
+    expect(texts).not.toContain('T-Spins:');
+    expect(texts).not.toContain('T-Minis:');
+    expect(texts).not.toContain('Attack:');
+  });
+
+  it('should render time value as formatted MM:SS', () => {
+    const ctx = createMockCtx();
+    renderStatsOverlay(ctx, MOCK_STATS, 400, 300);
+    const valueTexts = ctx.fillText.mock.calls.map((call: unknown[]) => call[0] as string);
+    expect(valueTexts).toContain('2:05');
   });
 });

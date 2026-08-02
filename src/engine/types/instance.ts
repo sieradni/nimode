@@ -1,3 +1,5 @@
+import { GameStats } from './stats';
+
 export interface InstanceConfig {
   isPrivate: boolean;
 }
@@ -14,11 +16,5 @@ export interface SpectatorPayload {
   hold: number | null;
   annotations: number[][];
   userPalette: string[];
-  stats: {
-    pps: number;
-    apm: number;
-    kpp: number;
-    piecesPlaced: number;
-    linesCleared: number;
-  };
+  stats: GameStats;
 }

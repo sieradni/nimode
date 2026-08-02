@@ -1,4 +1,5 @@
 import type { SpectatorPayload } from '../engine/types/instance';
+import { GameStats, DEFAULT_GAME_STATS } from '../engine/types';
 
 export const INTERPOLATION_DELAY_MS = 20;
 export const MAX_SNAPSHOTS = 128;
@@ -16,12 +17,8 @@ export interface InterpolatedState {
   hold: number | null;
   annotations: number[][];
   userPalette: string[];
-  stats: SpectatorPayload['stats'];
+  stats: GameStats;
   hasData: boolean;
-}
-
-function emptyStats(): SpectatorPayload['stats'] {
-  return { pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 };
 }
 
 function toInterpolatedState(payload: SpectatorPayload): InterpolatedState {
@@ -87,7 +84,7 @@ export class SpectatorBuffer {
         hold: null,
         annotations: [],
         userPalette: [],
-        stats: emptyStats(),
+        stats: { ...DEFAULT_GAME_STATS },
         hasData: false,
       };
     }

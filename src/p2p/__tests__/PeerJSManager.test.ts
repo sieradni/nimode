@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { DataConnection, Peer } from 'peerjs';
 import type { PeerMetadata } from '../types';
 import type { SpectatorPayload } from '../../engine/types/instance';
+import { DEFAULT_GAME_STATS } from '../../engine/types';
 import { PeerJSManager } from '../PeerJSManager';
 
 type MockConn = DataConnection & {
@@ -62,7 +63,7 @@ function makePayload(overrides: Partial<SpectatorPayload> = {}): SpectatorPayloa
     hold: null,
     annotations: [],
     userPalette: ['#ffffff'],
-    stats: { pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 },
+    stats: { ...DEFAULT_GAME_STATS },
     ...overrides,
   };
 }

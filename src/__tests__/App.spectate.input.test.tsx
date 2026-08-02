@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { EngineState } from '../engine/interfaces/IEngineCore';
+import { DEFAULT_GAME_STATS } from '../engine/types';
 
 const { mockHandleInput } = vi.hoisted(() => ({
   mockHandleInput: vi.fn(),
@@ -19,22 +20,7 @@ function createState(): EngineState {
     queue: [1, 2, 3, 4, 5, 6],
     hold: 7,
     canHold: true,
-    stats: {
-      piecesPlaced: 0,
-      linesCleared: 0,
-      singles: 0,
-      doubles: 0,
-      triples: 0,
-      quads: 0,
-      tSpins: 0,
-      tSpinMinis: 0,
-      pps: 0,
-      apm: 0,
-      kpp: 0,
-      finesse: 0,
-      efficiency: 0,
-      attack: 0,
-    },
+    stats: { ...DEFAULT_GAME_STATS },
     gameOver: false,
     paused: false,
     annotations,

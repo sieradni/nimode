@@ -38,9 +38,12 @@ function createMockStatsSnapshot(overrides: Partial<PlayerStatsSnapshot> = {}): 
     quads: 0,
     tSpins: 0,
     tSpinMinis: 0,
+    keyPresses: 5,
+    elapsedMs: 5000,
     finesse: 0.5,
-    efficiency: 0.5,
     attack: 5,
+    time: 5,
+    efficiency: 0.5,
     ...overrides,
   };
 }
