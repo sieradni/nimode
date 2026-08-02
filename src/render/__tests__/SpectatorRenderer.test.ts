@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderSpectatorState } from '../SpectatorRenderer';
 import type { InterpolatedState } from '../../p2p/SpectatorBuffer';
+import { PIECE_COLORS } from '../../engine/types';
 
 function createMockCtx() {
   const calls: Record<string, unknown[]> = {};
@@ -69,8 +70,10 @@ describe('SpectatorRenderer', () => {
   it('renders annotations on top of the board (verify fillRect called for annotation positions)', () => {
     const ctx = createMockCtx();
     const annotations = makeBoardMatrix();
-    annotations[20]![0] = 1;
-    annotations[25]![5] = 2;
+    const iPieceCell = 1;
+    const jPieceCell = 2;
+    annotations[20]![0] = iPieceCell;
+    annotations[25]![5] = jPieceCell;
     const state = makeEmptyState({
       hasData: true,
       matrix: makeBoardMatrix(),
@@ -78,12 +81,12 @@ describe('SpectatorRenderer', () => {
     });
     renderSpectatorState(ctx, state, { boardCellSize: 30 });
     const calls = ctx.calls;
-    const cyanCalls = (calls.fillRect as unknown[])
-      .filter((c) => (c as Record<string, unknown>).fillStyle === '#00f0f0');
-    const blueCalls = (calls.fillRect as unknown[])
-      .filter((c) => (c as Record<string, unknown>).fillStyle === '#0000f0');
-    expect(cyanCalls.length).toBeGreaterThanOrEqual(1);
-    expect(blueCalls.length).toBeGreaterThanOrEqual(1);
+    const iPieceCalls = (calls.fillRect as unknown[])
+      .filter((c) => (c as Record<string, unknown>).fillStyle === PIECE_COLORS[iPieceCell]);
+    const jPieceCalls = (calls.fillRect as unknown[])
+      .filter((c) => (c as Record<string, unknown>).fillStyle === PIECE_COLORS[jPieceCell]);
+    expect(iPieceCalls.length).toBeGreaterThanOrEqual(1);
+    expect(jPieceCalls.length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders without active piece (null) without throwing', () => {
