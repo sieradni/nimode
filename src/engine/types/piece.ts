@@ -15,13 +15,13 @@ export const PIECE_NAMES: Record<PieceType, string> = {
 
 export const PIECE_COLORS: Record<PieceType, string> = {
   0: '#000000',
-  1: '#00f0f0',
-  2: '#0000f0',
-  3: '#f0a000',
-  4: '#f0f000',
-  5: '#00f000',
-  6: '#a000f0',
-  7: '#f00000',
+  1: '#47efef',
+  2: '#1d2bea',
+  3: '#f5a42a',
+  4: '#f6eb29',
+  5: '#5be43f',
+  6: '#982dea',
+  7: '#eb3a3a',
 };
 
 export interface PieceState {
