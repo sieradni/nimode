@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { InputHandler } from '../inputHandler';
-import { DEFAULT_CONFIG, GameConfig } from '../types';
+import { DEFAULT_CONFIG, GameConfig, MAX_SOFT_DROP_FACTOR } from '../types';
 
 const CONFIG: GameConfig = { ...DEFAULT_CONFIG, das: 133, arr: 33, sdf: 50 };
 
@@ -110,25 +110,75 @@ describe('InputHandler movement (DAS/ARR/SDF)', () => {
     expect(onMove).toHaveBeenCalledTimes(3);
   });
 
-  it('soft drop repeats at the sdf rate and accelerates by sdfFactor', () => {
+  it('soft drop repeats at the sdf rate scaled by sdfFactor', () => {
     const handler = new InputHandler();
-    const onMove = vi.fn();
+    const onMove = vi.fn().mockReturnValue(true);
 
     handler.handleInput({ type: 'SOFT_DROP', pressed: true });
-    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 1, onMove);
-    expect(onMove).toHaveBeenCalledTimes(1);
+    // sdf=100, factor=10 → one cell per 10ms
+    const cfg = { ...CONFIG, sdf: 100, sdfFactor: 10 };
+    handler.updateMovement(cfg, 1, onMove);
+    expect(onMove).toHaveBeenCalledTimes(1); // immediate first cell
 
-    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 50, onMove);
+    handler.updateMovement(cfg, 10, onMove);
     expect(onMove).toHaveBeenCalledTimes(2);
 
-    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 20, onMove);
-    expect(onMove).toHaveBeenCalledTimes(2);
-
-    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 10, onMove);
-    expect(onMove).toHaveBeenCalledTimes(3);
+    handler.updateMovement(cfg, 40, onMove);
+    expect(onMove).toHaveBeenCalledTimes(6); // 4 more cells in 40ms
 
     const downMoves = onMove.mock.calls.filter(([, dy]) => dy === 1);
-    expect(downMoves).toHaveLength(3);
+    expect(downMoves).toHaveLength(6);
+  });
+
+  it('soft drop speed is consistent regardless of hold duration (no acceleration)', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn().mockReturnValue(true);
+
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    // 10ms per cell; every 20ms tick must produce exactly 2 cells, every time.
+    const cfg = { ...CONFIG, sdf: 100, sdfFactor: 10 };
+    handler.updateMovement(cfg, 1, onMove);
+    expect(onMove).toHaveBeenCalledTimes(1);
+
+    const cellsPer20msTick = (): number => {
+      const before = onMove.mock.calls.length;
+      handler.updateMovement(cfg, 20, onMove);
+      return onMove.mock.calls.length - before;
+    };
+    expect(cellsPer20msTick()).toBe(2);
+    expect(cellsPer20msTick()).toBe(2);
+    expect(cellsPer20msTick()).toBe(2);
+  });
+
+  it('soft drop repeats multiple cells per tick for high factors (not tick-rate limited)', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn().mockReturnValue(true);
+
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    // sdf=50, factor=20 → 2.5ms/cell: a single 50ms tick drops 20 cells.
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: 20 }, 50, onMove);
+
+    const downMoves = onMove.mock.calls.filter(([, dy]) => dy === 1);
+    expect(downMoves.length).toBeGreaterThan(10);
+  });
+
+  it('max sdfFactor drops the piece to its landing position in one step (infinite soft drop)', () => {
+    const handler = new InputHandler();
+    const onMove = vi
+      .fn()
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false); // blocked after 5 rows
+
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: MAX_SOFT_DROP_FACTOR }, 16.67, onMove);
+
+    expect(onMove).toHaveBeenCalledTimes(6);
+    const downMoves = onMove.mock.calls.filter(([, dy]) => dy === 1);
+    expect(downMoves).toHaveLength(6);
   });
 
   it('resets the immediate move on release', () => {
@@ -173,5 +223,57 @@ describe('InputHandler one-time inputs (CLEAR_HOLD)', () => {
     handler.reset();
 
     expect(handler.consumeOneTimeInputs().clearHold).toBe(false);
+  });
+});
+
+describe('InputHandler key press counting (KPP)', () => {
+  it('counts each press transition and one-time action exactly once', () => {
+    const handler = new InputHandler();
+
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true }); // OS repeat
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    handler.handleInput({ type: 'SOFT_DROP', pressed: false }); // release
+    handler.handleInput({ type: 'ROTATE_CW' });
+    handler.handleInput({ type: 'HARD_DROP' });
+
+    expect(handler.consumeKeyPressCount()).toBe(4);
+    expect(handler.consumeKeyPressCount()).toBe(0);
+  });
+
+  it('counts a held DAS key as one press, not one per auto-repeated cell', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn().mockReturnValue(true);
+
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    for (let i = 0; i < 10; i++) {
+      handler.updateMovement({ ...CONFIG, das: 50, arr: 10 }, 50, onMove);
+    }
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: false });
+
+    expect(onMove.mock.calls.length).toBeGreaterThan(5); // DAS/ARR moved it
+    expect(handler.consumeKeyPressCount()).toBe(1);
+  });
+
+  it('counts one soft drop press even though it drops many cells', () => {
+    const handler = new InputHandler();
+    let fell = 0;
+    const onMove = vi.fn((_dx: number, dy: number) => {
+      if (dy === 1) fell++;
+      return fell < 20; // blocked once the piece has fallen 20 rows
+    });
+
+    handler.handleInput({ type: 'SOFT_DROP', pressed: true });
+    handler.updateMovement({ ...CONFIG, sdf: 50, sdfFactor: MAX_SOFT_DROP_FACTOR }, 16.67, onMove);
+
+    expect(fell).toBe(20); // infinite soft drop fell the whole distance
+    expect(handler.consumeKeyPressCount()).toBe(1);
+  });
+
+  it('reset() clears pending key presses', () => {
+    const handler = new InputHandler();
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    handler.reset();
+    expect(handler.consumeKeyPressCount()).toBe(0);
   });
 });

@@ -36,7 +36,15 @@ export const DEFAULT_KEYBINDINGS: KeyBindings = {
 export interface GameConfig {
   das: number;
   arr: number;
+  /**
+   * Base soft drop delay in milliseconds per cell (the "1x" soft drop speed).
+   */
   sdf: number;
+  /**
+   * Soft drop factor: a multiplier on the base soft drop speed. Soft drop runs
+   * at a consistent speed (delay = sdf / max(sdfFactor, 1)) for the whole hold,
+   * and at the max factor the piece drops instantly to its landing position.
+   */
   sdfFactor: number;
   lockDelay: number;
   maxLockResets: number;
@@ -45,6 +53,13 @@ export interface GameConfig {
   autoColor: boolean;
   spawnOffset: number;
 }
+
+/**
+ * The maximum soft drop factor. At this value soft drop becomes infinite:
+ * the piece drops instantly to its landing position, matching TETR.IO's ∞ SDF
+ * ("sonic drop"). The settings slider shares this bound so the max = infinite.
+ */
+export const MAX_SOFT_DROP_FACTOR = 100;
 
 export const DEFAULT_CONFIG: GameConfig = {
   das: 133,

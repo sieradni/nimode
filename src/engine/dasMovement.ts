@@ -1,4 +1,4 @@
-import { GameConfig, InputState } from './types';
+import { GameConfig, InputState, MAX_SOFT_DROP_FACTOR } from './types';
 import { BOARD_WIDTH } from './types/board';
 
 export interface DASArrTimers {
@@ -14,7 +14,6 @@ export interface DASMovementState {
   initialLeft: boolean;
   initialRight: boolean;
   initialDown: boolean;
-  softDropSteps: number;
 }
 
 export function createInitialMovementState(): DASMovementState {
@@ -23,12 +22,11 @@ export function createInitialMovementState(): DASMovementState {
     initialLeft: false,
     initialRight: false,
     initialDown: false,
-    softDropSteps: 0,
   };
 }
 
-function softDropDelay(sdf: number, sdfFactor: number, steps: number): number {
-  return Math.max(sdf - sdfFactor * steps, 1);
+function softDropDelay(sdf: number, sdfFactor: number): number {
+  return sdf / Math.max(sdfFactor, 1);
 }
 
 export function updateDASMovement(
@@ -77,17 +75,25 @@ export function updateDASMovement(
   }
 
   if (inputState.down) {
+    if (config.sdfFactor >= MAX_SOFT_DROP_FACTOR) {
+      // Infinite soft drop (TETR.IO ∞ SDF / "sonic drop"): the piece drops
+      // straight to its landing position in one tick, not limited by the
+      // tick rate. It then locks through the normal lock delay.
+      while (onMove(0, 1)) {
+        // falling until the piece lands
+      }
+      state.timers.dasDown = 0;
+      return;
+    }
     if (state.initialDown) {
       onMove(0, 1);
       state.initialDown = false;
-      state.softDropSteps = 0;
     }
     state.timers.dasDown += dt;
-    const delay = softDropDelay(config.sdf, config.sdfFactor, state.softDropSteps);
-    if (state.timers.dasDown >= delay) {
-      onMove(0, 1);
-      state.softDropSteps++;
-      state.timers.dasDown = 0;
+    const delay = softDropDelay(config.sdf, config.sdfFactor);
+    while (state.timers.dasDown >= delay) {
+      if (!onMove(0, 1)) break;
+      state.timers.dasDown -= delay;
     }
   }
 }

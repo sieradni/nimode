@@ -5,11 +5,15 @@ import { DASMovementState, createInitialMovementState, updateDASMovement } from 
 export class InputHandler {
   private inputState: InputState = { ...EMPTY_INPUT_STATE };
   private movement: DASMovementState = createInitialMovementState();
+  private pendingKeyPresses = 0;
 
   handleInput(input: InputEvent): void {
     switch (input.type) {
       case 'MOVE_LEFT':
-        if (input.pressed && !this.inputState.left) this.movement.initialLeft = true;
+        if (input.pressed && !this.inputState.left) {
+          this.movement.initialLeft = true;
+          this.pendingKeyPresses++;
+        }
         this.inputState.left = input.pressed;
         if (!input.pressed) {
           this.movement.timers.dasLeft = 0;
@@ -18,7 +22,10 @@ export class InputHandler {
         }
         break;
       case 'MOVE_RIGHT':
-        if (input.pressed && !this.inputState.right) this.movement.initialRight = true;
+        if (input.pressed && !this.inputState.right) {
+          this.movement.initialRight = true;
+          this.pendingKeyPresses++;
+        }
         this.inputState.right = input.pressed;
         if (!input.pressed) {
           this.movement.timers.dasRight = 0;
@@ -27,42 +34,56 @@ export class InputHandler {
         }
         break;
       case 'SOFT_DROP':
-        if (input.pressed && !this.inputState.down) this.movement.initialDown = true;
+        if (input.pressed && !this.inputState.down) {
+          this.movement.initialDown = true;
+          this.pendingKeyPresses++;
+        }
         this.inputState.down = input.pressed;
         if (!input.pressed) {
           this.movement.timers.dasDown = 0;
           this.movement.initialDown = false;
-          this.movement.softDropSteps = 0;
         }
         break;
       case 'HARD_DROP':
-        this.inputState.hardDrop = true;
+        this.inputState.hardDrop = true; this.pendingKeyPresses++;
         break;
       case 'ROTATE_CW':
-        this.inputState.cw = true;
+        this.inputState.cw = true; this.pendingKeyPresses++;
         break;
       case 'ROTATE_CCW':
-        this.inputState.ccw = true;
+        this.inputState.ccw = true; this.pendingKeyPresses++;
         break;
       case 'ROTATE_180':
-        this.inputState.rotate180 = true;
+        this.inputState.rotate180 = true; this.pendingKeyPresses++;
         break;
       case 'HOLD':
-        this.inputState.hold = true;
+        this.inputState.hold = true; this.pendingKeyPresses++;
         break;
       case 'CLEAR_HOLD':
-        this.inputState.clearHold = true;
+        this.inputState.clearHold = true; this.pendingKeyPresses++;
         break;
       case 'RESET':
-        this.inputState.reset = true;
+        this.inputState.reset = true; this.pendingKeyPresses++;
         break;
       case 'UNDO':
-        this.inputState.undo = true;
+        this.inputState.undo = true; this.pendingKeyPresses++;
         break;
       case 'REDO':
-        this.inputState.redo = true;
+        this.inputState.redo = true; this.pendingKeyPresses++;
         break;
     }
+  }
+
+  /**
+   * Returns how many distinct physical inputs were received since the last
+   * call. OS key-repeat, held-key auto-repeat (DAS/ARR) and key releases do
+   * not count; each press transition and one-time action counts exactly once,
+   * regardless of how many cells that input moves the piece.
+   */
+  consumeKeyPressCount(): number {
+    const count = this.pendingKeyPresses;
+    this.pendingKeyPresses = 0;
+    return count;
   }
 
   getInputState(): InputState {
@@ -116,5 +137,6 @@ export class InputHandler {
   reset(): void {
     this.inputState = { ...EMPTY_INPUT_STATE };
     this.movement = createInitialMovementState();
+    this.pendingKeyPresses = 0;
   }
 }

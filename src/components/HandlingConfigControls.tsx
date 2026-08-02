@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameConfigStore } from '../engine/configStore';
+import { MAX_SOFT_DROP_FACTOR } from '../engine/types';
 
 interface HandlingConfigControlsProps {
     store: GameConfigStore;
@@ -33,7 +34,7 @@ export function HandlingConfigControls({ store }: HandlingConfigControlsProps) {
 
     const handleSDFFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseInt(e.target.value, 10);
-        if (!Number.isNaN(value) && value >= 0 && value <= 100) {
+        if (!Number.isNaN(value) && value >= 0 && value <= MAX_SOFT_DROP_FACTOR) {
             store.setSdfFactor(value);
         }
     };
@@ -96,13 +97,14 @@ export function HandlingConfigControls({ store }: HandlingConfigControlsProps) {
 
             <div>
                 <label className="block text-xs text-slate-300 mb-1">
-                    SDF Factor (Soft Drop Acceleration): {config.sdfFactor}
+                    Soft Drop Factor (higher = faster, max = instant):{' '}
+                    {config.sdfFactor >= MAX_SOFT_DROP_FACTOR ? '∞' : `${config.sdfFactor}x`}
                 </label>
                 <div className="flex gap-4 items-center">
                     <input
                         type="range"
                         min={0}
-                        max={100}
+                        max={MAX_SOFT_DROP_FACTOR}
                         value={config.sdfFactor}
                         onChange={handleSDFFactorChange}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500"
@@ -111,13 +113,17 @@ export function HandlingConfigControls({ store }: HandlingConfigControlsProps) {
                     <input
                         type="number"
                         min={0}
-                        max={100}
+                        max={MAX_SOFT_DROP_FACTOR}
                         value={config.sdfFactor}
                         onChange={handleSDFFactorChange}
                         className="w-20 px-2 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200"
                         aria-label="SDF Factor value"
                     />
                 </div>
+                <p className="text-xs text-slate-500 mt-1">
+                    Soft drop runs at a consistent speed for the whole hold. At the
+                    max factor the piece drops instantly to its landing position.
+                </p>
             </div>
         </div>
     );

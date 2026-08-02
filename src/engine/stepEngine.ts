@@ -42,30 +42,32 @@ export function runFixedTick(
     const success = movePiece(state, dx, dy);
     if (success) {
       moved = true;
-      callbacks.onKeyPress();
     }
     return success;
   });
 
   const actions = inputHandler.consumeOneTimeInputs();
+  const keyPresses = inputHandler.consumeKeyPressCount();
+  for (let i = 0; i < keyPresses; i++) {
+    callbacks.onKeyPress();
+  }
 
   if (actions.reset) {
     callbacks.onReset();
     return { lockDelayState: createLockDelayState(), gravityTimer: 0 };
   }
   if (state.gameOver) {
-    if (actions.undo) { callbacks.onUndo(); callbacks.onKeyPress(); }
-    if (actions.redo) { callbacks.onRedo(); callbacks.onKeyPress(); }
+    if (actions.undo) { callbacks.onUndo(); }
+    if (actions.redo) { callbacks.onRedo(); }
     return { lockDelayState, gravityTimer };
   }
-  if (actions.undo) { callbacks.onUndo(); callbacks.onKeyPress(); }
-  if (actions.redo) { callbacks.onRedo(); callbacks.onKeyPress(); }
-  if (actions.cw) { rotated = callbacks.rotate(1) || rotated; callbacks.onKeyPress(); }
-  if (actions.ccw) { rotated = callbacks.rotate(-1) || rotated; callbacks.onKeyPress(); }
-  if (actions.rotate180) { rotated = callbacks.rotate(2) || rotated; callbacks.onKeyPress(); }
+  if (actions.undo) { callbacks.onUndo(); }
+  if (actions.redo) { callbacks.onRedo(); }
+  if (actions.cw) { rotated = callbacks.rotate(1) || rotated; }
+  if (actions.ccw) { rotated = callbacks.rotate(-1) || rotated; }
+  if (actions.rotate180) { rotated = callbacks.rotate(2) || rotated; }
   if (actions.hold) {
     holdPiece(state, bagRandomizer, rotationSystem, config);
-    callbacks.onKeyPress();
     callbacks.onHold();
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
@@ -73,13 +75,11 @@ export function runFixedTick(
   if (actions.clearHold) {
     if (state.queue.hold !== null) {
       state.queue.hold = null;
-      callbacks.onKeyPress();
       callbacks.onClearHold();
     }
   }
   if (actions.hardDrop) {
     const lockedPiece = state.activePiece ? { ...state.activePiece } : null;
-    callbacks.onKeyPress();
     callbacks.onLock(hardDrop(state, bagRandomizer, rotationSystem), lockedPiece);
     lockDelayState = createLockDelayState();
     gravityTimer = 0;
