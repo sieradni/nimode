@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { GameState } from '../types';
 import { PlayerStatsSnapshot } from '../undoRedoEngine';
-import { saveSnapshot, restoreSnapshot } from '../engineUndoRedo';
+import { createStateSnapshot } from '../undoRedoEngine';
+import { restoreSnapshot } from '../engineUndoRedo';
 import { PlayerStats } from '../playerStats';
 import { LockDelayState, createLockDelayState } from '../lockDelayEngine';
 import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
@@ -43,8 +44,8 @@ function createMockStatsSnapshot(overrides: Partial<PlayerStatsSnapshot> = {}): 
   };
 }
 
-function createMockLockDelayState(): LockDelayState {
-  return createLockDelayState();
+function createMockLockDelayState(overrides: Partial<LockDelayState> = {}): LockDelayState {
+  return { ...createLockDelayState(), ...overrides };
 }
 
 function createBagState(randomizer: SevenBagRandomizer) {
@@ -54,49 +55,48 @@ function createBagState(randomizer: SevenBagRandomizer) {
 describe('engineUndoRedo', () => {
   it('should create snapshot from game state', () => {
     const state = createMockGameState();
-    const stats = createMockStatsSnapshot();
-    const lockDelay = createMockLockDelayState();
+    const lockDelay = createMockLockDelayState({ grounded: true, timer: 42, resets: 3 });
     const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(state, stats, 100, lockDelay, bagState);
+    const snapshot = createStateSnapshot(state, 100, lockDelay, bagState);
 
-    expect(snapshot.state.board.length).toBe(40);
-    expect(snapshot.state.activePiece).not.toBeNull();
-    expect(snapshot.state.activePiece?.type).toBe(6);
-    expect(snapshot.state.queue).toEqual([1, 2, 3]);
-    expect(snapshot.state.hold).toBe(7);
-    expect(snapshot.state.canHold).toBe(true);
-    expect(snapshot.state.gameOver).toBe(false);
-    expect(snapshot.state.gravityTimer).toBe(100);
-    expect(snapshot.state.lockDelay).toEqual({ timer: 0, resets: 0 });
-    expect(snapshot.state.bagState).toEqual(bagState);
-    expect(snapshot.stats).toEqual(stats);
+    expect(snapshot.board.length).toBe(40);
+    expect(snapshot.activePiece).not.toBeNull();
+    expect(snapshot.activePiece?.type).toBe(6);
+    expect(snapshot.queue).toEqual([1, 2, 3]);
+    expect(snapshot.hold).toBe(7);
+    expect(snapshot.canHold).toBe(true);
+    expect(snapshot.gameOver).toBe(false);
+    expect(snapshot.gravityTimer).toBe(100);
+    expect(snapshot.lockDelay).toEqual({ grounded: true, timer: 42, resets: 3 });
+    expect(snapshot.bagState).toEqual(bagState);
   });
 
   it('should handle activePiece being null in snapshot', () => {
     const state = createMockGameState({ activePiece: null });
-    const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
     const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(state, stats, 100, lockDelay, bagState);
+    const snapshot = createStateSnapshot(state, 100, lockDelay, bagState);
 
-    expect(snapshot.state.activePiece).toBeNull();
+    expect(snapshot.activePiece).toBeNull();
   });
 
-  it('should restore snapshot to target state', () => {
+  it('should restore snapshot to target state and return the captured timers', () => {
     const originalState = createMockGameState({ gameOver: false, activePiece: { type: 6, x: 3, y: 36, rotation: 0 } });
     const targetState = createMockGameState({ gameOver: true, activePiece: null });
-    const stats = createMockStatsSnapshot({ pps: 2.5, piecesPlaced: 10 });
-    const lockDelay = createMockLockDelayState();
+    const lockDelay = createMockLockDelayState({ grounded: true, timer: 42, resets: 3 });
     const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay, bagState);
+    const snapshot = {
+      state: createStateSnapshot(originalState, 100, lockDelay, bagState),
+      stats: createMockStatsSnapshot({ pps: 2.5, piecesPlaced: 10 }),
+    };
     const playerStats = new PlayerStats();
     const randomizer = new SevenBagRandomizer(99);
     const randomizerBefore = randomizer.snapshot();
 
-    restoreSnapshot(targetState, snapshot, playerStats, randomizer);
+    const restored = restoreSnapshot(targetState, snapshot, playerStats, randomizer);
 
     expect(targetState.gameOver).toBe(false);
     expect(targetState.activePiece).not.toBeNull();
@@ -109,21 +109,26 @@ describe('engineUndoRedo', () => {
     expect(targetState.annotations).toEqual(originalState.annotations);
     expect(randomizer.snapshot()).toEqual(bagState);
     expect(randomizer.snapshot()).not.toEqual(randomizerBefore);
+    expect(restored.gravityTimer).toBe(100);
+    expect(restored.lockDelay).toEqual({ grounded: true, timer: 42, resets: 3 });
   });
 
   it('should handle activePiece being null in restore', () => {
     const originalState = createMockGameState({ activePiece: null, gameOver: true });
     const targetState = createMockGameState({ activePiece: { type: 6, x: 3, y: 36, rotation: 0 } });
-    const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
     const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay, bagState);
+    const snapshot = {
+      state: createStateSnapshot(originalState, 100, lockDelay, bagState),
+      stats: createMockStatsSnapshot(),
+    };
     const playerStats = new PlayerStats();
 
-    restoreSnapshot(targetState, snapshot, playerStats, new SevenBagRandomizer(99));
+    const restored = restoreSnapshot(targetState, snapshot, playerStats, new SevenBagRandomizer(99));
 
     expect(targetState.activePiece).toBeNull();
     expect(targetState.gameOver).toBe(true);
+    expect(restored.lockDelay).toEqual(createLockDelayState());
   });
 });

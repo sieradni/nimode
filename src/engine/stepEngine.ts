@@ -7,6 +7,11 @@ import { stepGravityAndLockDelay } from './gravityEngine';
 import { LockDelayState, createLockDelayState } from './lockDelayEngine';
 import { LockResult } from './tSpinDetector';
 
+export interface RestoredTimers {
+  gravityTimer: number;
+  lockDelay: LockDelayState;
+}
+
 export interface FixedTickCallbacks {
   rotate(direction: 1 | -1 | 2): boolean;
   onReset(): void;
@@ -14,8 +19,8 @@ export interface FixedTickCallbacks {
   onKeyPress(): void;
   onHold(): void;
   onClearHold(): void;
-  onUndo(): void;
-  onRedo(): void;
+  onUndo(): RestoredTimers | null;
+  onRedo(): RestoredTimers | null;
   rotationOccurred(): boolean;
 }
 
@@ -56,13 +61,23 @@ export function runFixedTick(
     callbacks.onReset();
     return { lockDelayState: createLockDelayState(), gravityTimer: 0 };
   }
+  if (actions.undo) {
+    const restored = callbacks.onUndo();
+    if (restored) {
+      gravityTimer = restored.gravityTimer;
+      lockDelayState = restored.lockDelay;
+    }
+  }
+  if (actions.redo) {
+    const restored = callbacks.onRedo();
+    if (restored) {
+      gravityTimer = restored.gravityTimer;
+      lockDelayState = restored.lockDelay;
+    }
+  }
   if (state.gameOver) {
-    if (actions.undo) { callbacks.onUndo(); }
-    if (actions.redo) { callbacks.onRedo(); }
     return { lockDelayState, gravityTimer };
   }
-  if (actions.undo) { callbacks.onUndo(); }
-  if (actions.redo) { callbacks.onRedo(); }
   if (actions.cw) { rotated = callbacks.rotate(1) || rotated; }
   if (actions.ccw) { rotated = callbacks.rotate(-1) || rotated; }
   if (actions.rotate180) { rotated = callbacks.rotate(2) || rotated; }

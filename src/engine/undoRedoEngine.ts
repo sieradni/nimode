@@ -1,5 +1,6 @@
 import { GameState } from './types';
 import { BagState } from './interfaces/IBagRandomizer';
+import { LockDelayState } from './lockDelayEngine';
 
 export interface StateSnapshot {
   board: number[][];
@@ -11,7 +12,7 @@ export interface StateSnapshot {
   userPalette: string[];
   gameOver: boolean;
   gravityTimer: number;
-  lockDelay: { timer: number; resets: number };
+  lockDelay: LockDelayState;
   bagState: BagState;
 }
 
@@ -37,8 +38,29 @@ export interface FullSnapshot {
   stats: PlayerStatsSnapshot;
 }
 
+export function createStateSnapshot(
+  state: GameState,
+  gravityTimer: number,
+  lockDelay: LockDelayState,
+  bagState: BagState,
+): StateSnapshot {
+  return {
+    board: state.board.map(row => [...row]),
+    activePiece: state.activePiece ? { ...state.activePiece, type: state.activePiece.type, rotation: state.activePiece.rotation } : null,
+    queue: [...state.queue.queue],
+    hold: state.queue.hold,
+    canHold: state.queue.canHold,
+    annotations: state.annotations.map(row => [...row]),
+    userPalette: [...state.userPalette],
+    gameOver: state.gameOver,
+    gravityTimer,
+    lockDelay: { ...lockDelay },
+    bagState: { ...bagState },
+  };
+}
+
 export interface IUndoRedoEngine {
-  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }, bagState: BagState): void;
+  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: LockDelayState, bagState: BagState): void;
   undo(): FullSnapshot | null;
   redo(): FullSnapshot | null;
   canUndo(): boolean;
@@ -55,21 +77,9 @@ export class UndoRedoEngine implements IUndoRedoEngine {
     this.maxSize = maxSize;
   }
 
-  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }, bagState: BagState): void {
+  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: LockDelayState, bagState: BagState): void {
     const snapshot: FullSnapshot = {
-      state: {
-        board: state.board.map(row => [...row]),
-        activePiece: state.activePiece ? { ...state.activePiece, type: state.activePiece.type, rotation: state.activePiece.rotation } : null,
-        queue: [...state.queue.queue],
-        hold: state.queue.hold,
-        canHold: state.queue.canHold,
-        annotations: state.annotations.map(row => [...row]),
-        userPalette: [...state.userPalette],
-        gameOver: state.gameOver,
-        gravityTimer,
-        lockDelay: { timer: lock.timer, resets: lock.resets },
-        bagState,
-      },
+      state: createStateSnapshot(state, gravityTimer, lock, bagState),
       stats: { ...stats },
     };
 

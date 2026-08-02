@@ -45,10 +45,10 @@ export interface IEngineCore {
   handleInput(input: InputEvent): void;
   getState(): EngineState;
   reset(): void;
+  clearBoard(): void;
   setQueue(pieces: PieceType[]): void;
   undo(): boolean;
   redo(): boolean;
   canUndo(): boolean;
   canRedo(): boolean;
-  isAutoColorEnabled(): boolean;
 }

@@ -4,14 +4,16 @@ import { IRotationSystem } from './interfaces/IRotationSystem';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { InputHandler } from './inputHandler';
 import { createInitialGameState } from './engineState';
-import { spawnNextPiece } from './engineActions';
+import { spawnNextPiece, tryRotatePiece } from './engineActions';
 import { LockDelayState, createLockDelayState } from './lockDelayEngine';
 import { PlayerStats } from './playerStats';
 import { LockResult } from './tSpinDetector';
 import { isEditInput, handleEditInput } from './editInputHandler';
+import { handleGameInput } from './gameInputHandler';
 import { EditSession } from './editSession';
 import { runFixedTick } from './stepEngine';
-import { UndoRedoController } from './engineUndoRedo';
+import { UndoRedoController, UndoRedoResult } from './engineUndoRedo';
+import { createEmptyBoard, isBoardEmpty } from './boardUtils';
 export class EngineCore implements IEngineCore {
   private config: GameConfig = DEFAULT_CONFIG;
   private rotationSystem: IRotationSystem;
@@ -44,10 +46,6 @@ export class EngineCore implements IEngineCore {
   updateConfig(config: GameConfig): void {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
-
-  isAutoColorEnabled(): boolean {
-    return this.config.autoColor;
-  }
   handleInput(input: InputEvent): void {
     if (isEditInput(input)) {
       handleEditInput(this.state, this.editSession, {
@@ -56,15 +54,7 @@ export class EngineCore implements IEngineCore {
       }, input);
       return;
     }
-    this.inputHandler.handleInput(input);
-    if (!this.state.activePiece) return;
-    const isRotation =
-      input.type === 'ROTATE_CW' || input.type === 'ROTATE_CCW' || input.type === 'ROTATE_180';
-    if ((input.type === 'MOVE_LEFT' || input.type === 'MOVE_RIGHT') && input.pressed) {
-      this.playerStats.recordInput('move');
-    } else if (isRotation) {
-      this.playerStats.recordInput('rotate');
-    }
+    handleGameInput(this.state, input, this.inputHandler, this.playerStats);
   }
   tick(deltaTime: number): void {
     if (this.state.paused) return;
@@ -72,7 +62,9 @@ export class EngineCore implements IEngineCore {
     const tickRate = 1000 / 60;
     while (this.accumulator >= tickRate) {
       this.fixedTick(tickRate);
-      this.accumulator -= tickRate;
+      // fixedTick can zero the accumulator (e.g. reset), so clamp instead of
+      // letting the budget go negative and starving the next tick.
+      this.accumulator = Math.max(0, this.accumulator - tickRate);
     }
   }
   private fixedTick(dt: number): void {
@@ -87,7 +79,13 @@ export class EngineCore implements IEngineCore {
       this.gravityTimer,
       dt,
       {
-        rotate: (direction) => this.rotatePiece(direction),
+        rotate: (direction) => {
+          const rotated = tryRotatePiece(this.state, this.rotationSystem, direction);
+          if (rotated) {
+            this.rotationOccurred = true;
+          }
+          return rotated;
+        },
         onReset: () => this.reset(),
         onLock: (lockResult, piece) => this.recordLockStats(lockResult, piece),
         onKeyPress: () => this.playerStats.recordKeyPress(),
@@ -98,23 +96,13 @@ export class EngineCore implements IEngineCore {
         onClearHold: () => {
           this.saveSnapshot();
         },
-        onUndo: () => this.undo(),
-        onRedo: () => this.redo(),
+        onUndo: () => this.undoRedo.undo(this.state),
+        onRedo: () => this.undoRedo.redo(this.state),
         rotationOccurred: () => this.rotationOccurred,
       },
     );
     this.lockDelayState = result.lockDelayState;
     this.gravityTimer = result.gravityTimer;
-  }
-  private rotatePiece(direction: 1 | -1 | 2): boolean {
-    if (!this.state.activePiece) return false;
-    const result = this.rotationSystem.rotate(this.state.board, this.state.activePiece, direction);
-    if (result) {
-      this.state.activePiece = result.piece;
-      this.rotationOccurred = true;
-      return true;
-    }
-    return false;
   }
   private recordLockStats(result: LockResult, piece: ActivePiece | null): void {
     this.rotationOccurred = false;
@@ -125,15 +113,34 @@ export class EngineCore implements IEngineCore {
   getState(): EngineState {
     return { board: this.state.board.map(r => [...r]), activePiece: this.state.activePiece ? {...this.state.activePiece} : null, queue: [...this.state.queue.queue], hold: this.state.queue.hold, canHold: this.state.queue.canHold, stats: this.playerStats.getStats(), gameOver: this.state.gameOver, paused: this.state.paused, annotations: this.state.annotations.map(r => [...r]), userPalette: [...this.state.userPalette] };
   }
-  undo(): boolean {
-    return this.undoRedo.undo(this.state);
-  }
-  redo(): boolean {
-    return this.undoRedo.redo(this.state);
-  }
+  undo(): boolean { return this.applyRestore(this.undoRedo.undo(this.state)); }
+  redo(): boolean { return this.applyRestore(this.undoRedo.redo(this.state)); }
   canUndo(): boolean { return this.undoRedo.canUndo(); }
   canRedo(): boolean { return this.undoRedo.canRedo(); }
-  reset(): void { this.bagRandomizer.reset(); this.state = createInitialGameState(this.bagRandomizer, this.config); this.inputHandler.reset(); this.gravityTimer = this.accumulator = 0; this.lockDelayState = createLockDelayState(); this.playerStats.reset(); this.rotationOccurred = false; this.undoRedo.clear(); this.editSession = new EditSession(); spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem, this.config); this.playerStats.onPieceSpawn(this.state.activePiece); this.saveSnapshot(); }
-
+  private applyRestore(result: UndoRedoResult | null): boolean {
+    if (!result) return false;
+    this.gravityTimer = result.gravityTimer;
+    this.lockDelayState = result.lockDelay;
+    return true;
+  }
+  reset(): void {
+    this.saveSnapshot();
+    this.bagRandomizer.reset();
+    this.state = createInitialGameState(this.bagRandomizer, this.config);
+    this.inputHandler.reset();
+    this.gravityTimer = this.accumulator = 0;
+    this.lockDelayState = createLockDelayState();
+    this.playerStats.reset();
+    this.rotationOccurred = false;
+    this.editSession = new EditSession();
+    spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem, this.config);
+    this.playerStats.onPieceSpawn(this.state.activePiece);
+    this.saveSnapshot();
+  }
+  clearBoard(): void {
+    if (isBoardEmpty(this.state.board)) return;
+    this.saveSnapshot();
+    this.state.board = createEmptyBoard();
+  }
   setQueue(pieces: PieceType[]): void { this.state.queue.queue = [...pieces]; }
 }

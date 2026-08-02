@@ -10,7 +10,7 @@ export interface AnnotationToolbarProps {
   tool?: AnnotationTool;
   onToolChange?: (tool: AnnotationTool) => void;
   onClearAll?: () => void;
-  onResetBoard?: () => void;
+  onClearBoard?: () => void;
   mode?: EditMode;
   onModeChange?: (mode: EditMode) => void;
   autoColor?: boolean;
@@ -37,7 +37,7 @@ export function AnnotationToolbar({
   tool = 'pen',
   onToolChange,
   onClearAll,
-  onResetBoard,
+  onClearBoard,
   mode = 'annotations',
   onModeChange,
   autoColor = false,
@@ -89,13 +89,13 @@ export function AnnotationToolbar({
           Clear All
         </button>
 
-        {onResetBoard && (
+        {onClearBoard && (
           <button
             type="button"
-            onClick={onResetBoard}
+            onClick={onClearBoard}
             className="px-3 py-1.5 text-xs rounded bg-red-900/60 hover:bg-red-800/60 text-red-200 transition-colors"
           >
-            Reset Board
+            Clear Board
           </button>
         )}
       </div>

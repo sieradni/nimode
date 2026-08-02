@@ -20,6 +20,20 @@ export function movePiece(state: GameState, dx: number, dy: number): boolean {
   return false;
 }
 
+export function tryRotatePiece(
+  state: GameState,
+  rotationSystem: IRotationSystem,
+  direction: 1 | -1 | 2,
+): boolean {
+  if (!state.activePiece) return false;
+  const result = rotationSystem.rotate(state.board, state.activePiece, direction);
+  if (result) {
+    state.activePiece = result.piece;
+    return true;
+  }
+  return false;
+}
+
 export function spawnNextPiece(
   state: GameState,
   randomizer: IBagRandomizer,

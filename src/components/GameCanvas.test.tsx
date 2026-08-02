@@ -58,12 +58,12 @@ function createMockEngine(): IEngineCore {
     handleInput: vi.fn(),
     getState: vi.fn(),
     reset: vi.fn(),
+    clearBoard: vi.fn(),
     setQueue: vi.fn(),
     undo: vi.fn().mockReturnValue(true),
     redo: vi.fn().mockReturnValue(true),
     canUndo: vi.fn().mockReturnValue(true),
     canRedo: vi.fn().mockReturnValue(true),
-    isAutoColorEnabled: vi.fn().mockReturnValue(true),
   };
 }
 

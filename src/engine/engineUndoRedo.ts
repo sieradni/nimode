@@ -1,33 +1,13 @@
 import { GameState } from './types';
 import { LockDelayState } from './lockDelayEngine';
 import { PlayerStats } from './playerStats';
-import { FullSnapshot, PlayerStatsSnapshot, IUndoRedoEngine, UndoRedoEngine } from './undoRedoEngine';
+import { FullSnapshot, IUndoRedoEngine, UndoRedoEngine } from './undoRedoEngine';
 import { PieceType, RotationState } from './types';
-import { IBagRandomizer, BagState } from './interfaces/IBagRandomizer';
+import { IBagRandomizer } from './interfaces/IBagRandomizer';
 
-export function saveSnapshot(
-  state: GameState,
-  stats: PlayerStatsSnapshot,
-  gravityTimer: number,
-  lockDelayState: LockDelayState,
-  bagState: BagState
-): FullSnapshot {
-  return {
-    state: {
-      board: state.board.map(row => [...row]),
-      activePiece: state.activePiece ? { ...state.activePiece, type: state.activePiece.type, rotation: state.activePiece.rotation } : null,
-      queue: [...state.queue.queue],
-      hold: state.queue.hold,
-      canHold: state.queue.canHold,
-      annotations: state.annotations.map(row => [...row]),
-      userPalette: [...state.userPalette],
-      gameOver: state.gameOver,
-      gravityTimer,
-      lockDelay: { timer: lockDelayState.timer, resets: lockDelayState.resets },
-      bagState,
-    },
-    stats: { ...stats },
-  };
+export interface UndoRedoResult {
+  gravityTimer: number;
+  lockDelay: LockDelayState;
 }
 
 export function restoreSnapshot(
@@ -35,7 +15,7 @@ export function restoreSnapshot(
   snapshot: FullSnapshot,
   playerStats: PlayerStats,
   bagRandomizer: IBagRandomizer
-): void {
+): UndoRedoResult {
   targetState.board = snapshot.state.board.map(row => [...row]);
   targetState.activePiece = snapshot.state.activePiece ? { ...snapshot.state.activePiece, type: snapshot.state.activePiece.type as PieceType, rotation: snapshot.state.activePiece.rotation as RotationState } : null;
   targetState.queue.queue = snapshot.state.queue as PieceType[];
@@ -46,6 +26,10 @@ export function restoreSnapshot(
   targetState.gameOver = snapshot.state.gameOver;
   bagRandomizer.restore(snapshot.state.bagState);
   playerStats.undoRestore(snapshot.stats);
+  return {
+    gravityTimer: snapshot.state.gravityTimer,
+    lockDelay: { ...snapshot.state.lockDelay },
+  };
 }
 
 export class UndoRedoController {
@@ -60,23 +44,21 @@ export class UndoRedoController {
       state,
       this.playerStats.getStatsSnapshot(),
       gravityTimer,
-      { timer: lock.timer, resets: lock.resets },
+      { ...lock },
       this.bagRandomizer.snapshot(),
     );
   }
 
-  undo(state: GameState): boolean {
+  undo(state: GameState): UndoRedoResult | null {
     const snapshot = this.engine.undo();
-    if (!snapshot) return false;
-    restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
-    return true;
+    if (!snapshot) return null;
+    return restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
   }
 
-  redo(state: GameState): boolean {
+  redo(state: GameState): UndoRedoResult | null {
     const snapshot = this.engine.redo();
-    if (!snapshot) return false;
-    restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
-    return true;
+    if (!snapshot) return null;
+    return restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
   }
 
   canUndo(): boolean {

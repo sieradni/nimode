@@ -7,6 +7,10 @@ export function createEmptyBoard(): BoardMatrix {
     .map(() => Array(BOARD_WIDTH).fill(0));
 }
 
+export function isBoardEmpty(board: BoardMatrix): boolean {
+  return board.every(row => row.every(cell => cell === 0));
+}
+
 export function checkCollision(board: BoardMatrix, piece: ActivePiece): boolean {
   const matrix = getPieceMatrix(piece.type, piece.rotation);
   const size = matrix.length;

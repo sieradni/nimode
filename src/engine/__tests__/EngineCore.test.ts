@@ -121,4 +121,76 @@ describe('EngineCore', () => {
       expect(engine.canUndo()).toBe(false);
     });
   });
+
+  describe('undoable reset', () => {
+    it('reset is undoable: undo restores the previous session and redo re-applies reset', () => {
+      const engine = createEngine();
+      engine.handleInput({ type: 'HARD_DROP' });
+      engine.tick(16.67);
+      const boardBefore = engine.getState().board;
+      const piecesBefore = engine.getState().stats.piecesPlaced;
+      expect(boardBefore.some(r => r.some(c => c !== 0))).toBe(true);
+
+      engine.handleInput({ type: 'RESET' });
+      engine.tick(16.67);
+      expect(engine.getState().board.every(r => r.every(c => c === 0))).toBe(true);
+      expect(engine.getState().stats.piecesPlaced).toBe(0);
+
+      engine.handleInput({ type: 'UNDO' });
+      engine.tick(16.67);
+      expect(engine.getState().board).toEqual(boardBefore);
+      expect(engine.getState().stats.piecesPlaced).toBe(piecesBefore);
+
+      engine.handleInput({ type: 'REDO' });
+      engine.tick(16.67);
+      expect(engine.getState().board.every(r => r.every(c => c === 0))).toBe(true);
+    });
+  });
+
+  describe('clearBoard', () => {
+    function engineWithStack() {
+      const engine = createEngine();
+      engine.handleInput({ type: 'HOLD' });
+      engine.tick(16.67);
+      engine.handleInput({ type: 'HARD_DROP' });
+      engine.tick(16.67);
+      return engine;
+    }
+
+    it('clears only the board, keeping piece, queue, hold and stats', () => {
+      const engine = engineWithStack();
+      const state = engine.getState();
+      expect(state.board.some(r => r.some(c => c !== 0))).toBe(true);
+      const holdBefore = state.hold;
+      const queueBefore = state.queue;
+      const piecesBefore = state.stats.piecesPlaced;
+      const activeBefore = state.activePiece;
+
+      engine.clearBoard();
+      const cleared = engine.getState();
+      expect(cleared.board.every(r => r.every(c => c === 0))).toBe(true);
+      expect(cleared.hold).toBe(holdBefore);
+      expect(cleared.queue).toEqual(queueBefore);
+      expect(cleared.stats.piecesPlaced).toBe(piecesBefore);
+      expect(cleared.activePiece).toEqual(activeBefore);
+    });
+
+    it('is undoable', () => {
+      const engine = engineWithStack();
+      const boardBefore = engine.getState().board;
+
+      engine.clearBoard();
+      expect(engine.getState().board.every(r => r.every(c => c === 0))).toBe(true);
+
+      engine.handleInput({ type: 'UNDO' });
+      engine.tick(16.67);
+      expect(engine.getState().board).toEqual(boardBefore);
+    });
+
+    it('is a no-op (and not undoable) when the board is already empty', () => {
+      const engine = createEngine();
+      engine.clearBoard();
+      expect(engine.canUndo()).toBe(false);
+    });
+  });
 });
