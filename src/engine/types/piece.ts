@@ -18,7 +18,7 @@ export const PIECE_COLORS: Record<PieceType, string> = {
   1: '#47efef',
   2: '#2836fc',
   3: '#f5a42a',
-  4: '#fff645',
+  4: '#ffec45',
   5: '#7bed4a',
   6: '#982dea',
   7: '#eb3a3a',
