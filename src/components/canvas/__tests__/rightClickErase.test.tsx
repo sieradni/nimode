@@ -22,8 +22,8 @@ describe('right-click eraser', () => {
       <GameBoardCanvas
         state={makeState()}
         annotationTool="pen"
-        onAnnotationPen={onPen}
-        onAnnotationErase={onErase}
+        onPen={onPen}
+        onErase={onErase}
       />,
     );
 
@@ -42,8 +42,8 @@ describe('right-click eraser', () => {
       <GameBoardCanvas
         state={makeState()}
         annotationTool="pen"
-        onAnnotationPen={onPen}
-        onAnnotationErase={onErase}
+        onPen={onPen}
+        onErase={onErase}
       />,
     );
 
@@ -61,8 +61,8 @@ describe('right-click eraser', () => {
       <GameBoardCanvas
         state={makeState()}
         annotationTool="pen"
-        onAnnotationErase={onErase}
-        onAnnotationPen={vi.fn()}
+        onErase={onErase}
+        onPen={vi.fn()}
         isDrawing={false}
       />,
     );
@@ -74,8 +74,8 @@ describe('right-click eraser', () => {
       <GameBoardCanvas
         state={makeState()}
         annotationTool="pen"
-        onAnnotationErase={onErase}
-        onAnnotationPen={vi.fn()}
+        onErase={onErase}
+        onPen={vi.fn()}
         isDrawing={true}
       />,
     );
@@ -86,7 +86,7 @@ describe('right-click eraser', () => {
   });
 
   it('suppresses the browser context menu on the board', () => {
-    render(<GameBoardCanvas state={makeState()} annotationTool="pen" onAnnotationPen={vi.fn()} />);
+    render(<GameBoardCanvas state={makeState()} annotationTool="pen" onPen={vi.fn()} />);
     const canvas = screen.getByTestId('board-canvas');
 
     const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });

@@ -15,10 +15,10 @@
 ---
 
 ## Annotation Auto-Color Rules
-When the user draws blocks in Annotation mode:
-1. Flood-fill search identifies connected 4-block components (orthogonally adjacent).
-2. Connected components are matched against the 7 canonical tetromino shapes (I, J, L, O, S, T, Z).
-3. Matched shapes are automatically recolored to match standard piece colors:
+When the user draws marks in Annotation mode (stroke auto-color, on by default):
+1. Matching is **stroke-scoped**: only the cells painted during one continuous drag are considered, so a stroke drawn adjacent to an existing piece is still recognized instead of merging into an oversized component.
+2. The stroke cells are matched against the 7 canonical tetromino shapes (I, J, L, O, S, T, Z) by their own geometry.
+3. Matched shapes are promoted to standard piece types and rendered in their tetromino colors:
    - **Cyan:** I Tetromino
    - **Blue:** J Tetromino
    - **Orange:** L Tetromino
@@ -26,6 +26,9 @@ When the user draws blocks in Annotation mode:
    - **Green:** S Tetromino
    - **Purple:** T Tetromino
    - **Red:** Z Tetromino
+4. Unmatched strokes keep the colour they were drawn with: the cell stores `8 + i` referencing `userPalette[i]`. A later colour-picker change never recolors existing marks.
+5. Auto-color promotion shares the gesture's undo step (one stroke = one undo). Block-edit mode is never auto-colored.
+6. The auto-color toggle defaults to enabled and persists in `localStorage`; old saved configs that lack the key merge with defaults on load.
 
 ---
 

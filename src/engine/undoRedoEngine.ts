@@ -7,6 +7,7 @@ export interface StateSnapshot {
   hold: number | null;
   canHold: boolean;
   annotations: number[][];
+  userPalette: string[];
   gameOver: boolean;
   gravityTimer: number;
   lockDelay: { timer: number; resets: number };
@@ -61,6 +62,7 @@ export class UndoRedoEngine implements IUndoRedoEngine {
         hold: state.queue.hold,
         canHold: state.queue.canHold,
         annotations: state.annotations.map(row => [...row]),
+        userPalette: [...state.userPalette],
         gameOver: state.gameOver,
         gravityTimer,
         lockDelay: { timer: lock.timer, resets: lock.resets },

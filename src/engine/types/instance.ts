@@ -13,6 +13,7 @@ export interface SpectatorPayload {
   queue: number[];
   hold: number | null;
   annotations: number[][];
+  userPalette: string[];
   stats: {
     pps: number;
     apm: number;

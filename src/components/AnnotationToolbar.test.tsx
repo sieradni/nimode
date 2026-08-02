@@ -46,15 +46,29 @@ describe('AnnotationToolbar', () => {
   });
 
   it('should switch to eraser tool when clicked', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
+    const onToolChange = vi.fn();
+    const { rerender } = render(
+      <AnnotationToolbar isOpen={true} onClose={() => {}} onToolChange={onToolChange} />
+    );
     fireEvent.click(screen.getByRole('button', { name: /eraser/i }));
+    expect(onToolChange).toHaveBeenCalledWith('erase');
+    rerender(
+      <AnnotationToolbar isOpen={true} onClose={() => {}} onToolChange={onToolChange} tool="erase" />
+    );
     expect(screen.getByRole('button', { name: /eraser/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /pen/i })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should switch to rect fill tool when clicked', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
+    const onToolChange = vi.fn();
+    const { rerender } = render(
+      <AnnotationToolbar isOpen={true} onClose={() => {}} onToolChange={onToolChange} />
+    );
     fireEvent.click(screen.getByRole('button', { name: /rect fill/i }));
+    expect(onToolChange).toHaveBeenCalledWith('rect');
+    rerender(
+      <AnnotationToolbar isOpen={true} onClose={() => {}} onToolChange={onToolChange} tool="rect" />
+    );
     expect(screen.getByRole('button', { name: /rect fill/i })).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -110,8 +124,7 @@ describe('AnnotationToolbar', () => {
   });
 
   it('should hide the colour picker when eraser is selected', () => {
-    render(<AnnotationToolbar isOpen={true} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /eraser/i }));
+    render(<AnnotationToolbar isOpen={true} onClose={() => {}} tool="erase" />);
     expect(screen.queryByLabelText(/annotation colour/i)).not.toBeInTheDocument();
   });
 

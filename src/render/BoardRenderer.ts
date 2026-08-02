@@ -10,8 +10,8 @@ import { resolveAnnotationColor } from './annotationColors';
 
 export interface RenderOptions {
   cellSize?: number;
-  /** Colour used for annotation cells that carry no recognised piece type. */
-  annotationColor?: string;
+  /** Player colour palette for drawn marks (see `annotationPalette.ts`). */
+  palette?: ReadonlyArray<string>;
 }
 
 function drawCell(
@@ -111,7 +111,7 @@ export function renderBoard(
         bx * cellSize,
         (by - VISIBLE_Y_OFFSET) * cellSize,
         cellSize,
-        PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? '#888',
+        resolveAnnotationColor(cell, options.palette),
       );
     }
   }
@@ -124,7 +124,7 @@ export function renderBoard(
       if (!cell || cell === 0) continue;
       const sx = bx * cellSize;
       const sy = (by - VISIBLE_Y_OFFSET) * cellSize;
-      ctx.fillStyle = resolveAnnotationColor(cell, options.annotationColor);
+      ctx.fillStyle = resolveAnnotationColor(cell, options.palette);
       ctx.globalAlpha = ANNOTATION_ALPHA;
       ctx.fillRect(sx, sy, cellSize, cellSize);
       ctx.globalAlpha = 1;

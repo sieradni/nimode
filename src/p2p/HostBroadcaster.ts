@@ -58,6 +58,7 @@ export class HostBroadcaster {
       queue: state.queue,
       hold: state.hold,
       annotations: state.annotations,
+      userPalette: state.userPalette,
       stats: {
         pps: state.stats.pps,
         apm: state.stats.apm,

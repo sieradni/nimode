@@ -1,6 +1,6 @@
 import { IRotationSystem } from './IRotationSystem';
 import { IBagRandomizer } from './IBagRandomizer';
-import { PieceType, BoardMatrix, ActivePiece, GameConfig, GameStats, AnnotationMatrix } from '../types';
+import { PieceType, BoardMatrix, ActivePiece, GameConfig, GameStats, AnnotationMatrix, AnnotationEvent, BoardEditEvent, EditMode } from '../types';
 
 export interface EngineState {
   board: BoardMatrix;
@@ -12,6 +12,7 @@ export interface EngineState {
   gameOver: boolean;
   paused: boolean;
   annotations: AnnotationMatrix;
+  userPalette: string[];
 }
 
 export type InputEvent =
@@ -27,13 +28,10 @@ export type InputEvent =
   | { type: 'RESET' }
   | { type: 'UNDO' }
   | { type: 'REDO' }
-  | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
-  | { type: 'ANNOTATE_ERASE'; x: number; y: number }
-  | { type: 'ANNOTATE_FLOOD_ERASE'; x: number; y: number }
-  | { type: 'ANNOTATE_RECT_FILL'; x1: number; y1: number; x2: number; y2: number; pieceType: number }
-  | { type: 'ANNOTATE_CLEAR_ALL' }
-  | { type: 'ANNOTATE_AUTO_COLOR' }
-  | { type: 'ANNOTATE_AUTO_COLOR_STROKE'; cells: ReadonlyArray<{ x: number; y: number }> };
+  | { type: 'EDIT_BEGIN'; mode: EditMode }
+  | { type: 'EDIT_COMMIT'; cells: ReadonlyArray<{ x: number; y: number }> }
+  | AnnotationEvent
+  | BoardEditEvent;
 
 export interface EngineDependencies {
   rotationSystem: IRotationSystem;

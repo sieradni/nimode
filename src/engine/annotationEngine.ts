@@ -1,7 +1,7 @@
 import { BOARD_HEIGHT, BOARD_WIDTH } from './types/board';
 import type { AnnotationMatrix } from './types/annotations';
 
-export { applyAnnotationFloodErase } from './floodEraseEngine';
+export { applyFloodErase as applyAnnotationFloodErase } from './floodEraseEngine';
 
 export function createEmptyAnnotations(): AnnotationMatrix {
   const matrix: AnnotationMatrix = [];
@@ -42,11 +42,15 @@ function clampY(y: number): number | null {
   return y;
 }
 
+/**
+ * Paints a single annotation cell. `value` is the encoded cell value: a piece
+ * type 1..7 (auto-colored) or `PALETTE_CELL_OFFSET + i` for a picked colour.
+ */
 export function applyAnnotationPen(
   annotations: AnnotationMatrix,
   x: number,
   y: number,
-  pieceType: number,
+  value: number,
 ): AnnotationMatrix {
   const cx = clampX(x);
   const cy = clampY(y);
@@ -57,7 +61,7 @@ export function applyAnnotationPen(
   const result = copyMatrix(annotations);
   const row = result[cy];
   if (row) {
-    row[cx] = pieceType;
+    row[cx] = value;
   }
   return result;
 }
@@ -80,7 +84,7 @@ export function applyAnnotationRectFill(
   y1: number,
   x2: number,
   y2: number,
-  pieceType: number,
+  value: number,
 ): AnnotationMatrix {
   const minX = Math.max(0, Math.min(x1, x2));
   const maxX = Math.min(BOARD_WIDTH - 1, Math.max(x1, x2));
@@ -93,7 +97,7 @@ export function applyAnnotationRectFill(
     const row = result[y];
     if (row) {
       for (let x = minX; x <= maxX; x++) {
-        row[x] = pieceType;
+        row[x] = value;
       }
     }
   }

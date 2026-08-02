@@ -10,6 +10,7 @@ const baseState = {
   board: Array.from({ length: 40 }, () => Array(BOARD_WIDTH).fill(0)),
   activePiece: { type: 6, x: 3, y: 36, rotation: 0 },
   annotations: Array.from({ length: 40 }, () => Array(BOARD_WIDTH).fill(0)),
+  userPalette: ['#ffffff'],
   queue: [1, 2, 3],
   hold: 7,
   canHold: true,
@@ -62,9 +63,8 @@ describe('GameBoardCanvas', () => {
     const { getByTestId } = render(
       <GameBoardCanvas
         state={baseState}
-        onAnnotationPen={onPen}
+        onPen={onPen}
         annotationTool="pen"
-        annotationPieceType={2}
         isDrawing
       />,
     );
@@ -84,7 +84,7 @@ describe('GameBoardCanvas', () => {
     const { getByTestId } = render(
       <GameBoardCanvas
         state={baseState}
-        onAnnotationErase={onErase}
+        onErase={onErase}
         annotationTool="erase"
         isDrawing
       />,
@@ -103,7 +103,7 @@ describe('GameBoardCanvas', () => {
     const { getByTestId } = render(
       <GameBoardCanvas
         state={baseState}
-        onAnnotationPen={onPen}
+        onPen={onPen}
         annotationTool="pen"
         isDrawing={false}
       />,

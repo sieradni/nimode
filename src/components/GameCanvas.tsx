@@ -4,18 +4,17 @@ import { IEngineCore } from '../engine/interfaces/IEngineCore';
 import { HoldCanvas } from './canvas/HoldCanvas';
 import { GameBoardCanvas } from './canvas/GameBoardCanvas';
 import { QueueCanvas } from './canvas/QueueCanvas';
-import { AnnotationTool } from './AnnotationToolbar';
+import { AnnotationTool, EditMode } from '../engine/types';
 import { StatsPanel } from './StatsPanel';
 import { useBoardScale, computePreviewCellSize, LAYOUT_GAP_PX } from './canvas/useBoardScale';
 import { useAnnotationStroke } from './canvas/useAnnotationStroke';
-import { ANNOTATION_PLAIN } from '../render/annotationColors';
 
 interface GameCanvasProps {
   state: EngineState;
   engine: IEngineCore;
   annotationTool: AnnotationTool;
   annotationColor: string;
-  autoColor: boolean;
+  editMode: EditMode;
   onReset: () => void;
 }
 
@@ -24,7 +23,7 @@ export function GameCanvas({
   engine,
   annotationTool,
   annotationColor,
-  autoColor,
+  editMode,
   onReset,
 }: GameCanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
@@ -33,34 +32,51 @@ export function GameCanvas({
   const previewCellSize = computePreviewCellSize(cellSize);
   const stroke = useAnnotationStroke();
 
-  const handleAnnotationPen = useCallback((x: number, y: number) => {
-    engine.handleInput({ type: 'ANNOTATE_PEN', x, y, pieceType: ANNOTATION_PLAIN });
-  }, [engine]);
+  const handlePen = useCallback((x: number, y: number, color: string) => {
+    if (editMode === 'blocks') {
+      engine.handleInput({ type: 'BOARD_PEN', x, y, color });
+    } else {
+      engine.handleInput({ type: 'ANNOTATE_PEN', x, y, color });
+    }
+  }, [engine, editMode]);
 
-  const handleAnnotationErase = useCallback((x: number, y: number) => {
-    engine.handleInput({ type: 'ANNOTATE_ERASE', x, y });
-  }, [engine]);
+  const handleErase = useCallback((x: number, y: number) => {
+    if (editMode === 'blocks') {
+      engine.handleInput({ type: 'BOARD_ERASE', x, y });
+    } else {
+      engine.handleInput({ type: 'ANNOTATE_ERASE', x, y });
+    }
+  }, [engine, editMode]);
 
-  const handleAnnotationFloodErase = useCallback((x: number, y: number) => {
-    engine.handleInput({ type: 'ANNOTATE_FLOOD_ERASE', x, y });
-  }, [engine]);
+  const handleFloodErase = useCallback((x: number, y: number) => {
+    if (editMode === 'blocks') {
+      engine.handleInput({ type: 'BOARD_FLOOD_ERASE', x, y });
+    } else {
+      engine.handleInput({ type: 'ANNOTATE_FLOOD_ERASE', x, y });
+    }
+  }, [engine, editMode]);
 
-  const handleAnnotationRectFill = useCallback((x1: number, y1: number, x2: number, y2: number) => {
-    engine.handleInput({ type: 'ANNOTATE_RECT_FILL', x1, y1, x2, y2, pieceType: ANNOTATION_PLAIN });
-  }, [engine]);
+  const handleRectFill = useCallback((x1: number, y1: number, x2: number, y2: number, color: string) => {
+    if (editMode === 'blocks') {
+      engine.handleInput({ type: 'BOARD_RECT_FILL', x1, y1, x2, y2, color });
+    } else {
+      engine.handleInput({ type: 'ANNOTATE_RECT_FILL', x1, y1, x2, y2, color });
+    }
+  }, [engine, editMode]);
 
   const handleDrawingStart = useCallback(() => {
     stroke.begin();
+    engine.handleInput({ type: 'EDIT_BEGIN', mode: editMode });
     setIsDrawing(true);
-  }, [stroke]);
+  }, [stroke, engine, editMode]);
 
   const handleDrawingEnd = useCallback(() => {
     setIsDrawing(false);
     const cells = stroke.end();
-    if (autoColor && cells.length > 0) {
-      engine.handleInput({ type: 'ANNOTATE_AUTO_COLOR_STROKE', cells });
-    }
-  }, [stroke, autoColor, engine]);
+    // Closing the transaction commits the whole gesture as one undo step and
+    // folds stroke auto-color into the same snapshot.
+    engine.handleInput({ type: 'EDIT_COMMIT', cells });
+  }, [stroke, engine]);
 
   const handleClearHold = useCallback(() => {
     engine.handleInput({ type: 'CLEAR_HOLD' });
@@ -82,10 +98,10 @@ export function GameCanvas({
           state={state}
           cellSize={cellSize}
           annotationColor={annotationColor}
-          onAnnotationPen={handleAnnotationPen}
-          onAnnotationErase={handleAnnotationErase}
-          onAnnotationFloodErase={handleAnnotationFloodErase}
-          onAnnotationRectFill={handleAnnotationRectFill}
+          onPen={handlePen}
+          onErase={handleErase}
+          onFloodErase={handleFloodErase}
+          onRectFill={handleRectFill}
           annotationTool={annotationTool}
           isDrawing={isDrawing}
           onDrawingStart={handleDrawingStart}

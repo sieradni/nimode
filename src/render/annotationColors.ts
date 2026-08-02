@@ -1,29 +1,23 @@
 import { PIECE_COLORS } from '../engine/types';
+import { DEFAULT_ANNOTATION_COLOR, paletteColorFor } from '../engine/annotationPalette';
+
+export { DEFAULT_ANNOTATION_COLOR, PALETTE_CELL_OFFSET } from '../engine/annotationPalette';
 
 /**
- * Annotations default to white. A drawn cell only takes a tetromino colour once
- * auto-color recognises it as a real piece shape; otherwise it uses whatever
- * colour the player picked in the toolbar.
- */
-export const DEFAULT_ANNOTATION_COLOR = '#ffffff';
-
-/**
- * Marker value stored in the annotation matrix for a cell that has been drawn
- * but not identified as a tetromino. It sits outside the 1..7 piece range so it
- * can never be mistaken for a piece type.
- */
-export const ANNOTATION_PLAIN = 8;
-
-/**
- * Resolves the fill colour for an annotation cell.
+ * Resolves the fill colour of a cell in either the annotation or the board
+ * layer.
  *
- * Cells holding a real piece type (1..7) keep that tetromino's colour so
- * auto-colored shapes stay recognisable; everything else uses the player's
- * chosen colour, defaulting to white.
+ * Piece-typed cells (1..7) keep their tetromino colour so auto-colored
+ * shapes and locked pieces stay recognisable. Palette cells
+ * (`PALETTE_CELL_OFFSET + i`) return the colour the mark was drawn with, so a
+ * change to the colour picker never recolours existing marks (US-8.6).
  */
-export function resolveAnnotationColor(cell: number, pickedColor?: string): string {
+export function resolveAnnotationColor(
+  cell: number,
+  palette: ReadonlyArray<string> = [],
+): string {
   if (cell >= 1 && cell <= 7) {
     return PIECE_COLORS[cell as keyof typeof PIECE_COLORS] ?? DEFAULT_ANNOTATION_COLOR;
   }
-  return pickedColor ?? DEFAULT_ANNOTATION_COLOR;
+  return paletteColorFor(cell, palette) ?? DEFAULT_ANNOTATION_COLOR;
 }

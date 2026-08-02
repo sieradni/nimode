@@ -2,7 +2,7 @@ import { EngineState, IEngineCore } from '../engine/interfaces/IEngineCore';
 import { GameCanvas } from './GameCanvas';
 import { SpectatorBoardCanvas } from './canvas/SpectatorBoardCanvas';
 import { SpectatorStatsPanel } from './SpectatorStatsPanel';
-import { AnnotationTool } from './AnnotationToolbar';
+import { AnnotationTool, EditMode } from '../engine/types';
 import { SpectatorBuffer } from '../p2p/SpectatorBuffer';
 
 interface ActiveViewProps {
@@ -11,7 +11,7 @@ interface ActiveViewProps {
   engine: IEngineCore;
   annotationTool: AnnotationTool;
   annotationColor: string;
-  autoColor: boolean;
+  editMode: EditMode;
   onReset: () => void;
   spectatorBuffer: SpectatorBuffer | null;
   onReturnToLocal: () => void;
@@ -24,7 +24,7 @@ export function ActiveView({
   engine,
   annotationTool,
   annotationColor,
-  autoColor,
+  editMode,
   onReset,
   spectatorBuffer,
   onReturnToLocal,
@@ -36,7 +36,7 @@ export function ActiveView({
         engine={engine}
         annotationTool={annotationTool}
         annotationColor={annotationColor}
-        autoColor={autoColor}
+        editMode={editMode}
         onReset={onReset}
       />
     );

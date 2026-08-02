@@ -69,6 +69,10 @@
 - **US-8.7:** As a player, I expect to be able to set my handling so that I can practice infinite DAS finesse by setting ARR to 0. I should be able to hold right and tap left to move a piece one left of the right wall where the right input movement should be canceled.
 - **US-8.8:** As a player, I expect to be able to set my handling so that I can practice infinite soft drop speed that is not limited by the tick rate.
 - **US-8.9:** As a player, I expect soft drop to work exactly like games such as TETR.IO, where the soft drop is a consistent speed regardless of how long I'm pressing it, and the handling control soft drop factor.
+- **US-8.10:** As a player, I want the stroke auto-color toggle to be enabled by default and persist across sessions, so drawn tetromino shapes are automatically colored without any setup.
+- **US-8.11:** As a player, I want each mark to keep the colour it was drawn with, so changing the colour picker never recolors existing marks and multi-colour setups stay intact.
+- **US-8.12:** As a player, I want to toggle a block-edit mode where the pen, eraser, rect fill and flood erase operate on real board cells — locked tetromino cells included, with the pen overwriting anything — so I can build and edit practice setups directly on the board.
+- **US-8.13:** As a player, I want every drawing gesture (a pen stroke, an erase drag, a rect fill) to undo and redo as a single step, with stroke auto-coloring folded into the same step, so undo history stays predictable.
 
 
 ### Layout & Presentation Corrections

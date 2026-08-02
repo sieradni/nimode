@@ -1,39 +1,99 @@
-import { AnnotationMatrix } from './types';
+import { AnnotationMatrix, AnnotationEvent, BoardEditEvent } from './types';
 import { InputEvent } from './interfaces/IEngineCore';
-import { applyAnnotationPen, applyAnnotationErase, applyAnnotationRectFill, applyAnnotationFloodErase, clearAllAnnotations } from './annotationEngine';
-import { autoColorAnnotations, autoColorStroke } from './autoColorEngine';
-
-export type AnnotationEvent =
-  | { type: 'ANNOTATE_PEN'; x: number; y: number; pieceType: number }
-  | { type: 'ANNOTATE_ERASE'; x: number; y: number }
-  | { type: 'ANNOTATE_FLOOD_ERASE'; x: number; y: number }
-  | { type: 'ANNOTATE_RECT_FILL'; x1: number; y1: number; x2: number; y2: number; pieceType: number }
-  | { type: 'ANNOTATE_CLEAR_ALL' }
-  | { type: 'ANNOTATE_AUTO_COLOR' }
-  | { type: 'ANNOTATE_AUTO_COLOR_STROKE'; cells: ReadonlyArray<{ x: number; y: number }> };
+import {
+  applyAnnotationPen,
+  applyAnnotationErase,
+  applyAnnotationRectFill,
+  applyAnnotationFloodErase,
+  clearAllAnnotations,
+} from './annotationEngine';
+import {
+  applyBoardPen,
+  applyBoardErase,
+  applyBoardRectFill,
+  applyBoardFloodErase,
+} from './boardEditEngine';
+import { registerPaletteColor, PALETTE_CELL_OFFSET } from './annotationPalette';
 
 export function isAnnotationEvent(input: InputEvent): input is AnnotationEvent {
   return input.type.startsWith('ANNOTATE');
 }
 
+export function isBoardEditEvent(input: InputEvent): input is BoardEditEvent {
+  return input.type.startsWith('BOARD');
+}
+
+export interface LayerReduction {
+  layer: number[][];
+  userPalette: string[];
+}
+
 export function reduceAnnotationEvent(
   annotations: AnnotationMatrix,
-  event: AnnotationEvent
-): AnnotationMatrix {
+  userPalette: string[],
+  event: AnnotationEvent,
+): LayerReduction {
   switch (event.type) {
-    case 'ANNOTATE_PEN':
-      return applyAnnotationPen(annotations, event.x, event.y, event.pieceType);
+    case 'ANNOTATE_PEN': {
+      const registration = registerPaletteColor(userPalette, event.color);
+      return {
+        layer: applyAnnotationPen(annotations, event.x, event.y, PALETTE_CELL_OFFSET + registration.index),
+        userPalette: registration.userPalette,
+      };
+    }
     case 'ANNOTATE_ERASE':
-      return applyAnnotationErase(annotations, event.x, event.y);
+      return { layer: applyAnnotationErase(annotations, event.x, event.y), userPalette };
     case 'ANNOTATE_FLOOD_ERASE':
-      return applyAnnotationFloodErase(annotations, event.x, event.y);
-    case 'ANNOTATE_RECT_FILL':
-      return applyAnnotationRectFill(annotations, event.x1, event.y1, event.x2, event.y2, event.pieceType);
+      return { layer: applyAnnotationFloodErase(annotations, event.x, event.y), userPalette };
+    case 'ANNOTATE_RECT_FILL': {
+      const registration = registerPaletteColor(userPalette, event.color);
+      return {
+        layer: applyAnnotationRectFill(
+          annotations,
+          event.x1,
+          event.y1,
+          event.x2,
+          event.y2,
+          PALETTE_CELL_OFFSET + registration.index,
+        ),
+        userPalette: registration.userPalette,
+      };
+    }
     case 'ANNOTATE_CLEAR_ALL':
-      return clearAllAnnotations(annotations);
-    case 'ANNOTATE_AUTO_COLOR':
-      return autoColorAnnotations(annotations);
-    case 'ANNOTATE_AUTO_COLOR_STROKE':
-      return autoColorStroke(annotations, event.cells);
+      return { layer: clearAllAnnotations(annotations), userPalette };
+  }
+}
+
+export function reduceBoardEditEvent(
+  board: number[][],
+  userPalette: string[],
+  event: BoardEditEvent,
+): LayerReduction {
+  switch (event.type) {
+    case 'BOARD_PEN': {
+      const registration = registerPaletteColor(userPalette, event.color);
+      return {
+        layer: applyBoardPen(board, event.x, event.y, PALETTE_CELL_OFFSET + registration.index),
+        userPalette: registration.userPalette,
+      };
+    }
+    case 'BOARD_ERASE':
+      return { layer: applyBoardErase(board, event.x, event.y), userPalette };
+    case 'BOARD_FLOOD_ERASE':
+      return { layer: applyBoardFloodErase(board, event.x, event.y), userPalette };
+    case 'BOARD_RECT_FILL': {
+      const registration = registerPaletteColor(userPalette, event.color);
+      return {
+        layer: applyBoardRectFill(
+          board,
+          event.x1,
+          event.y1,
+          event.x2,
+          event.y2,
+          PALETTE_CELL_OFFSET + registration.index,
+        ),
+        userPalette: registration.userPalette,
+      };
+    }
   }
 }

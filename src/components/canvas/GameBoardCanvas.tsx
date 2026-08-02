@@ -11,12 +11,11 @@ export type { AnnotationTool };
 
 interface GameBoardCanvasProps {
   state: EngineState;
-  onAnnotationPen?: (x: number, y: number, pieceType: number) => void;
-  onAnnotationErase?: (x: number, y: number) => void;
-  onAnnotationFloodErase?: (x: number, y: number) => void;
-  onAnnotationRectFill?: (x1: number, y1: number, x2: number, y2: number, pieceType: number) => void;
+  onPen?: (x: number, y: number, color: string) => void;
+  onErase?: (x: number, y: number) => void;
+  onFloodErase?: (x: number, y: number) => void;
+  onRectFill?: (x1: number, y1: number, x2: number, y2: number, color: string) => void;
   annotationTool?: AnnotationTool;
-  annotationPieceType?: number;
   annotationColor?: string;
   isDrawing?: boolean;
   onDrawingStart?: () => void;
@@ -27,13 +26,12 @@ interface GameBoardCanvasProps {
 
 export function GameBoardCanvas({
   state,
-  onAnnotationPen,
-  onAnnotationErase,
-  onAnnotationFloodErase,
-  onAnnotationRectFill,
+  onPen,
+  onErase,
+  onFloodErase,
+  onRectFill,
   annotationTool = 'pen',
-  annotationPieceType = 1,
-  annotationColor,
+  annotationColor = '#ffffff',
   isDrawing = false,
   onDrawingStart,
   onDrawingEnd,
@@ -42,12 +40,12 @@ export function GameBoardCanvas({
 }: GameBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useBoardInput(canvasRef, {
-    onAnnotationPen,
-    onAnnotationErase,
-    onAnnotationFloodErase,
-    onAnnotationRectFill,
+    onPen,
+    onErase,
+    onFloodErase,
+    onRectFill,
     annotationTool,
-    annotationPieceType,
+    annotationColor,
     isDrawing,
     onDrawingStart,
     onDrawingEnd,
@@ -65,9 +63,9 @@ export function GameBoardCanvas({
     if (!ctx) return;
     renderBoard(ctx, state.board, state.activePiece, state.annotations, {
       cellSize,
-      annotationColor,
+      palette: state.userPalette,
     });
-  }, [state, cellSize, width, height, annotationColor]);
+  }, [state, cellSize, width, height]);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();

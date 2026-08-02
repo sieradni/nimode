@@ -127,6 +127,7 @@ export interface SpectatorPayload {
   queue: number[];
   hold: number | null;
   annotations: number[][];
+  userPalette: string[];
   stats: {
     pps: number;
     apm: number;
@@ -173,16 +174,21 @@ Defaults follow the standard Tetris layout: `Z` = CCW, `X` = CW, `C` = Hold, `Sp
 
 ## Annotation Model
 
-Annotation cells store either a **tetromino type (`1..7`)** or the neutral marker `ANNOTATION_PLAIN` (`8`), defined in `src/render/annotationColors.ts`. Freshly drawn cells always carry the neutral marker; only auto-color promotes cells to a real piece type. `resolveAnnotationColor` renders piece-typed cells in their tetromino colour and neutral cells in the player's picked colour, defaulting to white.
+Both the annotation and board layers encode cell colours through a single **shared user palette** (`src/engine/annotationPalette.ts`). A cell value is either a tetromino type (`1..7`), or `PALETTE_CELL_OFFSET + i` (`8 + i`) indexing `userPalette[i]`; the palette itself lives in `EngineState.userPalette` and rides the `SpectatorPayload` wire format. Piece-typed cells keep their tetromino colour; palette cells render the exact colour the mark was drawn with, so changing the colour picker never recolors existing marks (US-8.11). Encoding the index in the matrix value means line clears shift the colour with the cells for free, and the wire stays `number[][]` plus one `string[]`. The palette starts as `[DEFAULT_ANNOTATION_COLOR]` (`#ffffff`); new colours are appended by `registerPaletteColor` (pure — returns a new array) up to `MAX_USER_PALETTE_SIZE` (56), falling back to index 0 when full.
+
+### Edit transactions
+Each pointer gesture is grouped into **one undoable action** (US-8.13):
+
+1. `GameCanvas` calls `stroke.begin()` (`useAnnotationStroke`, `src/components/canvas/useAnnotationStroke.ts`) and dispatches `EDIT_BEGIN { mode }` on `pointer down`; every painted cell is accumulated in the stroke ref and forwarded as an `ANNOTATE_*` or `BOARD_*` event.
+2. On `pointer up`, `GameCanvas` dispatches `EDIT_COMMIT { cells }`. `EditSession` (`src/engine/editSession.ts`) folds stroke auto-color into the same action, then pushes **exactly one** undo snapshot when anything changed.
+3. `ANNOTATE_CLEAR_ALL` snapshots immediately when no gesture is open.
+
+`EngineCore` routes edit input through `editInputHandler.ts` (kept separate to respect the line budget). Events are typed `AnnotationEvent` / `BoardEditEvent` in `src/engine/types/annotations.ts` and reduced by `reduceAnnotationEvent` / `reduceBoardEditEvent` (`src/engine/annotationInput.ts`), which register colours and dispatch to `annotationEngine.ts` (free-form marks) or `boardEditEngine.ts` (real board cells). Block-mode tools mirror the annotation tools but with overwrite semantics: the pen writes any cell (locked tetromino cells included) and flood erase clears any filled cell in the region (US-8.12).
 
 ### Stroke-scoped auto-color
-A global flood fill merges a newly drawn piece with any annotation it touches, producing an oversized component that no longer matches a tetromino. Auto-color is therefore scoped to the **current stroke**:
+A global flood fill merges a newly drawn piece with any annotation it touches, producing an oversized component that no longer matches a tetromino. Auto-color is therefore scoped to the **current stroke** and runs at `EDIT_COMMIT` time (annotations mode only, gated by `config.autoColor`):
 
-1. `useAnnotationStroke` (`src/components/canvas/useAnnotationStroke.ts`) accumulates the cells painted during one continuous drag in a ref, so mid-stroke updates never trigger a re-render.
-2. On stroke end, `GameCanvas` dispatches `ANNOTATE_AUTO_COLOR_STROKE` with those cells.
-3. `autoColorStroke` (`src/engine/autoColorEngine.ts`) matches the stroke's own geometry via `matchTetromino`, ignoring cells erased mid-stroke and duplicates from overlapping pointer moves.
-
-`autoColorAnnotations` (whole-board flood fill) is retained for the explicit "auto-color everything" action. Shape matching is shared through `src/engine/autoColorShapes.ts`.
+`autoColorStroke` (`src/engine/autoColorEngine.ts`) matches the stroke's own geometry via `matchTetromino` (shared through `src/engine/autoColorShapes.ts`), ignoring cells erased mid-stroke and duplicates from overlapping pointer moves, and promotes matched cells from their palette value to a tetromino type (`1..7`). Since it runs inside the commit transaction, the promotion shares the gesture's undo step. `config.autoColor` defaults to `true` and persists through `configStore`/`settingsIO`; old saved configs missing the key merge with defaults on load (US-8.10).
 
 ### Pointer tools
 The **right mouse button erases regardless of the selected tool**. The erase mode is latched on press (`BoardInputHandler`) because `mousemove` does not report which button is held, so an entire right-drag keeps erasing. The board suppresses the context menu. Right-drag erasing never contributes cells to the auto-color stroke.

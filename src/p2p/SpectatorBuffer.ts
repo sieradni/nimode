@@ -15,6 +15,7 @@ export interface InterpolatedState {
   queue: number[];
   hold: number | null;
   annotations: number[][];
+  userPalette: string[];
   stats: SpectatorPayload['stats'];
   hasData: boolean;
 }
@@ -31,6 +32,7 @@ function toInterpolatedState(payload: SpectatorPayload): InterpolatedState {
     queue: payload.queue,
     hold: payload.hold,
     annotations: payload.annotations,
+    userPalette: payload.userPalette,
     stats: payload.stats,
     hasData: true,
   };
@@ -84,6 +86,7 @@ export class SpectatorBuffer {
         queue: [],
         hold: null,
         annotations: [],
+        userPalette: [],
         stats: emptyStats(),
         hasData: false,
       };
@@ -139,6 +142,7 @@ export class SpectatorBuffer {
       queue: s1.payload.queue,
       hold: s1.payload.hold,
       annotations: s1.payload.annotations,
+      userPalette: s1.payload.userPalette,
       stats: s1.payload.stats,
       hasData: true,
     };

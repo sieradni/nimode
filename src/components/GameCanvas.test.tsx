@@ -46,6 +46,7 @@ function createState(): EngineState {
     gameOver: false,
     paused: false,
     annotations,
+    userPalette: ['#ffffff'],
   };
 }
 
@@ -88,7 +89,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -104,7 +105,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -120,7 +121,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -136,7 +137,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -153,13 +154,13 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
     expect(vi.mocked(renderBoard)).toHaveBeenCalledWith(mockCtx, state.board, state.activePiece, state.annotations, {
       cellSize: MIN_CELL_SIZE,
-      annotationColor: '#ffffff',
+      palette: state.userPalette,
     });
   });
 
@@ -171,7 +172,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -186,7 +187,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -202,7 +203,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -213,7 +214,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-         autoColor={false}
+        editMode="annotations"
          onReset={vi.fn()}
        />
     );
@@ -227,7 +228,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-        autoColor={false}
+        editMode="annotations"
         onReset={vi.fn()}
       />
     );
@@ -241,7 +242,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-        autoColor={false}
+        editMode="annotations"
         onReset={vi.fn()}
       />
     );
@@ -258,7 +259,7 @@ describe('GameCanvas', () => {
         engine={mockEngine}
         annotationTool="pen"
         annotationColor="#ffffff"
-        autoColor={false}
+        editMode="annotations"
         onReset={vi.fn()}
       />
     );

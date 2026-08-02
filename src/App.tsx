@@ -16,6 +16,7 @@ import { FloatingControls } from './components/FloatingControls';
 import { ActiveView } from './components/ActiveView';
 import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
 import { DEFAULT_ANNOTATION_COLOR } from './render/annotationColors';
+import { EditMode } from './engine/types';
 
 function App() {
   const [engine] = useState(
@@ -43,22 +44,20 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('pen');
   const [annotationColor, setAnnotationColor] = useState<string>(DEFAULT_ANNOTATION_COLOR);
+  const [editMode, setEditMode] = useState<EditMode>('annotations');
   const [autoColor, setAutoColor] = useState(() => configStore.getConfig().autoColor);
 
   useEffect(() => {
-    const handleConfigChange = () => setAutoColor(configStore.getConfig().autoColor);
-    configStore.subscribe(handleConfigChange);
-    return () => configStore.unsubscribe(handleConfigChange);
-  }, []);
+    const syncConfig = () => {
+      engine.updateConfig(configStore.getConfig());
+      setAutoColor(configStore.getConfig().autoColor);
+    };
+    syncConfig();
+    configStore.subscribe(syncConfig);
+    return () => configStore.unsubscribe(syncConfig);
+  }, [engine]);
   const [annotationToolbarOpen, setAnnotationToolbarOpen] = useState(false);
   const settingsOpenRef = useRef(false);
-
-  useEffect(() => {
-    engine.updateConfig(configStore.getConfig());
-    const handleConfigChange = () => engine.updateConfig(configStore.getConfig());
-    configStore.subscribe(handleConfigChange);
-    return () => configStore.unsubscribe(handleConfigChange);
-  }, [engine]);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -106,6 +105,8 @@ function App() {
         onAutoColorToggle={configStore.setAutoColor}
         color={annotationColor}
         onColorChange={setAnnotationColor}
+        mode={editMode}
+        onModeChange={setEditMode}
       />
 
       {peerSession.connectionError && (
@@ -121,7 +122,7 @@ function App() {
           engine={engine}
           annotationTool={annotationTool}
           annotationColor={annotationColor}
-          autoColor={autoColor}
+          editMode={editMode}
           onReset={() => { engine.reset(); setGameState(engine.getState()); }}
           spectatorBuffer={peerSession.spectatorBuffer}
           onReturnToLocal={peerSession.returnToLocal}

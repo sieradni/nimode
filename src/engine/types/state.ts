@@ -21,4 +21,10 @@ export interface GameState {
   gameOver: boolean;
   paused: boolean;
   annotations: AnnotationMatrix;
+  /**
+   * Player-chosen colours for drawn marks. Cells in the annotation and board
+   * matrices encode a colour as `PALETTE_CELL_OFFSET + i` (see
+   * `annotationPalette.ts`); piece types 1..7 render in their tetromino colour.
+   */
+  userPalette: string[];
 }

@@ -37,6 +37,7 @@ describe('SpectatorStatsPanel', () => {
       queue: [],
       hold: null,
       annotations: [],
+      userPalette: ['#ffffff'],
       stats: { pps: 2.5, apm: 30.5, kpp: 1.2, piecesPlaced: 10, linesCleared: 5 },
     }, Date.now());
 

@@ -9,6 +9,7 @@ export interface EngineCoreState {
   activePiece: { type: number; x: number; y: number; rotation: number } | null;
   queue: { queue: number[]; hold: number | null; canHold: boolean };
   annotations: number[][];
+  userPalette: string[];
   gameOver: boolean;
   gravityTimer: number;
   lockDelayState: LockDelayState;
@@ -28,6 +29,7 @@ export function saveSnapshot(
       hold: state.queue.hold,
       canHold: state.queue.canHold,
       annotations: state.annotations.map(row => [...row]),
+      userPalette: [...state.userPalette],
       gameOver: state.gameOver,
       gravityTimer,
       lockDelay: { timer: lockDelayState.timer, resets: lockDelayState.resets },
@@ -47,6 +49,7 @@ export function restoreSnapshot(
   targetState.queue.hold = snapshot.state.hold as PieceType | null;
   targetState.queue.canHold = snapshot.state.canHold;
   targetState.annotations = snapshot.state.annotations.map(row => [...row]);
+  targetState.userPalette = [...snapshot.state.userPalette];
   targetState.gameOver = snapshot.state.gameOver;
   playerStats.undoRestore(snapshot.stats);
 }

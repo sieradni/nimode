@@ -79,6 +79,7 @@ function makePayload(): SpectatorPayload {
     queue: [],
     hold: null,
     annotations: [],
+    userPalette: ['#ffffff'],
     stats: { pps: 3.2, apm: 40, kpp: 1.5, piecesPlaced: 10, linesCleared: 2 },
   };
 }

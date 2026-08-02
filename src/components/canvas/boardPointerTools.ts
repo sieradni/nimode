@@ -1,4 +1,4 @@
-import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
+import { BOARD_CELL_SIZE } from './canvasConstants';
 import { VISIBLE_HEIGHT } from '../../engine/types';
 
 export interface BoardCoord {
@@ -13,11 +13,6 @@ export function isRightButton(
   e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
 ): boolean {
   return 'button' in e && e.button === RIGHT_BUTTON;
-}
-
-/** Tools whose drag paints cells that feed stroke auto-color. */
-export function isPaintingTool(tool: AnnotationTool): boolean {
-  return tool === 'pen';
 }
 
 export function getCanvasCoordinates(

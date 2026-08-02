@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { AnnotationToolbarControls } from './AnnotationToolbarControls';
 import { DEFAULT_ANNOTATION_COLOR } from '../render/annotationColors';
-import type { AnnotationTool } from './canvas/canvasConstants';
+import type { AnnotationTool, EditMode } from '../engine/types';
 
-export type { AnnotationTool } from './canvas/canvasConstants';
+export type { AnnotationTool, EditMode } from '../engine/types';
 
 export interface AnnotationToolbarProps {
   isOpen: boolean;
@@ -12,6 +11,8 @@ export interface AnnotationToolbarProps {
   onToolChange?: (tool: AnnotationTool) => void;
   onClearAll?: () => void;
   onResetBoard?: () => void;
+  mode?: EditMode;
+  onModeChange?: (mode: EditMode) => void;
   autoColor?: boolean;
   onAutoColorToggle?: (enabled: boolean) => void;
   color?: string;
@@ -25,37 +26,25 @@ const TOOL_LABELS: Record<AnnotationTool, string> = {
   rect: 'Rect Fill',
 };
 
+/**
+ * Fully controlled: the App owns the tool, mode, colour and auto-color state,
+ * so toggles can never drift from the source of truth (e.g. a config-store
+ * change or a reload).
+ */
 export function AnnotationToolbar({
   isOpen,
   onClose,
-  tool: initialTool = 'pen',
+  tool = 'pen',
   onToolChange,
   onClearAll,
   onResetBoard,
-  autoColor: initialAutoColor = false,
+  mode = 'annotations',
+  onModeChange,
+  autoColor = false,
   onAutoColorToggle,
-  color: initialColor = DEFAULT_ANNOTATION_COLOR,
+  color = DEFAULT_ANNOTATION_COLOR,
   onColorChange,
 }: AnnotationToolbarProps) {
-  const [tool, setTool] = useState<AnnotationTool>(initialTool);
-  const [autoColor, setAutoColor] = useState<boolean>(initialAutoColor);
-  const [color, setColor] = useState<string>(initialColor);
-
-  const handleToolChange = (newTool: AnnotationTool) => {
-    setTool(newTool);
-    onToolChange?.(newTool);
-  };
-
-  const handleAutoColorToggle = (enabled: boolean) => {
-    setAutoColor(enabled);
-    onAutoColorToggle?.(enabled);
-  };
-
-  const handleColorChange = (newColor: string) => {
-    setColor(newColor);
-    onColorChange?.(newColor);
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -68,7 +57,7 @@ export function AnnotationToolbar({
               type="button"
               role="button"
               aria-pressed={tool === t}
-              onClick={() => handleToolChange(t)}
+              onClick={() => onToolChange?.(t)}
               className={`px-3 py-1.5 text-xs rounded transition-colors ${
                 tool === t
                   ? 'bg-slate-600 text-white'
@@ -82,10 +71,12 @@ export function AnnotationToolbar({
 
         <AnnotationToolbarControls
           tool={tool}
+          mode={mode}
           autoColor={autoColor}
           color={color}
-          onAutoColorToggle={handleAutoColorToggle}
-          onColorChange={handleColorChange}
+          onModeChange={onModeChange ?? (() => {})}
+          onAutoColorToggle={onAutoColorToggle ?? (() => {})}
+          onColorChange={onColorChange ?? (() => {})}
         />
 
         <div className="h-px w-20 bg-slate-700 my-1" />

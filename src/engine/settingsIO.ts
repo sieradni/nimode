@@ -31,6 +31,12 @@ function isValidKeyBindings(value: unknown): value is KeyBindings {
   return true;
 }
 
+/**
+ * Validates the shape of a stored/imported config. Keys added after the
+ * config was first released are merged from `DEFAULT_CONFIG` (see
+ * `loadConfigFromStorage` and `mergeConfig`), so an older config lacking a
+ * newer boolean flag still loads — with the flag falling back to its default.
+ */
 function isValidGameConfig(value: unknown): value is GameConfig {
   if (!isRecord(value)) return false;
   for (const key of CONFIG_NUMERIC_KEYS) {
@@ -62,7 +68,7 @@ function mergeConfig(imported: GameConfig): GameConfig {
     result[key] = imported[key];
   }
   result.subzero = imported.subzero;
-  result.autoColor = imported.autoColor;
+  result.autoColor = imported.autoColor ?? DEFAULT_CONFIG.autoColor;
   return result;
 }
 
@@ -116,7 +122,12 @@ export function loadConfigFromStorage(): GameConfig {
     const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
     if (raw === null) return { ...DEFAULT_CONFIG };
     const parsed: unknown = JSON.parse(raw);
-    if (isValidGameConfig(parsed)) return parsed;
+    if (isValidGameConfig(parsed)) {
+      // Merge over the defaults so newer boolean flags (e.g. `autoColor`)
+      // that older stored configs lack fall back to their default instead of
+      // loading as `undefined` and silently disabling the feature.
+      return { ...DEFAULT_CONFIG, ...parsed };
+    }
     return { ...DEFAULT_CONFIG };
   } catch {
     return { ...DEFAULT_CONFIG };

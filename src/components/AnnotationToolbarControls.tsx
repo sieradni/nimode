@@ -1,23 +1,49 @@
-import type { AnnotationTool } from './canvas/canvasConstants';
+import type { AnnotationTool, EditMode } from '../engine/types';
 import { AnnotationColorPicker } from './AnnotationColorPicker';
 
 interface AnnotationToolbarControlsProps {
   tool: AnnotationTool;
+  mode: EditMode;
   autoColor: boolean;
   color: string;
+  onModeChange: (mode: EditMode) => void;
   onAutoColorToggle: (enabled: boolean) => void;
   onColorChange: (color: string) => void;
 }
 
+const MODE_LABELS: Record<EditMode, string> = {
+  annotations: 'Annotate',
+  blocks: 'Blocks',
+};
+
 export function AnnotationToolbarControls({
   tool,
+  mode,
   autoColor,
   color,
+  onModeChange,
   onAutoColorToggle,
   onColorChange,
 }: AnnotationToolbarControlsProps) {
   return (
     <>
+      <div className="flex w-full gap-1">
+        {(['annotations', 'blocks'] as EditMode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="button"
+            aria-pressed={mode === m}
+            onClick={() => onModeChange(m)}
+            className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
+              mode === m ? 'bg-slate-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            {MODE_LABELS[m]}
+          </button>
+        ))}
+      </div>
+
       <div className="h-px w-20 bg-slate-700" />
 
       {(tool === 'pen' || tool === 'rect') && (

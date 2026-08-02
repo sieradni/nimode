@@ -35,6 +35,7 @@ function makeEmptyState(overrides: Partial<InterpolatedState> = {}): Interpolate
     queue: [],
     hold: null,
     annotations: [],
+    userPalette: ['#ffffff'],
     stats: { pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 },
     hasData: false,
     ...overrides,

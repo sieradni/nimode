@@ -17,6 +17,7 @@ function createMockState(y: number): GameState {
     gameOver: false,
     paused: false,
     annotations: createEmptyAnnotations(),
+    userPalette: ['#ffffff'],
   };
 }
 

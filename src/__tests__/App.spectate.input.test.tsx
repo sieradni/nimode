@@ -38,6 +38,7 @@ function createState(): EngineState {
     gameOver: false,
     paused: false,
     annotations,
+    userPalette: ['#ffffff'],
   };
 }
 

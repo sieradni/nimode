@@ -7,18 +7,14 @@ export { getCanvasCoordinates };
 export type { BoardCoord };
 
 export interface BoardInputCallbacks {
-  onAnnotationPen?: (x: number, y: number, pieceType: number) => void;
-  onAnnotationErase?: (x: number, y: number) => void;
-  onAnnotationFloodErase?: (x: number, y: number) => void;
-  onAnnotationRectFill?: (
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    pieceType: number,
-  ) => void;
+  /** Paints a cell on the active layer (annotation or board) with the picked colour. */
+  onPen?: (x: number, y: number, color: string) => void;
+  /** Erases a cell from the active layer (also used for right-drag erasing). */
+  onErase?: (x: number, y: number) => void;
+  onFloodErase?: (x: number, y: number) => void;
+  onRectFill?: (x1: number, y1: number, x2: number, y2: number, color: string) => void;
   annotationTool: AnnotationTool;
-  annotationPieceType: number;
+  annotationColor: string;
   isDrawing: boolean;
   onDrawingStart?: () => void;
   onDrawingEnd?: () => void;
@@ -50,36 +46,36 @@ export function useBoardInput(
   };
 
   const paint = (x: number, y: number) => {
-    callbacks.onAnnotationPen?.(x, y, callbacks.annotationPieceType);
+    callbacks.onPen?.(x, y, callbacks.annotationColor);
     callbacks.onStrokeCell?.(x, y);
   };
 
   const handleMouseDown = (e: PointerEvt) => {
-    const { onAnnotationPen, onAnnotationErase, onAnnotationFloodErase, onAnnotationRectFill } = callbacks;
-    if (!onAnnotationPen && !onAnnotationErase && !onAnnotationFloodErase && !onAnnotationRectFill) return;
+    const { onPen, onErase, onFloodErase, onRectFill } = callbacks;
+    if (!onPen && !onErase && !onFloodErase && !onRectFill) return;
     const coords = coordsOf(e);
     if (!coords) return;
     lastCell.current = coords;
     erasing.current = isRightButton(e);
 
+    // Begin the stroke before the first paint so the stroke recorder never
+    // loses the origin cell.
+    callbacks.onDrawingStart?.();
+
     if (erasing.current) {
-      onAnnotationErase?.(coords.x, coords.y);
-      callbacks.onDrawingStart?.();
+      onErase?.(coords.x, coords.y);
       return;
     }
 
-    if (callbacks.annotationTool === 'pen' && onAnnotationPen) {
+    if (callbacks.annotationTool === 'pen' && onPen) {
       paint(coords.x, coords.y);
-    } else if (callbacks.annotationTool === 'erase' && onAnnotationErase) {
-      onAnnotationErase(coords.x, coords.y);
-    } else if (callbacks.annotationTool === 'floodErase' && onAnnotationFloodErase) {
-      onAnnotationFloodErase(coords.x, coords.y);
-    } else if (callbacks.annotationTool === 'rect' && onAnnotationRectFill) {
+    } else if (callbacks.annotationTool === 'erase' && onErase) {
+      onErase(coords.x, coords.y);
+    } else if (callbacks.annotationTool === 'floodErase' && onFloodErase) {
+      onFloodErase(coords.x, coords.y);
+    } else if (callbacks.annotationTool === 'rect' && onRectFill) {
       setRectStart(coords);
-    } else {
-      return;
     }
-    callbacks.onDrawingStart?.();
   };
 
   const handleMouseMove = (e: PointerEvt) => {
@@ -87,7 +83,7 @@ export function useBoardInput(
     const coords = coordsOf(e);
     if (!coords) return;
     const from = lastCell.current;
-    const { annotationTool, annotationPieceType } = callbacks;
+    const { annotationTool, annotationColor } = callbacks;
 
     const eraseAlong = (fn: (x: number, y: number) => void) => {
       for (const [cx, cy] of walkLineCells(from.x, from.y, coords.x, coords.y)) {
@@ -95,29 +91,29 @@ export function useBoardInput(
       }
     };
 
-    if (erasing.current && callbacks.onAnnotationErase) {
-      eraseAlong(callbacks.onAnnotationErase);
-    } else if (annotationTool === 'pen' && callbacks.onAnnotationPen) {
+    if (erasing.current && callbacks.onErase) {
+      eraseAlong(callbacks.onErase);
+    } else if (annotationTool === 'pen' && callbacks.onPen) {
       eraseAlong(paint);
-    } else if (annotationTool === 'erase' && callbacks.onAnnotationErase) {
-      eraseAlong(callbacks.onAnnotationErase);
-    } else if (annotationTool === 'rect' && rectStart && callbacks.onAnnotationRectFill) {
-      callbacks.onAnnotationRectFill(rectStart.x, rectStart.y, coords.x, coords.y, annotationPieceType);
+    } else if (annotationTool === 'erase' && callbacks.onErase) {
+      eraseAlong(callbacks.onErase);
+    } else if (annotationTool === 'rect' && rectStart && callbacks.onRectFill) {
+      callbacks.onRectFill(rectStart.x, rectStart.y, coords.x, coords.y, annotationColor);
     }
     lastCell.current = coords;
   };
 
   const handleMouseUp = (e: PointerEvt) => {
     if (!callbacks.isDrawing) return;
-    if (!erasing.current && callbacks.annotationTool === 'rect' && rectStart && callbacks.onAnnotationRectFill) {
+    if (!erasing.current && callbacks.annotationTool === 'rect' && rectStart && callbacks.onRectFill) {
       const coords = coordsOf(e);
       if (coords) {
-        callbacks.onAnnotationRectFill(
+        callbacks.onRectFill(
           rectStart.x,
           rectStart.y,
           coords.x,
           coords.y,
-          callbacks.annotationPieceType,
+          callbacks.annotationColor,
         );
       }
       setRectStart(null);

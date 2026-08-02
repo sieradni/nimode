@@ -2,6 +2,7 @@ import { GameState, GameConfig, DEFAULT_CONFIG, EMPTY_INPUT_STATE, PieceType } f
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { createEmptyBoard } from './boardUtils';
 import { createEmptyAnnotations } from './annotationEngine';
+import { DEFAULT_ANNOTATION_COLOR } from './annotationPalette';
 
 const INITIAL_QUEUE_SIZE = 6;
 
@@ -28,5 +29,6 @@ export function createInitialGameState(
     gameOver: false,
     paused: false,
     annotations: createEmptyAnnotations(),
+    userPalette: [DEFAULT_ANNOTATION_COLOR],
   };
 }
