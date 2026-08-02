@@ -66,19 +66,19 @@ describe('srsPlusKicks', () => {
       }
     });
 
-    it('I-piece 180-degree transitions have 2 kick entries', () => {
+    it('I-piece 180-degree transitions have 3 kick entries', () => {
       const kicks180: Array<[RotationState, RotationState]> = [
         [0, 2], [2, 0], [1, 3], [3, 1],
       ];
       for (const [from, to] of kicks180) {
         const kicks = getSrsPlusKicks(1, from, to);
-        expect(kicks).toHaveLength(2);
+        expect(kicks).toHaveLength(3);
       }
     });
   });
 
-  describe('specific kick values', () => {
-    it('JLSTZ 0->1 (CW from spawn) matches SRS+ board coords', () => {
+  describe('JLSTZ 90-degree specific kick values (standard SRS)', () => {
+    it('JLSTZ 0->1 (CW from spawn) matches SRS board coords', () => {
       const kicks = getSrsPlusKicks(6, 0, 1);
       expect(kicks).toEqual([
         { x: 0, y: 0 }, { x: -1, y: 0 },
@@ -86,7 +86,7 @@ describe('srsPlusKicks', () => {
       ]);
     });
 
-    it('JLSTZ 1->0 (CCW to spawn) matches SRS+ board coords', () => {
+    it('JLSTZ 1->0 (CCW to spawn) matches SRS board coords', () => {
       const kicks = getSrsPlusKicks(6, 1, 0);
       expect(kicks).toEqual([
         { x: 0, y: 0 }, { x: 1, y: 0 },
@@ -94,56 +94,287 @@ describe('srsPlusKicks', () => {
       ]);
     });
 
-    it('I-piece 0->1 matches TETR.IO I kicks (board coords)', () => {
-      const kicks = getSrsPlusKicks(1, 0, 1);
+    it('JLSTZ 1->2 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 1, 2);
       expect(kicks).toEqual([
-        { x: 0, y: 0 }, { x: -2, y: 0 },
-        { x: 1, y: 0 }, { x: -2, y: 1 }, { x: 1, y: -2 },
+        { x: 0, y: 0 }, { x: 1, y: 0 },
+        { x: 1, y: 1 }, { x: 0, y: -2 }, { x: 1, y: -2 },
       ]);
     });
 
-    it('I-piece 0->2 (180) has only two entries', () => {
-      const kicks = getSrsPlusKicks(1, 0, 2);
-      expect(kicks).toEqual([{ x: 0, y: 0 }, { x: 0, y: 1 }]);
+    it('JLSTZ 2->1 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 2, 1);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 }, { x: -1, y: 0 },
+        { x: -1, y: -1 }, { x: 0, y: 2 }, { x: -1, y: 2 },
+      ]);
     });
 
-    it('I-piece 2->0 (180 reverse) has only two entries', () => {
-      const kicks = getSrsPlusKicks(1, 2, 0);
-      expect(kicks).toEqual([{ x: 0, y: 0 }, { x: 0, y: -1 }]);
+    it('JLSTZ 2->3 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 2, 3);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 }, { x: 1, y: 0 },
+        { x: 1, y: -1 }, { x: 0, y: 2 }, { x: 1, y: 2 },
+      ]);
     });
 
-    it('I-piece 1->3 (180) has only two entries', () => {
-      const kicks = getSrsPlusKicks(1, 1, 3);
-      expect(kicks).toEqual([{ x: 0, y: 0 }, { x: 1, y: 0 }]);
+    it('JLSTZ 3->2 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 3, 2);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 }, { x: -1, y: 0 },
+        { x: -1, y: 1 }, { x: 0, y: -2 }, { x: -1, y: -2 },
+      ]);
     });
 
-    it('I-piece 3->1 (180 reverse) has only two entries', () => {
-      const kicks = getSrsPlusKicks(1, 3, 1);
-      expect(kicks).toEqual([{ x: 0, y: 0 }, { x: -1, y: 0 }]);
+    it('JLSTZ 3->0 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 3, 0);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 }, { x: -1, y: 0 },
+        { x: -1, y: 1 }, { x: 0, y: -2 }, { x: -1, y: -2 },
+      ]);
     });
 
-    it('JLSTZ 0->2 (180) has 6 entries with correct first pair', () => {
+    it('JLSTZ 0->3 matches SRS board coords', () => {
+      const kicks = getSrsPlusKicks(6, 0, 3);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 }, { x: 1, y: 0 },
+        { x: 1, y: -1 }, { x: 0, y: 2 }, { x: 1, y: 2 },
+      ]);
+    });
+  });
+
+  describe('JLSTZ 180-degree specific kick values (TETR.IO SRS+)', () => {
+    it('JLSTZ 0->2 (180 CW from spawn) kicks UP first', () => {
       const kicks = getSrsPlusKicks(6, 0, 2);
-      expect(kicks[0]).toEqual({ x: 0, y: 0 });
-      expect(kicks[1]).toEqual({ x: 0, y: 1 });
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 0, y: -1 },
+        { x: 1, y: -1 },
+        { x: -1, y: -1 },
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+      ]);
     });
 
-    it('JLSTZ 2->0 (180 reverse) has 6 entries with correct first pair', () => {
+    it('JLSTZ 2->0 (180 CCW to spawn) kicks DOWN first', () => {
       const kicks = getSrsPlusKicks(6, 2, 0);
-      expect(kicks[0]).toEqual({ x: 0, y: 0 });
-      expect(kicks[1]).toEqual({ x: 0, y: -1 });
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 0, y: 1 },
+        { x: -1, y: 1 },
+        { x: 1, y: 1 },
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+      ]);
     });
 
-    it('JLSTZ 1->3 (180) has 6 entries with correct first pair', () => {
+    it('JLSTZ 1->3 (180 CW from R) kicks UP for vertical shifts', () => {
       const kicks = getSrsPlusKicks(6, 1, 3);
-      expect(kicks[0]).toEqual({ x: 0, y: 0 });
-      expect(kicks[1]).toEqual({ x: 1, y: 0 });
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: 1, y: -2 },
+        { x: 1, y: -1 },
+        { x: 0, y: -2 },
+        { x: 0, y: -1 },
+      ]);
     });
 
-    it('JLSTZ 3->1 (180 reverse) has 6 entries with correct first pair', () => {
+    it('JLSTZ 3->1 (180 CCW from L) kicks UP for vertical shifts', () => {
       const kicks = getSrsPlusKicks(6, 3, 1);
-      expect(kicks[0]).toEqual({ x: 0, y: 0 });
-      expect(kicks[1]).toEqual({ x: -1, y: 0 });
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: -1, y: -2 },
+        { x: -1, y: -1 },
+        { x: 0, y: -2 },
+        { x: 0, y: -1 },
+      ]);
+    });
+  });
+
+  describe('I-piece 90-degree symmetric kick values (SRS+)', () => {
+    it('I-piece 0->1 (CW from spawn) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 0, 1);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: -2, y: 0 },
+        { x: 1, y: 2 },
+        { x: -2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 1->0 (CCW to spawn) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 1, 0);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: 2, y: 0 },
+        { x: -1, y: 2 },
+        { x: 2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 1->2 (CW from R) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 1, 2);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: 2, y: 0 },
+        { x: -1, y: 2 },
+        { x: 2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 2->1 (CCW from 2) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 2, 1);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: -2, y: 0 },
+        { x: 1, y: 2 },
+        { x: -2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 2->3 (CW from 2) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 2, 3);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: 2, y: 0 },
+        { x: -1, y: 2 },
+        { x: 2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 3->2 (CCW from L) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 3, 2);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: -2, y: 0 },
+        { x: 1, y: 2 },
+        { x: -2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 3->0 (CW from L) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 3, 0);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: -2, y: 0 },
+        { x: 1, y: 2 },
+        { x: -2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 0->3 (CCW from spawn) uses symmetric table', () => {
+      const kicks = getSrsPlusKicks(1, 0, 3);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: 2, y: 0 },
+        { x: -1, y: 2 },
+        { x: 2, y: -1 },
+      ]);
+    });
+
+    it('I-piece 0->1 and 0->3 are x-mirrors (left/right symmetry)', () => {
+      const cw = getSrsPlusKicks(1, 0, 1);
+      const ccw = getSrsPlusKicks(1, 0, 3);
+      expect(cw.length).toBe(ccw.length);
+      for (let i = 0; i < cw.length; i++) {
+        const cwKick = cw[i]!;
+        const ccwKick = ccw[i]!;
+        // Mirror symmetry: cw.x === -ccw.x (handle -0 === 0)
+        const mirroredX = -ccwKick.x;
+        const xMatch = cwKick.x === mirroredX || (cwKick.x === 0 && mirroredX === 0);
+        expect(xMatch).toBe(true);
+        expect(cwKick.y).toBe(ccwKick.y);
+      }
+    });
+
+    it('I-piece 1->2 and 3->2 are x-mirrors', () => {
+      const cw = getSrsPlusKicks(1, 1, 2);
+      const ccw = getSrsPlusKicks(1, 3, 2);
+      expect(cw.length).toBe(ccw.length);
+      for (let i = 0; i < cw.length; i++) {
+        const cwKick = cw[i]!;
+        const ccwKick = ccw[i]!;
+        const mirroredX = -ccwKick.x;
+        const xMatch = cwKick.x === mirroredX || (cwKick.x === 0 && mirroredX === 0);
+        expect(xMatch).toBe(true);
+        expect(cwKick.y).toBe(ccwKick.y);
+      }
+    });
+
+    it('I-piece 2->1 and 2->3 are x-mirrors', () => {
+      const cw = getSrsPlusKicks(1, 2, 1);
+      const ccw = getSrsPlusKicks(1, 2, 3);
+      expect(cw.length).toBe(ccw.length);
+      for (let i = 0; i < cw.length; i++) {
+        const cwKick = cw[i]!;
+        const ccwKick = ccw[i]!;
+        const mirroredX = -ccwKick.x;
+        const xMatch = cwKick.x === mirroredX || (cwKick.x === 0 && mirroredX === 0);
+        expect(xMatch).toBe(true);
+        expect(cwKick.y).toBe(ccwKick.y);
+      }
+    });
+
+    it('I-piece 3->0 and 1->0 are x-mirrors', () => {
+      const cw = getSrsPlusKicks(1, 3, 0);
+      const ccw = getSrsPlusKicks(1, 1, 0);
+      expect(cw.length).toBe(ccw.length);
+      for (let i = 0; i < cw.length; i++) {
+        const cwKick = cw[i]!;
+        const ccwKick = ccw[i]!;
+        const mirroredX = -ccwKick.x;
+        const xMatch = cwKick.x === mirroredX || (cwKick.x === 0 && mirroredX === 0);
+        expect(xMatch).toBe(true);
+        expect(cwKick.y).toBe(ccwKick.y);
+      }
+    });
+  });
+
+  describe('I-piece 180-degree specific kick values (TETR.IO SRS+)', () => {
+    it('I-piece 0->2 (180 from horizontal) has 3 kicks', () => {
+      const kicks = getSrsPlusKicks(1, 0, 2);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: 1 },
+        { x: 1, y: 0 },
+      ]);
+    });
+
+    it('I-piece 2->0 (180 to horizontal) has 3 kicks', () => {
+      const kicks = getSrsPlusKicks(1, 2, 0);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: -1 },
+        { x: -1, y: 0 },
+      ]);
+    });
+
+    it('I-piece 1->3 (180 from vertical R) has 3 kicks', () => {
+      const kicks = getSrsPlusKicks(1, 1, 3);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: -1, y: 1 },
+        { x: 0, y: 1 },
+      ]);
+    });
+
+    it('I-piece 3->1 (180 from vertical L) has 3 kicks', () => {
+      const kicks = getSrsPlusKicks(1, 3, 1);
+      expect(kicks).toEqual([
+        { x: 0, y: 0 },
+        { x: 1, y: -1 },
+        { x: 0, y: -1 },
+      ]);
     });
   });
 });

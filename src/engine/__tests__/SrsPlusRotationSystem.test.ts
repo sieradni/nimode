@@ -136,7 +136,8 @@ describe('SrsPlusRotationSystem', () => {
     expect(result?.kicked).toBe(true);
     expect(result?.kickIndex).toBe(1);
     expect(result?.piece.x).toBe(7);
-    expect(result?.piece.y).toBe(16);
+    // 0->2 kicks UP (y negative): second kick is (0, -1)
+    expect(result?.piece.y).toBe(14);
   });
 
   it('should preserve piece type across rotation', () => {
@@ -158,5 +159,53 @@ describe('SrsPlusRotationSystem', () => {
     const second = rotationSystem.rotate(board, first!.piece, 2);
     expect(second).not.toBeNull();
     expect(second?.piece.rotation).toBe(0);
+  });
+
+  it('should perform 180-degree rotation with correct kicks for all pieces', () => {
+    const board = createEmptyBoard();
+    const pieceTypes: PieceType[] = [1, 2, 3, 5, 6, 7];
+
+    for (const type of pieceTypes) {
+      const spawn = rotationSystem.getInitialState(type, testConfig);
+      const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: 0 };
+
+      const result = rotationSystem.rotate(board, piece, 2);
+      expect(result).not.toBeNull();
+      expect(result?.piece.rotation).toBe(2);
+      // For I-piece, should use 3-kick table; for others 6-kick
+      if (type === 1) {
+        expect(result?.kickIndex).toBeLessThan(3);
+      } else {
+        expect(result?.kickIndex).toBeLessThan(6);
+      }
+    }
+  });
+
+  it('I-piece CW and CCW from spawn are symmetric (SRS+)', () => {
+    const board = createEmptyBoard();
+    const spawn = rotationSystem.getInitialState(1, testConfig);
+
+    const cw = rotationSystem.rotate(board, { ...spawn, type: 1 }, 1);
+    const ccw = rotationSystem.rotate(board, { ...spawn, type: 1 }, -1);
+
+    expect(cw).not.toBeNull();
+    expect(ccw).not.toBeNull();
+    // At spawn (x=3), both succeed without kicks in open space
+    expect(cw!.kicked).toBe(false);
+    expect(ccw!.kicked).toBe(false);
+    expect(cw!.piece.rotation).toBe(1);
+    expect(ccw!.piece.rotation).toBe(3);
+    // Symmetry is verified by kick table unit tests
+  });
+
+  it('I-piece 180 rotation uses 3-kick table', () => {
+    const board = createEmptyBoard();
+    const spawn = rotationSystem.getInitialState(1, testConfig);
+    const piece: ActivePiece = { ...spawn, type: 1, rotation: 0 };
+
+    const result = rotationSystem.rotate(board, piece, 2);
+    expect(result).not.toBeNull();
+    expect(result?.piece.rotation).toBe(2);
+    expect(result?.kickIndex).toBeLessThan(3);
   });
 });
