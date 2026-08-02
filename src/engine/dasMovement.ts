@@ -29,6 +29,26 @@ function softDropDelay(sdf: number, sdfFactor: number): number {
   return sdf / Math.max(sdfFactor, 1);
 }
 
+/**
+ * DAS cancel: pressing the opposite direction while a direction is held
+ * resets that side's DAS charge (and any firing ARR), so it must re-charge
+ * from zero. The newly pressed direction still performs its immediate move.
+ */
+export function cancelOppositeDirection(
+  state: DASMovementState,
+  pressed: 'left' | 'right',
+): void {
+  if (pressed === 'left') {
+    state.timers.dasRight = 0;
+    state.timers.arrRight = 0;
+    state.initialRight = false;
+  } else {
+    state.timers.dasLeft = 0;
+    state.timers.arrLeft = 0;
+    state.initialLeft = false;
+  }
+}
+
 export function updateDASMovement(
   state: DASMovementState,
   inputState: InputState,

@@ -170,6 +170,9 @@ Bindings are **canonical binding codes** (`src/engine/keybindingCodes.ts`): a ke
 
 Defaults follow the standard Tetris layout: `Z` = CCW, `X` = CW, `C` = Hold, `Space` = Hard Drop, `Ctrl+Z` / `Ctrl+Y` = Undo / Redo.
 
+### DAS cancel
+Pressing the opposite direction while a direction key is held cancels that side's DAS: `InputHandler` resets the held side's `das*` / `arr*` timers on the press transition (`cancelOppositeDirection`, `src/engine/dasMovement.ts`), so the charge (or any firing ARR repeat) restarts from zero. The newly pressed direction still performs its immediate 1-cell move. This enables infinite-DAS finesse practice (US-8.7): holding right at the wall and tapping left parks the piece one cell left of the wall instead of ARR pulling it back.
+
 ---
 
 ## Annotation Model

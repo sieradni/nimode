@@ -205,6 +205,75 @@ describe('InputHandler movement (DAS/ARR/SDF)', () => {
   });
 });
 
+describe('InputHandler DAS cancel', () => {
+  const DAS_CANCEL_CONFIG: GameConfig = { ...CONFIG, das: 100, arr: 0 };
+
+  it('pressing the opposite direction cancels the held direction DAS charge', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn();
+
+    handler.handleInput({ type: 'MOVE_RIGHT', pressed: true });
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove); // immediate right move
+    handler.updateMovement(DAS_CANCEL_CONFIG, 50, onMove); // right DAS half charged
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true }); // cancel right DAS
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove); // immediate left move
+    handler.updateMovement(DAS_CANCEL_CONFIG, 49, onMove); // 50ms elapsed, right re-charging
+
+    // Without cancel, the charged right DAS (51+50ms) would fire ARR and
+    // move right again; with cancel it must not.
+    expect(onMove).toHaveBeenCalledTimes(2);
+    expect(onMove.mock.calls[0]).toEqual([1, 0]);
+    expect(onMove.mock.calls[1]).toEqual([-1, 0]);
+  });
+
+  it('cancels an already-firing ARR repeat, not only the charge phase', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn((_dx: number, _dy: number) => true);
+
+    handler.handleInput({ type: 'MOVE_RIGHT', pressed: true });
+    handler.updateMovement(DAS_CANCEL_CONFIG, 150, onMove); // DAS charged, ARR=0 repeats
+    const rightMoves = onMove.mock.calls.length;
+    expect(rightMoves).toBeGreaterThan(1);
+
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true }); // cancel firing ARR
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove); // immediate left move only
+    handler.updateMovement(DAS_CANCEL_CONFIG, 49, onMove); // right must stay canceled
+
+    const leftMoves = onMove.mock.calls.filter(([dx]) => dx === -1);
+    expect(leftMoves).toHaveLength(1);
+    const rightMovesAfter = onMove.mock.calls.filter(([dx]) => dx === 1);
+    expect(rightMovesAfter).toHaveLength(rightMoves);
+  });
+
+  it('the tapped direction moves immediately while the held direction is down', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn();
+
+    handler.handleInput({ type: 'MOVE_RIGHT', pressed: true });
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove);
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true });
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove);
+
+    expect(onMove.mock.calls[1]).toEqual([-1, 0]);
+  });
+
+  it('after cancel, releasing the tapped key lets the held direction re-charge', () => {
+    const handler = new InputHandler();
+    const onMove = vi.fn();
+
+    handler.handleInput({ type: 'MOVE_RIGHT', pressed: true });
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove); // dasRight=1
+    handler.updateMovement(DAS_CANCEL_CONFIG, 50, onMove); // dasRight=51
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: true }); // cancel -> dasRight=0
+    handler.updateMovement(DAS_CANCEL_CONFIG, 1, onMove); // left move, dasRight=1
+    handler.handleInput({ type: 'MOVE_LEFT', pressed: false });
+
+    expect(onMove).toHaveBeenCalledTimes(2);
+    handler.updateMovement(DAS_CANCEL_CONFIG, 100, onMove); // full DAS re-charge
+    expect(onMove.mock.calls[2]).toEqual([1, 0]);
+  });
+});
+
 describe('InputHandler one-time inputs (CLEAR_HOLD)', () => {
   it('queues clearHold on press and consumes it exactly once', () => {
     const handler = new InputHandler();

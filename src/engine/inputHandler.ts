@@ -1,6 +1,6 @@
 import { InputState, GameConfig, EMPTY_INPUT_STATE } from './types';
 import { InputEvent } from './interfaces/IEngineCore';
-import { DASMovementState, createInitialMovementState, updateDASMovement } from './dasMovement';
+import { DASMovementState, createInitialMovementState, updateDASMovement, cancelOppositeDirection } from './dasMovement';
 
 export class InputHandler {
   private inputState: InputState = { ...EMPTY_INPUT_STATE };
@@ -13,6 +13,9 @@ export class InputHandler {
         if (input.pressed && !this.inputState.left) {
           this.movement.initialLeft = true;
           this.pendingKeyPresses++;
+          if (this.inputState.right) {
+            cancelOppositeDirection(this.movement, 'left');
+          }
         }
         this.inputState.left = input.pressed;
         if (!input.pressed) {
@@ -25,6 +28,9 @@ export class InputHandler {
         if (input.pressed && !this.inputState.right) {
           this.movement.initialRight = true;
           this.pendingKeyPresses++;
+          if (this.inputState.left) {
+            cancelOppositeDirection(this.movement, 'right');
+          }
         }
         this.inputState.right = input.pressed;
         if (!input.pressed) {

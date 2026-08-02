@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EngineCore } from '../EngineCore';
 import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
 import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
+import { DEFAULT_CONFIG } from '../types';
 
 function createEngine(): EngineCore {
   return new EngineCore({
@@ -58,5 +59,24 @@ describe('EngineCore finesse', () => {
     engine.tick(100);
     engine.reset();
     expect(engine.getState().stats.finesse).toBe(0);
+  });
+});
+
+describe('EngineCore DAS cancel (US-8.7)', () => {
+  it('hold right to the wall, tap left: piece sits one cell left and does not snap back', () => {
+    const engine = createEngine();
+    engine.updateConfig({ ...DEFAULT_CONFIG, das: 100, arr: 0 });
+
+    engine.handleInput({ type: 'MOVE_RIGHT', pressed: true });
+    engine.tick(150); // DAS charged, ARR=0 repeats to the right wall
+    const wallX = engine.getState().activePiece?.x ?? 0;
+
+    engine.handleInput({ type: 'MOVE_LEFT', pressed: true }); // cancel right DAS
+    engine.tick(16.67); // immediate left move
+    const oneLeftOfWall = engine.getState().activePiece?.x;
+    expect(oneLeftOfWall).toBe(wallX - 1);
+
+    engine.tick(60); // right DAS re-charging, must not fire yet
+    expect(engine.getState().activePiece?.x).toBe(wallX - 1);
   });
 });
