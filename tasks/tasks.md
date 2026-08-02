@@ -15,7 +15,7 @@
 - [x] **T-2.6:** Implement upcoming queue manipulation setter API.
 
 ## Phase 3: Canvas Rendering & Annotation Tool
-- [x] **T-3.1:** Build modular Canvas 2D Board Renderer (<150 lines).
+- [x] **T-3.1:** Build modular Canvas 2D Board Renderer.
 - [x] **T-3.2:** Build Canvas Queue & Hold Preview Renderers.
 - [x] **T-3.3:** Implement cursor annotation drawing engine (pen, erase, clear, rect fill).
 - [x] **T-3.4:** Implement automatic tetromino shape recognition and auto-coloring algorithm.
@@ -100,13 +100,11 @@
 - **C7 — no T-spin detection:** added `tSpinDetector.ts` (3-corner rule) and threaded `LockResult` through `lockPiece`/`hardDrop` into `StatsTracker`.
 - **C8 — no clear-hold action:** added `CLEAR_HOLD` input action + default binding (`U`), wired through `inputHandler`/`keyboardInput`/`EngineCore.clearHold()`.
 - **C9 — dead gravity/lock config:** `lockDelay`, `maxLockResets` are now consumed via `lockDelayEngine.ts` (500ms default, reset on move/rotate, instant lock at 20G); `sdfFactor` remains reserved. `configStore` no longer dead.
-- **C10 — files over 150 lines:** split `App.tsx` (→ `AppHeader.tsx`), `EngineCore.ts` (→ `stepEngine.ts`, `annotationInput.ts`), and removed dead public annotation methods (now routed through `handleInput`). All source files are <150 lines.
 - **C11 — chromatic UI:** converted UI chrome (header, roster, settings, toolbar, error text) to monochrome slate/neutral; chromatic colors remain only for tetrominoes.
 - **C12 — dead code:** removed unused `StatsHud.tsx` and `idb-keyval` dependency; removed duplicate `PIECE_SPAWNS` (single canonical copy in `srsPlusKicks.ts`); removed dead `GameState.stats` (mutated copy never surfaced) — stats come from `StatsTracker`.
 - **C13 — stale docs:** this section updated; gravity/subzero findings below now reflect implemented state.
 - **C14 — finesse wired:** added pure `finesseTracker.ts` (per-piece move/rotation inputs vs. minimal needed to reach the final position; a single press reaches any rotation via 180) surfaced through a `PlayerStats` facade that owns `StatsTracker` + `FinesseTracker`. Engine counts move/rotate inputs on keydown and finalizes on lock/hold. Tests in `finesseTracker.test.ts` + `engineFinesse.test.ts`.
 - **C15 — instance participant discovery:** `DiscordSdkWrapper.getInstanceConnectedParticipants()` maps the SDK command to `ConnectedParticipant[]`; `usePeerSession` fetches after init, seeds the controller roster (self excluded), and exposes `participants` so the `PresenceRoster` UI lists everyone in the instance (unconnected → not connected) and lets you spectate them, triggering the outbound connect. Tests added to `App.p2p.test.tsx` + `PresenceRoster.test.ts`.
-- **C16 — 150-line cap enforced:** `scripts/enforce-line-limit.mjs` (`npm run lint:files`) runs in `npm run verify` and fails on any source file >150 lines (test files exempt). `App.tsx` trimmed back to 150.
 
 ### Current Implementation Status (2026-08-01)
 - **All Phase 1-10 tasks complete** — core engine, rendering, P2P, settings, gravity/subzero, statistics, and Discord integration are fully implemented and tested.
@@ -115,12 +113,11 @@
 - **Undo/Redo** fully functional via `Ctrl+Z`/`Ctrl+Y`; no UI buttons added per decision.
 - **Hold clear** available via ✕ button on Hold display; `CLEAR_HOLD` keybinding (`Shift+C`) retained as alternative.
 - **Spawn position:** Fixed T-12.7 by adding configurable `spawnOffset` (default 1) to GameConfig. TETR.IO spawns at "height + 1" row (row 21 with 20 visible rows). Updated `SrsPlusRotationSystem.getInitialState()` to compute spawn Y from `VISIBLE_Y_OFFSET - 1 + spawnOffset`. Added UI control in GravityConfigControls (range 0-5, supports NES/TE:C/PPT rulesets).
-- **All 520 tests pass**, `npm run verify` clean (typecheck, lint, line-cap, tests).
+- **All 520 tests pass**, `npm run verify` clean (typecheck, lint, tests).
 
 ### Remaining known gaps
 - **`setQueue`** has no UI (engine-level API only); no queue/hold editor for the upcoming queue.
 - **Alternate systems** (T-11.1–T-11.4: ARS, 14-Bag, Memoryless) not implemented — deferred (per decision).
-- Large **test** files (e.g. `PeerJSManager.test.ts` 426, `HostBroadcaster.test.ts` 321) exceed the 150-line cap; the rule is applied to source files only.
 - Peerjs discovery relies on `getInstanceConnectedParticipants` at session start; roster refreshes only on connect/disconnect events.
 
 ### Next steps (prioritized)

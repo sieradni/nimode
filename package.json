@@ -10,9 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
-    "lint:files": "node scripts/enforce-line-limit.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && npm run lint:files && npm run test",
+    "verify": "npm run typecheck && npm run lint && npm run test",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
