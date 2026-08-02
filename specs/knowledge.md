@@ -27,7 +27,7 @@ When the user draws marks in Annotation mode (stroke auto-color, on by default):
    - **Purple:** T Tetromino
    - **Red:** Z Tetromino
 4. Unmatched strokes keep the colour they were drawn with: the cell stores `8 + i` referencing `userPalette[i]`. A later colour-picker change never recolors existing marks.
-5. Auto-color promotion shares the gesture's undo step (one stroke = one undo). Block-edit mode is never auto-colored.
+5. Auto-color promotion shares the gesture's undo step (one stroke = one undo) and applies to both Annotation mode and Block-edit mode — a tetromino drawn as real board blocks is promoted to its piece type just like a free-form mark.
 6. The auto-color toggle defaults to enabled and persists in `localStorage`; old saved configs that lack the key merge with defaults on load.
 
 ---

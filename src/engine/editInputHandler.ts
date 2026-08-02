@@ -34,11 +34,16 @@ export function handleEditInput(
     return;
   }
   if (input.type === 'EDIT_COMMIT') {
+    const mode = session.getMode();
     session.commit({
       cells: input.cells,
       autoColorEnabled: deps.isAutoColorEnabled(),
       applyStrokeAutoColor: (cells) => {
-        state.annotations = autoColorStroke(state.annotations, cells);
+        if (mode === 'blocks') {
+          state.board = autoColorStroke(state.board, cells);
+        } else {
+          state.annotations = autoColorStroke(state.annotations, cells);
+        }
       },
       saveSnapshot: deps.saveSnapshot,
     });

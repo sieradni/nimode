@@ -12,10 +12,10 @@ export interface EditCommitOptions {
  * erase, a rect fill) into a single undoable action.
  *
  * `begin` opens the session for the active layer; every mutating edit event
- * marks it dirty; `commit` folds stroke auto-color (annotation mode only)
- * into the same action and pushes exactly one undo snapshot when anything
- * changed. A gesture therefore undoes as one step instead of one step per
- * painted cell (US-1.12).
+ * marks it dirty; `commit` folds stroke auto-color into the same action (the
+ * caller routes it to the layer the gesture targeted) and pushes exactly one
+ * undo snapshot when anything changed. A gesture therefore undoes as one step
+ * instead of one step per painted cell (US-1.12).
  */
 export class EditSession {
   private mode: EditMode | null = null;
@@ -40,7 +40,7 @@ export class EditSession {
 
   commit(options: EditCommitOptions): void {
     const mode = this.mode;
-    if (mode === 'annotations' && options.autoColorEnabled && options.cells.length > 0) {
+    if (mode !== null && options.autoColorEnabled && options.cells.length > 0) {
       options.applyStrokeAutoColor(options.cells);
     }
     if (this.dirty) {

@@ -52,11 +52,18 @@ describe('EditSession', () => {
     expect(options.applyStrokeAutoColor).toHaveBeenCalledWith(options.cells);
   });
 
-  it('does not apply stroke auto-color in block mode', () => {
+  it('applies stroke auto-color in block mode too', () => {
     const session = new EditSession();
     const options = createOptions({ autoColorEnabled: true });
     session.begin('blocks');
     session.markDirty();
+    session.commit(options);
+    expect(options.applyStrokeAutoColor).toHaveBeenCalledWith(options.cells);
+  });
+
+  it('does not apply stroke auto-color when no gesture is open', () => {
+    const session = new EditSession();
+    const options = createOptions({ autoColorEnabled: true });
     session.commit(options);
     expect(options.applyStrokeAutoColor).not.toHaveBeenCalled();
   });

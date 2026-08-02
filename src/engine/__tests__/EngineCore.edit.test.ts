@@ -117,15 +117,31 @@ describe('EngineCore edit transactions', () => {
     }
   });
 
-  it('does not promote block-mode strokes with auto-color enabled', () => {
+  it('promotes block-mode strokes with auto-color enabled', () => {
     const engine = createEngine({ autoColor: true });
+    const cells = [{ x: 5, y: 20 }, { x: 4, y: 21 }, { x: 5, y: 21 }, { x: 6, y: 21 }];
     engine.handleInput({ type: 'EDIT_BEGIN', mode: 'blocks' });
-    engine.handleInput({ type: 'BOARD_PEN', x: 5, y: 20, color: DEFAULT_ANNOTATION_COLOR });
-    engine.handleInput({ type: 'BOARD_PEN', x: 4, y: 21, color: DEFAULT_ANNOTATION_COLOR });
-    engine.handleInput({ type: 'BOARD_PEN', x: 5, y: 21, color: DEFAULT_ANNOTATION_COLOR });
-    engine.handleInput({ type: 'BOARD_PEN', x: 6, y: 21, color: DEFAULT_ANNOTATION_COLOR });
-    engine.handleInput({ type: 'EDIT_COMMIT', cells: [{ x: 5, y: 20 }, { x: 4, y: 21 }, { x: 5, y: 21 }, { x: 6, y: 21 }] });
+    for (const c of cells) {
+      engine.handleInput({ type: 'BOARD_PEN', x: c.x, y: c.y, color: DEFAULT_ANNOTATION_COLOR });
+    }
+    engine.handleInput({ type: 'EDIT_COMMIT', cells });
     const state = engine.getState();
-    expect(state.board[21]?.[5]).toBe(PALETTE_CELL_OFFSET);
+    for (const c of cells) {
+      expect(state.board[c.y]?.[c.x]).toBe(6);
+    }
+  });
+
+  it('keeps the picked colour on block strokes when auto-color is disabled', () => {
+    const engine = createEngine({ autoColor: false });
+    const cells = [{ x: 5, y: 20 }, { x: 4, y: 21 }, { x: 5, y: 21 }, { x: 6, y: 21 }];
+    engine.handleInput({ type: 'EDIT_BEGIN', mode: 'blocks' });
+    for (const c of cells) {
+      engine.handleInput({ type: 'BOARD_PEN', x: c.x, y: c.y, color: DEFAULT_ANNOTATION_COLOR });
+    }
+    engine.handleInput({ type: 'EDIT_COMMIT', cells });
+    const state = engine.getState();
+    for (const c of cells) {
+      expect(state.board[c.y]?.[c.x]).toBe(PALETTE_CELL_OFFSET);
+    }
   });
 });
