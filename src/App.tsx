@@ -115,7 +115,7 @@ function App() {
         </div>
       )}
 
-      <main className="h-full w-full p-4">
+      <main className="flex h-full w-full items-center justify-center p-4">
         <ActiveView
           isLocal={peerSession.view === 'LOCAL_ACTIVE'}
           state={gameState}

@@ -83,17 +83,22 @@ export function GameCanvas({
   }, [engine]);
 
   const gap = LAYOUT_GAP_PX;
+  const previewColumnWidth = previewCellSize * 4;
 
   return (
-    <div ref={layoutRef} className="relative flex h-full w-full items-stretch">
+    <div
+      ref={layoutRef}
+      className="relative flex h-full w-full items-center justify-center gap-3"
+      style={{ gap: `${gap}px` }}
+    >
       {/* Left column: Hold (top) + Stats (bottom) */}
-      <div className="flex w-16 flex-shrink-0 flex-col items-center gap-3 self-center" style={{ gap: `${gap}px` }}>
+      <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px` }}>
         <HoldCanvas state={state} cellSize={previewCellSize} onClearHold={handleClearHold} />
         <StatsPanel stats={state.stats} cellSize={previewCellSize} />
       </div>
 
       {/* Center: Board */}
-      <div className="flex min-w-0 flex-1 items-center justify-center" style={{ paddingLeft: `${gap}px`, paddingRight: `${gap}px` }}>
+      <div className="flex items-center justify-center">
         <GameBoardCanvas
           state={state}
           cellSize={cellSize}
@@ -111,7 +116,7 @@ export function GameCanvas({
       </div>
 
       {/* Right column: Queue (top-right adjacent) */}
-      <div className="flex w-16 flex-shrink-0 flex-col items-center self-center">
+      <div className="flex flex-col items-center self-start" style={{ width: previewColumnWidth }}>
         <QueueCanvas state={state} cellSize={previewCellSize} />
       </div>
 
