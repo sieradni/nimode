@@ -16,10 +16,20 @@ describe('SrsPlusRotationSystem', () => {
 
   it('should return initial spawn position for pieces', () => {
     const spawnI = rotationSystem.getInitialState(1, testConfig);
-    expect(spawnI).toEqual({ x: 3, y: 20, rotation: 0 });
+    expect(spawnI).toEqual({ x: 3, y: 18, rotation: 0 });
 
     const spawnO = rotationSystem.getInitialState(4, testConfig);
-    expect(spawnO).toEqual({ x: 4, y: 20, rotation: 0 });
+    expect(spawnO).toEqual({ x: 4, y: 18, rotation: 0 });
+  });
+
+  it('increasing spawnOffset spawns the piece higher above the field', () => {
+    const config0 = { ...testConfig, spawnOffset: 0 };
+    const config2 = { ...testConfig, spawnOffset: 2 };
+    const spawn0 = rotationSystem.getInitialState(6, config0);
+    const spawn2 = rotationSystem.getInitialState(6, config2);
+    expect(spawn0.y).toBe(19);
+    expect(spawn2.y).toBe(17);
+    expect(spawn2.y).toBeLessThan(spawn0.y);
   });
 
   it('should rotate piece clockwise in open space without kick', () => {

@@ -16,7 +16,7 @@ const REQUIRED_ACTIONS: (keyof KeyBindings)[] = [
 
 type NumericConfigKey = Exclude<keyof GameConfig, 'subzero' | 'autoColor'>;
 const CONFIG_NUMERIC_KEYS: NumericConfigKey[] = [
-  'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets', 'gravity',
+  'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets', 'gravity', 'spawnOffset',
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {

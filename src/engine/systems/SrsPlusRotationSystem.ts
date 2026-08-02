@@ -53,11 +53,11 @@ function checkCollision(board: BoardMatrix, piece: ActivePiece, matrix: number[]
 }
 
 function computeSpawnY(config: GameConfig): number {
-  // TETR.IO default: spawn at (visible_height - 1) + spawnOffset
-  // visible_height = 20, so visible rows are 0-19, hidden rows 20-39
-  // spawnOffset=1 (default) -> y = 19 + 1 = 20 (row 21 in 1-indexed)
-  // This matches TETR.IO's "height + 1" where height=20 visible rows
-  return VISIBLE_Y_OFFSET - 1 + config.spawnOffset;
+  // Visible rows are VISIBLE_Y_OFFSET..BOARD_HEIGHT (y grows downward).
+  // spawnOffset=1 (default, TETR.IO): y = 19 - 1 = 18 -> bottom-most cell at
+  // row 19, immediately above the visible field with no part within it.
+  // Increasing the offset spawns the piece higher above the field.
+  return VISIBLE_Y_OFFSET - 1 - config.spawnOffset;
 }
 
 export class SrsPlusRotationSystem implements IRotationSystem {

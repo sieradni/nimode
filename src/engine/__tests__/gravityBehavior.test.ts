@@ -57,7 +57,9 @@ describe('EngineCore gravity (T-10.2)', () => {
     }
 
     const board = engine.getState().board;
-    for (let y = 0; y < 20; y++) {
+    // Pieces spawn at row 18 (spawnOffset=1) and only ever move down, so the
+    // stack cannot rise above the spawn row's top (row 17).
+    for (let y = 0; y < 18; y++) {
       expect(board[y]!.every(cell => cell === 0)).toBe(true);
     }
     const visibleHasBlocks = board.slice(20).some(row => row.some(cell => cell !== 0));

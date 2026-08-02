@@ -75,7 +75,7 @@ export function GravityConfigControls({ store }: GravityConfigControlsProps) {
       </div>
       <div>
         <label className="block text-sm text-slate-300 mb-1">
-          Spawn Offset: {config.spawnOffset} (row {19 + config.spawnOffset})
+          Spawn Offset: {config.spawnOffset} (row {19 - config.spawnOffset})
         </label>
         <input
           type="range"
@@ -96,7 +96,8 @@ export function GravityConfigControls({ store }: GravityConfigControlsProps) {
           aria-label="Spawn Offset value"
         />
         <p className="text-xs text-slate-500 mt-1">
-          Default: 1 (TETR.IO). 0=row 19, 1=row 20, 2=row 21 (TE:C), etc.
+          Default: 1 (TETR.IO), spawns fully above the field. Higher offset spawns
+          higher above the field. 0=row 19 (bottom at skyline), 1=row 18, 2=row 17, etc.
         </p>
       </div>
     </div>
