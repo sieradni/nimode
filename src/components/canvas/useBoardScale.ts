@@ -6,11 +6,11 @@ export const MIN_CELL_SIZE = 8;
 export const MAX_CELL_SIZE = 64;
 
 /**
- * Hold/queue previews render smaller than the playfield so a single piece does
- * not dominate the panel. 2/3 keeps the same feel as the original fixed sizes
- * (board cell 30 -> preview cell 20) while scaling smoothly with the board.
+ * Hold/queue previews render close to the playfield size so tetrominos in the
+ * preview match the on-board pieces (US-7.7). A 0.9 factor keeps previews
+ * slightly smaller than the field while scaling smoothly with the board.
  */
-export const PREVIEW_SCALE_FACTOR = 2 / 3;
+export const PREVIEW_SCALE_FACTOR = 0.9;
 const MIN_PREVIEW_CELL_SIZE = 4;
 
 /** Horizontal gap between the board and its flanking panels, in CSS pixels. */

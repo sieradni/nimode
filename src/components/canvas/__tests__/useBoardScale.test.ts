@@ -57,8 +57,8 @@ describe('computeLayoutCellSize', () => {
 
 describe('computePreviewCellSize', () => {
   it('scales the preview cell size by the preview factor', () => {
-    expect(computePreviewCellSize(30)).toBe(20); // 30 * 2/3
-    expect(computePreviewCellSize(9)).toBe(6); // 9 * 2/3
+    expect(computePreviewCellSize(30)).toBe(27); // 30 * 0.9
+    expect(computePreviewCellSize(9)).toBe(8); // 9 * 0.9
   });
 
   it('floors at the minimum preview cell size', () => {

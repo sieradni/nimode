@@ -4,7 +4,7 @@ import { IEngineCore } from '../engine/interfaces/IEngineCore';
 import { HoldCanvas } from './canvas/HoldCanvas';
 import { GameBoardCanvas } from './canvas/GameBoardCanvas';
 import { QueueCanvas } from './canvas/QueueCanvas';
-import { AnnotationTool, EditMode } from '../engine/types';
+import { AnnotationTool, EditMode, RENDER_HEIGHT } from '../engine/types';
 import { StatsPanel } from './StatsPanel';
 import { useBoardScale, computePreviewCellSize, LAYOUT_GAP_PX } from './canvas/useBoardScale';
 import { useAnnotationStroke } from './canvas/useAnnotationStroke';
@@ -84,6 +84,9 @@ export function GameCanvas({
 
   const gap = LAYOUT_GAP_PX;
   const previewColumnWidth = previewCellSize * 4;
+  // Offset the side panels down by ~10% of the board's vertical height so they
+  // sit slightly below the top edge rather than flush against it.
+  const panelTopOffset = Math.round(0.1 * RENDER_HEIGHT * cellSize);
 
   return (
     <div
@@ -92,7 +95,7 @@ export function GameCanvas({
       style={{ gap: `${gap}px` }}
     >
       {/* Left column: Hold (top) + Stats (bottom) */}
-      <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px` }}>
+      <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px`, marginTop: panelTopOffset }}>
         <HoldCanvas state={state} cellSize={previewCellSize} onClearHold={handleClearHold} />
         <StatsPanel stats={state.stats} cellSize={previewCellSize} />
       </div>
@@ -116,7 +119,7 @@ export function GameCanvas({
       </div>
 
       {/* Right column: Queue (top-right adjacent) */}
-      <div className="flex flex-col items-center self-start" style={{ width: previewColumnWidth }}>
+      <div className="flex flex-col items-center self-start" style={{ width: previewColumnWidth, marginTop: panelTopOffset }}>
         <QueueCanvas state={state} cellSize={previewCellSize} />
       </div>
 
