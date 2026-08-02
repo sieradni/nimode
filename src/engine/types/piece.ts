@@ -16,10 +16,10 @@ export const PIECE_NAMES: Record<PieceType, string> = {
 export const PIECE_COLORS: Record<PieceType, string> = {
   0: '#000000',
   1: '#47efef',
-  2: '#1d2bea',
+  2: '#2836fc',
   3: '#f5a42a',
-  4: '#f6eb29',
-  5: '#5be43f',
+  4: '#fff645',
+  5: '#7bed4a',
   6: '#982dea',
   7: '#eb3a3a',
 };
