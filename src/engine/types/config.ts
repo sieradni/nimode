@@ -1,3 +1,5 @@
+import { PieceType } from './piece';
+
 export interface KeyBindings {
   MOVE_LEFT: string;
   MOVE_RIGHT: string;
@@ -52,6 +54,12 @@ export interface GameConfig {
   subzero: boolean;
   autoColor: boolean;
   spawnOffset: number;
+  /**
+   * Preset upcoming queue. When non-empty, new games start with this queue
+   * instead of random pieces. An empty array means the randomizer fills the
+   * queue as usual.
+   */
+  queue: PieceType[];
 }
 
 /**
@@ -72,4 +80,5 @@ export const DEFAULT_CONFIG: GameConfig = {
   subzero: false,
   autoColor: true,
   spawnOffset: 1,
+  queue: [],
 };

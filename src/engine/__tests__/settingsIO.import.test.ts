@@ -84,9 +84,9 @@ describe('importSettingsFromJson', () => {
       REDO: 'KeyY',
     };
     const customConfig: GameConfig = {
-      das: 150, arr: 25, sdf: 60, sdfFactor: 15, lockDelay: 400, maxLockResets: 10,
-      gravity: 15, subzero: true, autoColor: true, spawnOffset: 2,
-    };
+       das: 150, arr: 25, sdf: 60, sdfFactor: 15, lockDelay: 400, maxLockResets: 10,
+       gravity: 15, subzero: true, autoColor: true, spawnOffset: 2, queue: [],
+     };
     const json = JSON.stringify({
       version: 1, keybindings: customBindings, config: customConfig,
     });

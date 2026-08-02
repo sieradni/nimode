@@ -9,7 +9,7 @@ function createEngine(config = {}) {
     bagRandomizer: new SevenBagRandomizer(100),
     rotationSystem: new SrsPlusRotationSystem(),
   });
-  engine.initialize({ das: 133, arr: 33, sdf: 50, sdfFactor: 20, lockDelay: 500, maxLockResets: 15, gravity: 1, subzero: false, autoColor: false, spawnOffset: 1, ...config });
+  engine.initialize({ das: 133, arr: 33, sdf: 50, sdfFactor: 20, lockDelay: 500, maxLockResets: 15, gravity: 1, subzero: false, autoColor: false, spawnOffset: 1, queue: [], ...config });
   return engine;
 }
 

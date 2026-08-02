@@ -1,4 +1,4 @@
-import { KeyBindings, GameConfig, DEFAULT_KEYBINDINGS, DEFAULT_CONFIG } from './types';
+import { KeyBindings, GameConfig, DEFAULT_KEYBINDINGS, DEFAULT_CONFIG, PieceType } from './types';
 
 export interface SettingsExport {
   version: number;
@@ -14,7 +14,7 @@ const REQUIRED_ACTIONS: (keyof KeyBindings)[] = [
   'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'RESET', 'UNDO', 'REDO',
 ];
 
-type NumericConfigKey = Exclude<keyof GameConfig, 'subzero' | 'autoColor'>;
+type NumericConfigKey = Exclude<keyof GameConfig, 'subzero' | 'autoColor' | 'queue'>;
 const CONFIG_NUMERIC_KEYS: NumericConfigKey[] = [
   'das', 'arr', 'sdf', 'sdfFactor', 'lockDelay', 'maxLockResets', 'gravity', 'spawnOffset',
 ];
@@ -31,6 +31,14 @@ function isValidKeyBindings(value: unknown): value is KeyBindings {
   return true;
 }
 
+function isValidQueue(value: unknown): value is PieceType[] {
+  if (!Array.isArray(value)) return false;
+  for (const item of value) {
+    if (typeof item !== 'number' || item < 0 || item > 7) return false;
+  }
+  return true;
+}
+
 /**
  * Validates the shape of a stored/imported config. Keys added after the
  * config was first released are merged from `DEFAULT_CONFIG` (see
@@ -43,6 +51,7 @@ function isValidGameConfig(value: unknown): value is GameConfig {
     if (typeof value[key] !== 'number') return false;
   }
   if (typeof value.subzero !== 'boolean') return false;
+  if (value.queue !== undefined && !isValidQueue(value.queue)) return false;
   return true;
 }
 
@@ -69,6 +78,7 @@ function mergeConfig(imported: GameConfig): GameConfig {
   }
   result.subzero = imported.subzero;
   result.autoColor = imported.autoColor ?? DEFAULT_CONFIG.autoColor;
+  result.queue = isValidQueue(imported.queue) ? imported.queue : DEFAULT_CONFIG.queue;
   return result;
 }
 
@@ -120,13 +130,18 @@ export function downloadSettingsBlob(json: string): DownloadResult {
 export function loadConfigFromStorage(): GameConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
-    if (raw === null) return { ...DEFAULT_CONFIG };
+    if (null === raw) return { ...DEFAULT_CONFIG };
     const parsed: unknown = JSON.parse(raw);
     if (isValidGameConfig(parsed)) {
-      // Merge over the defaults so newer boolean flags (e.g. `autoColor`)
-      // that older stored configs lack fall back to their default instead of
-      // loading as `undefined` and silently disabling the feature.
-      return { ...DEFAULT_CONFIG, ...parsed };
+      const merged = { ...DEFAULT_CONFIG, ...parsed };
+      if (Array.isArray(merged.queue)) {
+        merged.queue = merged.queue.filter(
+          (q: unknown) => typeof q === 'number' && q >= 0 && q <= 7,
+        ) as PieceType[];
+      } else {
+        merged.queue = DEFAULT_CONFIG.queue;
+      }
+      return merged;
     }
     return { ...DEFAULT_CONFIG };
   } catch {
