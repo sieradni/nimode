@@ -52,7 +52,7 @@ function dispatchKey(type: 'keydown' | 'keyup', code: string, repeat = false): v
 describe('App keyboard wiring', () => {
   beforeEach(() => {
     import.meta.env.VITE_DISCORD_CLIENT_ID = 'test-client-id';
-    mockInit.mockResolvedValue({});
+    mockInit.mockResolvedValue({ accessToken: 'test-access-token' });
     mockHandleInput.mockReset();
     mockTick.mockReset();
     mockGetState.mockReturnValue(createState());

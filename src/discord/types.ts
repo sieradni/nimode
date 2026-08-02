@@ -3,6 +3,7 @@ export interface DiscordAuth {
   guildId: string;
   channelId: string;
   instanceId: string;
+  accessToken: string;
 }
 
 export interface ConnectedParticipant {

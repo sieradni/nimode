@@ -11,8 +11,8 @@ describe('getDiscordClientId', () => {
     expect(getDiscordClientId()).toBe('client-abc');
   });
 
-  it('falls back to an empty string when the env var is unset', () => {
+  it('throws when VITE_DISCORD_CLIENT_ID is not set', () => {
     delete import.meta.env.VITE_DISCORD_CLIENT_ID;
-    expect(getDiscordClientId()).toBe('');
+    expect(() => getDiscordClientId()).toThrow('VITE_DISCORD_CLIENT_ID environment variable is required');
   });
 });

@@ -9,6 +9,7 @@ interface FloatingControlsProps {
 function connectionLabel(discordAuth: DiscordAuthStatus): string | null {
   if (discordAuth.status === 'connecting') return 'Connecting…';
   if (discordAuth.status === 'authenticated') return discordAuth.auth.userId;
+  if (discordAuth.status === 'unavailable') return 'Discord unavailable';
   return null;
 }
 

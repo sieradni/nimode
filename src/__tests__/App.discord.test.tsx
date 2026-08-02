@@ -25,6 +25,7 @@ const AUTH: DiscordAuth = {
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',
+  accessToken: 'test-access-token',
 };
 
 describe('App Discord integration', () => {
@@ -48,7 +49,9 @@ describe('App Discord integration', () => {
   it('shows the connected user when authentication succeeds', async () => {
     mockInit.mockResolvedValue(AUTH);
     render(<App />);
-    expect(await screen.findByText(/user-123/i)).toBeInTheDocument();
+    // The user ID appears in the FloatingControls label (top-left)
+    const label = await screen.findByText(/user-123/i, { selector: 'div[class*="pointer-events-none"]' });
+    expect(label).toBeInTheDocument();
   });
 
   it('renders the board and no connection chrome when authentication fails', async () => {

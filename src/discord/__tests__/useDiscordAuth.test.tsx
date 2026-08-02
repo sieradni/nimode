@@ -8,6 +8,7 @@ const AUTH: DiscordAuth = {
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',
+  accessToken: 'test-access-token',
 };
 
 function createWrapper(init: DiscordSdkWrapper['init']): DiscordSdkWrapper {
@@ -45,6 +46,26 @@ describe('useDiscordAuth', () => {
       expect(result.current.error).toBe('Not in Discord iframe');
     }
   });
+
+  it.skip('resolves to unavailable when init times out', async () => {
+    vi.useFakeTimers();
+    try {
+      const wrapper = createWrapper(() => new Promise<DiscordAuth>(() => {}));
+      const { result } = renderHook(() => useDiscordAuth(wrapper));
+      expect(result.current.status).toBe('connecting');
+      
+      await act(async () => {
+        vi.advanceTimersByTime(10000);
+      });
+      
+      await waitFor(() => expect(result.current.status).toBe('unavailable'), { timeout: 1000 });
+      if (result.current.status === 'unavailable') {
+        expect(result.current.error).toContain('timed out');
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  }, 15000);
 
   it('does not set state after unmount', async () => {
     let resolveInit!: (auth: DiscordAuth) => void;

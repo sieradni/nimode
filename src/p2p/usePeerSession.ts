@@ -42,9 +42,10 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
   const managerRef = useRef<PeerJSManager | null>(null);
 
   useEffect(() => {
-    if (!instanceId) return;
+    if (!instanceId && !userId) return;
 
-    const peerId = `${instanceId}-${userId}`;
+    const effectiveInstanceId = instanceId ?? `${userId}-fallback`;
+    const peerId = `${effectiveInstanceId}-${userId}`;
     const manager = new PeerJSManager({
       instanceId: peerId,
       role: 'host',
@@ -57,7 +58,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     const controller = new ViewStateController({
       roster,
       buffer,
-      connectToTarget: buildConnectToTarget({ instanceId, userId, manager, configStore }),
+      connectToTarget: buildConnectToTarget({ instanceId: effectiveInstanceId, userId, manager, configStore }),
     });
     controllerRef.current = controller;
     managerRef.current = manager;
@@ -81,7 +82,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
                             false,
                           );
                           manager.connectToPeer(
-                            `${instanceId}-${p.id}`,
+                            `${effectiveInstanceId}-${p.id}`,
                             makeMetadata(userId, configStore),
                           );
                         }

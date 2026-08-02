@@ -31,7 +31,7 @@ function createState(): EngineState {
 vi.mock('../discord/sdk', () => ({
   createDiscordSdk: vi.fn(() => ({
     clientId: 'test-client-id',
-    init: vi.fn().mockResolvedValue({}),
+    init: vi.fn().mockResolvedValue({ accessToken: 'test-access-token' }),
   })),
 }));
 

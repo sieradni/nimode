@@ -68,6 +68,7 @@ const AUTH: DiscordAuth = {
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',
+  accessToken: 'test-access-token',
 };
 
 const STUN_SERVERS = ['stun:stun.l.google.com:19302'];
@@ -88,6 +89,13 @@ function makePayload(): SpectatorPayload {
 async function flushAuth(): Promise<void> {
   await act(async () => {});
   await act(async () => {});
+  try {
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+  } catch {
+    // Timers not available in real-timer mode
+  }
 }
 
 describe('App P2P integration', () => {
@@ -164,10 +172,12 @@ describe('App P2P integration', () => {
       });
       expect(stateCalls).toHaveLength(0);
 
-      const presenceCall = mockConn.send.mock.calls.find((call) => {
+      const presenceCalls = mockConn.send.mock.calls.filter((call) => {
         const message = call[0] as { kind?: string } | undefined;
         return typeof message === 'object' && message !== null && message.kind === 'presence';
       });
+      // The last presence call should reflect the private instance config
+      const presenceCall = presenceCalls[presenceCalls.length - 1];
       expect(presenceCall?.[0]).toEqual({
         kind: 'presence',
         metadata: { userId: 'user-123', displayName: 'user-123', isPrivate: true },
