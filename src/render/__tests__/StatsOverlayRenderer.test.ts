@@ -53,9 +53,10 @@ describe('StatsOverlayRenderer', () => {
 
     expect(texts).toContain('PPS:');
     expect(texts).toContain('APM:');
+    expect(texts).toContain('Attack:');
     expect(texts).toContain('KPP:');
     expect(texts).toContain('APP:');
-    expect(texts).toContain('TIME:');
+    expect(texts).toContain('Time:');
     expect(texts).toContain('Pieces:');
     expect(texts).toContain('Finesse:');
   });
@@ -72,7 +73,7 @@ describe('StatsOverlayRenderer', () => {
     expect(texts).not.toContain('Quads:');
     expect(texts).not.toContain('T-Spins:');
     expect(texts).not.toContain('T-Minis:');
-    expect(texts).not.toContain('Attack:');
+    expect(texts).not.toContain('Efficiency:');
   });
 
   it('should render time value as formatted MM:SS', () => {

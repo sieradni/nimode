@@ -18,7 +18,8 @@ describe('StatsPanel', () => {
     expect(screen.getByText('APM')).toBeInTheDocument();
     expect(screen.getByText('KPP')).toBeInTheDocument();
     expect(screen.getByText('APP')).toBeInTheDocument();
-    expect(screen.getByText('TIME')).toBeInTheDocument();
+    expect(screen.getByText('Time')).toBeInTheDocument();
+    expect(screen.getByText('Attack')).toBeInTheDocument();
     expect(screen.getByText('Pieces')).toBeInTheDocument();
     expect(screen.getByText('Finesse')).toBeInTheDocument();
 
@@ -34,8 +35,8 @@ describe('StatsPanel', () => {
     expect(screen.getByText('2:05')).toBeInTheDocument();
   });
 
-  it('removes old stat rows (Lines, Singles, Doubles, Triples, Quads, T-Spins, T-Minis, Attack)', () => {
-    const stats = createMockStats({ linesCleared: 10, singles: 3, doubles: 2, triples: 1, quads: 4, tSpins: 5, attack: 99 });
+  it('removes old stat rows (Lines, Singles, Doubles, Triples, Quads, T-Spins, T-Minis, Efficiency)', () => {
+    const stats = createMockStats({ linesCleared: 10, singles: 3, doubles: 2, triples: 1, quads: 4, tSpins: 5 });
     render(<StatsPanel stats={stats} cellSize={20} />);
     expect(screen.queryByText('Lines')).not.toBeInTheDocument();
     expect(screen.queryByText('Singles')).not.toBeInTheDocument();
@@ -44,7 +45,6 @@ describe('StatsPanel', () => {
     expect(screen.queryByText('Quads')).not.toBeInTheDocument();
     expect(screen.queryByText('T-Spins')).not.toBeInTheDocument();
     expect(screen.queryByText('T-Minis')).not.toBeInTheDocument();
-    expect(screen.queryByText('Attack')).not.toBeInTheDocument();
     expect(screen.queryByText('Efficiency')).not.toBeInTheDocument();
   });
 
