@@ -1,25 +1,16 @@
 import { GameState } from './types';
 import { LockDelayState } from './lockDelayEngine';
 import { PlayerStats } from './playerStats';
-import { FullSnapshot, PlayerStatsSnapshot } from './undoRedoEngine';
+import { FullSnapshot, PlayerStatsSnapshot, IUndoRedoEngine, UndoRedoEngine } from './undoRedoEngine';
 import { PieceType, RotationState } from './types';
-
-export interface EngineCoreState {
-  board: number[][];
-  activePiece: { type: number; x: number; y: number; rotation: number } | null;
-  queue: { queue: number[]; hold: number | null; canHold: boolean };
-  annotations: number[][];
-  userPalette: string[];
-  gameOver: boolean;
-  gravityTimer: number;
-  lockDelayState: LockDelayState;
-}
+import { IBagRandomizer, BagState } from './interfaces/IBagRandomizer';
 
 export function saveSnapshot(
   state: GameState,
   stats: PlayerStatsSnapshot,
   gravityTimer: number,
-  lockDelayState: LockDelayState
+  lockDelayState: LockDelayState,
+  bagState: BagState
 ): FullSnapshot {
   return {
     state: {
@@ -33,6 +24,7 @@ export function saveSnapshot(
       gameOver: state.gameOver,
       gravityTimer,
       lockDelay: { timer: lockDelayState.timer, resets: lockDelayState.resets },
+      bagState,
     },
     stats: { ...stats },
   };
@@ -41,7 +33,8 @@ export function saveSnapshot(
 export function restoreSnapshot(
   targetState: GameState,
   snapshot: FullSnapshot,
-  playerStats: PlayerStats
+  playerStats: PlayerStats,
+  bagRandomizer: IBagRandomizer
 ): void {
   targetState.board = snapshot.state.board.map(row => [...row]);
   targetState.activePiece = snapshot.state.activePiece ? { ...snapshot.state.activePiece, type: snapshot.state.activePiece.type as PieceType, rotation: snapshot.state.activePiece.rotation as RotationState } : null;
@@ -51,5 +44,50 @@ export function restoreSnapshot(
   targetState.annotations = snapshot.state.annotations.map(row => [...row]);
   targetState.userPalette = [...snapshot.state.userPalette];
   targetState.gameOver = snapshot.state.gameOver;
+  bagRandomizer.restore(snapshot.state.bagState);
   playerStats.undoRestore(snapshot.stats);
+}
+
+export class UndoRedoController {
+  private readonly engine: IUndoRedoEngine;
+
+  constructor(private readonly playerStats: PlayerStats, private readonly bagRandomizer: IBagRandomizer) {
+    this.engine = new UndoRedoEngine();
+  }
+
+  save(state: GameState, gravityTimer: number, lock: LockDelayState): void {
+    this.engine.saveSnapshot(
+      state,
+      this.playerStats.getStatsSnapshot(),
+      gravityTimer,
+      { timer: lock.timer, resets: lock.resets },
+      this.bagRandomizer.snapshot(),
+    );
+  }
+
+  undo(state: GameState): boolean {
+    const snapshot = this.engine.undo();
+    if (!snapshot) return false;
+    restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
+    return true;
+  }
+
+  redo(state: GameState): boolean {
+    const snapshot = this.engine.redo();
+    if (!snapshot) return false;
+    restoreSnapshot(state, snapshot, this.playerStats, this.bagRandomizer);
+    return true;
+  }
+
+  canUndo(): boolean {
+    return this.engine.canUndo();
+  }
+
+  canRedo(): boolean {
+    return this.engine.canRedo();
+  }
+
+  clear(): void {
+    this.engine.clear();
+  }
 }

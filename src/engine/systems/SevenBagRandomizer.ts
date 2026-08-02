@@ -1,5 +1,5 @@
 import { PieceType } from '../types';
-import { IBagRandomizer } from '../interfaces/IBagRandomizer';
+import { IBagRandomizer, BagState } from '../interfaces/IBagRandomizer';
 
 const BAG_PIECES: readonly PieceType[] = [1, 2, 3, 4, 5, 6, 7];
 
@@ -59,10 +59,6 @@ export class SevenBagRandomizer implements IBagRandomizer {
     this.nextBag = shufflePieces(BAG_PIECES, this.nextSeed());
   }
 
-  generateBag(): PieceType[] {
-    return shufflePieces(BAG_PIECES, this.nextSeed());
-  }
-
   peek(count: number): PieceType[] {
     const result: PieceType[] = [];
     let bagIndex = 0;
@@ -93,9 +89,7 @@ export class SevenBagRandomizer implements IBagRandomizer {
     }
     const piece = this.bag.shift();
     if (piece === undefined) {
-      this.refillBag();
-      const retry = this.bag.shift();
-      return retry ?? 1;
+      throw new Error('7-bag invariant violated: bag was empty after refill');
     }
     return piece;
   }
@@ -106,11 +100,11 @@ export class SevenBagRandomizer implements IBagRandomizer {
     this.refillBag();
   }
 
-  getBagState(): { current: PieceType[]; next: PieceType[] } {
+  snapshot(): BagState {
     return { current: [...this.bag], next: [...this.nextBag] };
   }
 
-  setBagState(state: { current: PieceType[]; next: PieceType[] }): void {
+  restore(state: BagState): void {
     this.bag = [...state.current];
     this.nextBag = [...state.next];
   }

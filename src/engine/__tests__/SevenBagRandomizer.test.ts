@@ -29,9 +29,9 @@ function countsByPiece(pieces: PieceType[]): Record<number, number> {
 }
 
 describe('SevenBagRandomizer', () => {
-  it('should generate a bag containing all 7 unique pieces (1 through 7)', () => {
+  it('should preview a bag containing all 7 unique pieces (1 through 7)', () => {
     const randomizer = new SevenBagRandomizer(12345);
-    const bag = randomizer.generateBag();
+    const bag = randomizer.peek(7);
     expect(bag).toHaveLength(7);
     expect([...bag].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
@@ -61,7 +61,7 @@ describe('SevenBagRandomizer', () => {
 
     const advanced = new SevenBagRandomizer(seed + 2);
 
-    expect(resetRandomizer.getBagState()).toEqual(advanced.getBagState());
+    expect(resetRandomizer.snapshot()).toEqual(advanced.snapshot());
   });
 });
 
@@ -103,16 +103,9 @@ describe('SevenBagRandomizer distribution', () => {
   it('different seeds produce varied bag orderings', () => {
     const orderings = new Set<string>();
     for (let seed = 0; seed < 16; seed++) {
-      orderings.add(new SevenBagRandomizer(seed).generateBag().join(','));
+      orderings.add(new SevenBagRandomizer(seed).peek(7).join(','));
     }
     expect(orderings.size).toBeGreaterThan(1);
-  });
-
-  it('generateBag() always returns a fresh valid permutation', () => {
-    const randomizer = new SevenBagRandomizer(1);
-    for (let i = 0; i < 20; i++) {
-      expect(isPermutation(randomizer.generateBag())).toBe(true);
-    }
   });
 });
 
@@ -152,5 +145,40 @@ describe('SevenBagRandomizer engine integration', () => {
     // Total consumed: 6 (initial) + 1 (first spawn) = 7 = one complete bag
     const firstBag = [...state.queue.queue, state.activePiece!.type];
     expect(isPermutation(firstBag)).toBe(true);
+  });
+});
+
+describe('SevenBagRandomizer bag-state round trip', () => {
+  it('restore(snapshot) resumes the exact bag stream (undo/redo continuity)', () => {
+    const seed = 1234;
+    const producer = new SevenBagRandomizer(seed);
+    for (let i = 0; i < 13; i++) producer.pop();
+    const bagState = producer.snapshot();
+    const expectedContinuation = producer.peek(21);
+
+    const replay = new SevenBagRandomizer(seed);
+    for (let i = 0; i < 13; i++) replay.pop();
+    replay.restore(bagState);
+
+    const resumed = Array.from({ length: 21 }, () => replay.pop());
+    expect(resumed).toEqual(expectedContinuation);
+  });
+
+  it('peek() matches pop() at every partial-consumption point', () => {
+    for (let consumed = 0; consumed <= 30; consumed++) {
+      const randomizer = new SevenBagRandomizer(77);
+      for (let i = 0; i < consumed; i++) randomizer.pop();
+      const peeked = randomizer.peek(21);
+      const popped = Array.from({ length: 21 }, () => randomizer.pop());
+      expect(peeked).toEqual(popped);
+    }
+  });
+
+  it('the pop stream never repeats a piece within one 7-piece window', () => {
+    const randomizer = new SevenBagRandomizer(2024);
+    const drawn = Array.from({ length: 7000 }, () => randomizer.pop());
+    for (const bag of groupIntoBags(drawn)) {
+      expect(isPermutation(bag)).toBe(true);
+    }
   });
 });

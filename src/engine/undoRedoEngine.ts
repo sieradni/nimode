@@ -1,4 +1,5 @@
 import { GameState } from './types';
+import { BagState } from './interfaces/IBagRandomizer';
 
 export interface StateSnapshot {
   board: number[][];
@@ -11,6 +12,7 @@ export interface StateSnapshot {
   gameOver: boolean;
   gravityTimer: number;
   lockDelay: { timer: number; resets: number };
+  bagState: BagState;
 }
 
 export interface PlayerStatsSnapshot {
@@ -36,7 +38,7 @@ export interface FullSnapshot {
 }
 
 export interface IUndoRedoEngine {
-  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }): void;
+  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }, bagState: BagState): void;
   undo(): FullSnapshot | null;
   redo(): FullSnapshot | null;
   canUndo(): boolean;
@@ -53,7 +55,7 @@ export class UndoRedoEngine implements IUndoRedoEngine {
     this.maxSize = maxSize;
   }
 
-  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }): void {
+  saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: { timer: number; resets: number }, bagState: BagState): void {
     const snapshot: FullSnapshot = {
       state: {
         board: state.board.map(row => [...row]),
@@ -66,6 +68,7 @@ export class UndoRedoEngine implements IUndoRedoEngine {
         gameOver: state.gameOver,
         gravityTimer,
         lockDelay: { timer: lock.timer, resets: lock.resets },
+        bagState,
       },
       stats: { ...stats },
     };

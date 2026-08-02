@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { UndoRedoEngine, IUndoRedoEngine, PlayerStatsSnapshot } from '../undoRedoEngine';
 import { GameState } from '../types';
 import { LockDelayState, createLockDelayState } from '../lockDelayEngine';
+import { BagState } from '../interfaces/IBagRandomizer';
+
+function createBagState(): BagState {
+  return { current: [1, 2, 3, 4, 5, 6, 7], next: [7, 6, 5, 4, 3, 2, 1] };
+}
 
 function createMockGameState(overrides: Partial<GameState> = {}): GameState {
   return {
@@ -57,8 +62,8 @@ describe('UndoRedoEngine', () => {
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
 
-    engine.saveSnapshot(state1, stats, 0, lockDelay);
-    engine.saveSnapshot(state2, stats, 0, lockDelay);
+    engine.saveSnapshot(state1, stats, 0, lockDelay, createBagState());
+    engine.saveSnapshot(state2, stats, 0, lockDelay, createBagState());
 
     expect(engine.canUndo()).toBe(true);
     expect(engine.canRedo()).toBe(false);
@@ -76,8 +81,8 @@ describe('UndoRedoEngine', () => {
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
 
-    engine.saveSnapshot(state1, stats, 0, lockDelay);
-    engine.saveSnapshot(state2, stats, 0, lockDelay);
+    engine.saveSnapshot(state1, stats, 0, lockDelay, createBagState());
+    engine.saveSnapshot(state2, stats, 0, lockDelay, createBagState());
 
     engine.undo();
     const redone = engine.redo();
@@ -94,10 +99,10 @@ describe('UndoRedoEngine', () => {
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
 
-    engine.saveSnapshot(state1, stats, 0, lockDelay);
-    engine.saveSnapshot(state2, stats, 0, lockDelay);
+    engine.saveSnapshot(state1, stats, 0, lockDelay, createBagState());
+    engine.saveSnapshot(state2, stats, 0, lockDelay, createBagState());
     engine.undo();
-    engine.saveSnapshot(state3, stats, 0, lockDelay);
+    engine.saveSnapshot(state3, stats, 0, lockDelay, createBagState());
 
     expect(engine.canRedo()).toBe(false);
   });
@@ -108,7 +113,7 @@ describe('UndoRedoEngine', () => {
     const lockDelay = createMockLockDelayState();
     for (let i = 0; i < 5; i++) {
       const state = createMockGameState({ activePiece: { type: (i + 1) as import('../types').PieceType, x: i, y: i, rotation: 0 } });
-      engine.saveSnapshot(state, stats, 0, lockDelay);
+      engine.saveSnapshot(state, stats, 0, lockDelay, createBagState());
     }
     expect(engine.canUndo()).toBe(true);
     engine.undo();
@@ -120,7 +125,7 @@ describe('UndoRedoEngine', () => {
     const state1 = createMockGameState();
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
-    engine.saveSnapshot(state1, stats, 0, lockDelay);
+    engine.saveSnapshot(state1, stats, 0, lockDelay, createBagState());
     engine.clear();
     expect(engine.canUndo()).toBe(false);
     expect(engine.canRedo()).toBe(false);

@@ -4,6 +4,7 @@ import { PlayerStatsSnapshot } from '../undoRedoEngine';
 import { saveSnapshot, restoreSnapshot } from '../engineUndoRedo';
 import { PlayerStats } from '../playerStats';
 import { LockDelayState, createLockDelayState } from '../lockDelayEngine';
+import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
 
 function createMockGameState(overrides: Partial<GameState> = {}): GameState {
   return {
@@ -46,13 +47,18 @@ function createMockLockDelayState(): LockDelayState {
   return createLockDelayState();
 }
 
+function createBagState(randomizer: SevenBagRandomizer) {
+  return randomizer.snapshot();
+}
+
 describe('engineUndoRedo', () => {
   it('should create snapshot from game state', () => {
     const state = createMockGameState();
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
+    const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(state, stats, 100, lockDelay);
+    const snapshot = saveSnapshot(state, stats, 100, lockDelay, bagState);
 
     expect(snapshot.state.board.length).toBe(40);
     expect(snapshot.state.activePiece).not.toBeNull();
@@ -63,6 +69,7 @@ describe('engineUndoRedo', () => {
     expect(snapshot.state.gameOver).toBe(false);
     expect(snapshot.state.gravityTimer).toBe(100);
     expect(snapshot.state.lockDelay).toEqual({ timer: 0, resets: 0 });
+    expect(snapshot.state.bagState).toEqual(bagState);
     expect(snapshot.stats).toEqual(stats);
   });
 
@@ -70,8 +77,9 @@ describe('engineUndoRedo', () => {
     const state = createMockGameState({ activePiece: null });
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
+    const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(state, stats, 100, lockDelay);
+    const snapshot = saveSnapshot(state, stats, 100, lockDelay, bagState);
 
     expect(snapshot.state.activePiece).toBeNull();
   });
@@ -81,11 +89,14 @@ describe('engineUndoRedo', () => {
     const targetState = createMockGameState({ gameOver: true, activePiece: null });
     const stats = createMockStatsSnapshot({ pps: 2.5, piecesPlaced: 10 });
     const lockDelay = createMockLockDelayState();
+    const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay);
+    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay, bagState);
     const playerStats = new PlayerStats();
+    const randomizer = new SevenBagRandomizer(99);
+    const randomizerBefore = randomizer.snapshot();
 
-    restoreSnapshot(targetState, snapshot, playerStats);
+    restoreSnapshot(targetState, snapshot, playerStats, randomizer);
 
     expect(targetState.gameOver).toBe(false);
     expect(targetState.activePiece).not.toBeNull();
@@ -96,6 +107,8 @@ describe('engineUndoRedo', () => {
     expect(targetState.queue.hold).toBe(7);
     expect(targetState.queue.canHold).toBe(true);
     expect(targetState.annotations).toEqual(originalState.annotations);
+    expect(randomizer.snapshot()).toEqual(bagState);
+    expect(randomizer.snapshot()).not.toEqual(randomizerBefore);
   });
 
   it('should handle activePiece being null in restore', () => {
@@ -103,11 +116,12 @@ describe('engineUndoRedo', () => {
     const targetState = createMockGameState({ activePiece: { type: 6, x: 3, y: 36, rotation: 0 } });
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
+    const bagState = createBagState(new SevenBagRandomizer(1));
 
-    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay);
+    const snapshot = saveSnapshot(originalState, stats, 100, lockDelay, bagState);
     const playerStats = new PlayerStats();
 
-    restoreSnapshot(targetState, snapshot, playerStats);
+    restoreSnapshot(targetState, snapshot, playerStats, new SevenBagRandomizer(99));
 
     expect(targetState.activePiece).toBeNull();
     expect(targetState.gameOver).toBe(true);
