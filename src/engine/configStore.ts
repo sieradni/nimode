@@ -37,6 +37,12 @@ export class GameConfigStore {
     this.notify();
   }
 
+  setSpawnOffset(spawnOffset: number): void {
+    this.config = { ...this.config, spawnOffset };
+    saveConfigToStorage(this.config);
+    this.notify();
+  }
+
   setHandling(das: number, arr: number, sdf: number): void {
     this.config = { ...this.config, das, arr, sdf };
     saveConfigToStorage(this.config);

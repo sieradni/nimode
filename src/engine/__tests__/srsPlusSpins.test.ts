@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
 import { createEmptyBoard } from '../boardUtils';
-import { ActivePiece, BoardMatrix, PieceType } from '../types';
+import { ActivePiece, BoardMatrix, PieceType, DEFAULT_CONFIG } from '../types';
 
 /**
  * Comprehensive SRS+ spin tests.
@@ -17,6 +17,7 @@ import { ActivePiece, BoardMatrix, PieceType } from '../types';
  */
 
 const rs = new SrsPlusRotationSystem();
+const testConfig = { ...DEFAULT_CONFIG };
 
 function setCell(board: BoardMatrix, y: number, x: number, v = 1): void {
     const row = board[y];
@@ -335,7 +336,7 @@ describe('SRS+ spin scenarios', () => {
         it('CW then CCW returns to original state in open space', () => {
             const board = createEmptyBoard();
             for (const type of NON_O_PIECES) {
-                const spawn = rs.getInitialState(type);
+                const spawn = rs.getInitialState(type, testConfig);
                 const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: spawn.rotation };
                 const cw = rs.rotate(board, piece, 1);
                 expect(cw).not.toBeNull();
@@ -350,7 +351,7 @@ describe('SRS+ spin scenarios', () => {
         it('180 twice returns to original state', () => {
             const board = createEmptyBoard();
             for (const type of NON_O_PIECES) {
-                const spawn = rs.getInitialState(type);
+                const spawn = rs.getInitialState(type, testConfig);
                 const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: spawn.rotation };
                 const first = rs.rotate(board, piece, 2);
                 expect(first).not.toBeNull();

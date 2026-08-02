@@ -73,18 +73,18 @@
 - [ ] **T-11.4:** Add rotation system / bag randomizer selectors to SettingsModal.
 
 ## Phase 12: UI/UX Fixes & Quality-of-Life
-- [ ] **T-12.1:** Move stats overlay to the side of the board instead of floating on top.
-- [ ] **T-12.2:** Reposition queue preview to the top right of the board.
-- [ ] **T-12.3:** Replace CLEAR_HOLD keybind with `x` key for hold clear.
-- [ ] **T-12.4:** Implement hold swapping (repeatedly pressing hold toggles between current and held piece).
-- [ ] **T-12.5:** Fix annotation shape detection to use actual drawn shape instead of adjacency check.
-- [ ] **T-12.6:** Fix fuzzy/low-resolution rendering (set canvas `imageSmoothingEnabled` and use `devicePixelRatio` scaling).
-- [ ] **T-12.7:** Fix pieces spawning partially off the board (ensure spawn position is fully visible).
-- [ ] **T-12.8:** Handle top-out properly — game should not freeze; allow player to reset.
-- [ ] **T-12.9:** Fix settings modal close button requiring scroll-back (make close button sticky/always visible).
-- [ ] **T-12.10:** Add undo/redo buttons with full action history tracking.
-- [ ] **T-12.11:** Allow undo past top-outs (restore pre-top-out board state).
-- [ ] **T-12.12:** Move annotation toolbar toggle to the side of the board so it does not cover the board.
+- [x] **T-12.1:** Move stats overlay to the side of the board instead of floating on top (left column, done).
+- [x] **T-12.2:** Reposition queue preview to the top right of the board (right column, done).
+- [x] **T-12.3:** Replace CLEAR_HOLD keybind with ✕ button on Hold display (button implemented in HoldCanvas).
+- [x] **T-12.4:** Implement hold swapping (repeatedly pressing hold toggles between current and held piece) — done in `holdPiece`.
+- [x] **T-12.5:** Fix annotation shape detection to use actual drawn shape instead of adjacency check — stroke-scoped auto-color implemented.
+- [x] **T-12.6:** Fix fuzzy/low-resolution rendering (set canvas `imageSmoothingEnabled` and use `devicePixelRatio` scaling) — done in `canvasScaling.ts`.
+- [x] **T-12.7:** Fix pieces spawning partially off the board — **implemented**: added configurable `spawnOffset` to GameConfig (default 1, matching TETR.IO's "height + 1" = row 21). Updated `SrsPlusRotationSystem.getInitialState()` to compute spawn Y from config. Added spawn offset control to GravityConfigControls. Validated range 0-5 for different rulesets (NES=19, TE:C=20, TETR.IO=21, PPT=22).
+- [x] **T-12.8:** Handle top-out properly — game should not freeze; allow player to reset (GAME OVER overlay with reset button).
+- [x] **T-12.9:** Fix settings modal close button requiring scroll-back (sticky close button at top-right).
+- [x] **T-12.10:** Add undo/redo — keyboard shortcuts `Ctrl+Z`/`Ctrl+Y` wired and functional; UI buttons not needed per decision.
+- [x] **T-12.11:** Allow undo past top-outs (undo restores pre-top-out `gameOver` state via snapshot).
+- [x] **T-12.12:** Move annotation toolbar toggle to the side of the board (toggle in FloatingControls top-right; panel opens left).
 
 ---
 
@@ -107,6 +107,15 @@
 - **C14 — finesse wired:** added pure `finesseTracker.ts` (per-piece move/rotation inputs vs. minimal needed to reach the final position; a single press reaches any rotation via 180) surfaced through a `PlayerStats` facade that owns `StatsTracker` + `FinesseTracker`. Engine counts move/rotate inputs on keydown and finalizes on lock/hold. Tests in `finesseTracker.test.ts` + `engineFinesse.test.ts`.
 - **C15 — instance participant discovery:** `DiscordSdkWrapper.getInstanceConnectedParticipants()` maps the SDK command to `ConnectedParticipant[]`; `usePeerSession` fetches after init, seeds the controller roster (self excluded), and exposes `participants` so the `PresenceRoster` UI lists everyone in the instance (unconnected → not connected) and lets you spectate them, triggering the outbound connect. Tests added to `App.p2p.test.tsx` + `PresenceRoster.test.ts`.
 - **C16 — 150-line cap enforced:** `scripts/enforce-line-limit.mjs` (`npm run lint:files`) runs in `npm run verify` and fails on any source file >150 lines (test files exempt). `App.tsx` trimmed back to 150.
+
+### Current Implementation Status (2026-08-01)
+- **All Phase 1-10 tasks complete** — core engine, rendering, P2P, settings, gravity/subzero, statistics, and Discord integration are fully implemented and tested.
+- **Phase 11 (Alternate Systems)** deferred — ARS rotation, 14-Bag, Memoryless Bag not yet scoped.
+- **Phase 12 (UI/UX)** — all 12 tasks complete.
+- **Undo/Redo** fully functional via `Ctrl+Z`/`Ctrl+Y`; no UI buttons added per decision.
+- **Hold clear** available via ✕ button on Hold display; `CLEAR_HOLD` keybinding (`Shift+C`) retained as alternative.
+- **Spawn position:** Fixed T-12.7 by adding configurable `spawnOffset` (default 1) to GameConfig. TETR.IO spawns at "height + 1" row (row 21 with 20 visible rows). Updated `SrsPlusRotationSystem.getInitialState()` to compute spawn Y from `VISIBLE_Y_OFFSET - 1 + spawnOffset`. Added UI control in GravityConfigControls (range 0-5, supports NES/TE:C/PPT rulesets).
+- **All 520 tests pass**, `npm run verify` clean (typecheck, lint, line-cap, tests).
 
 ### Remaining known gaps
 - **`setQueue`** has no UI (engine-level API only); no queue/hold editor for the upcoming queue.

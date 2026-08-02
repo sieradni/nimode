@@ -7,7 +7,9 @@ import {
   RotationResult,
 } from '../types';
 import { IRotationSystem } from '../interfaces/IRotationSystem';
-import { PIECE_SHAPES, PIECE_SPAWNS, getSrsPlusKicks, KickOffset } from './srsPlusKicks';
+import { GameConfig } from '../types';
+import { PIECE_SHAPES, getSrsPlusKicks, KickOffset } from './srsPlusKicks';
+import { VISIBLE_Y_OFFSET } from '../types';
 
 export function rotateMatrix(matrix: number[][]): number[][] {
   const n = matrix.length;
@@ -50,12 +52,22 @@ function checkCollision(board: BoardMatrix, piece: ActivePiece, matrix: number[]
   return false;
 }
 
+function computeSpawnY(config: GameConfig): number {
+  // TETR.IO default: spawn at (visible_height - 1) + spawnOffset
+  // visible_height = 20, so visible rows are 0-19, hidden rows 20-39
+  // spawnOffset=1 (default) -> y = 19 + 1 = 20 (row 21 in 1-indexed)
+  // This matches TETR.IO's "height + 1" where height=20 visible rows
+  return VISIBLE_Y_OFFSET - 1 + config.spawnOffset;
+}
+
 export class SrsPlusRotationSystem implements IRotationSystem {
   id = 'srs+';
   name = 'SRS+ (TETR.IO)';
 
-  getInitialState(type: PieceType): { x: number; y: number; rotation: RotationState } {
-    return PIECE_SPAWNS[type] ?? { x: 3, y: 19, rotation: 0 };
+  getInitialState(type: PieceType, config: GameConfig): { x: number; y: number; rotation: RotationState } {
+    const spawnY = computeSpawnY(config);
+    const x = type === 1 ? 3 : type === 4 ? 4 : 3; // I piece at 3, O at 4, others at 3 (left-leaning)
+    return { x, y: spawnY, rotation: 0 };
   }
 
   getKickTable(

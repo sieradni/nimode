@@ -1,4 +1,4 @@
-import { GameState, ActivePiece } from './types';
+import { GameState, ActivePiece, GameConfig } from './types';
 import { IBagRandomizer } from './interfaces/IBagRandomizer';
 import { IRotationSystem } from './interfaces/IRotationSystem';
 import { checkCollision, lockPieceToBoard, clearBoardLines } from './boardUtils';
@@ -23,7 +23,8 @@ export function movePiece(state: GameState, dx: number, dy: number): boolean {
 export function spawnNextPiece(
   state: GameState,
   randomizer: IBagRandomizer,
-  rotationSystem: IRotationSystem
+  rotationSystem: IRotationSystem,
+  config: GameConfig
 ): void {
   if (state.queue.queue.length === 0) {
     state.queue.queue.push(randomizer.pop());
@@ -33,7 +34,7 @@ export function spawnNextPiece(
 
   state.queue.queue.push(randomizer.pop());
 
-  const spawn = rotationSystem.getInitialState(nextType);
+  const spawn = rotationSystem.getInitialState(nextType, config);
   const piece: ActivePiece = {
     type: nextType,
     x: spawn.x,
@@ -64,7 +65,7 @@ export function lockPiece(
   const { newBoard, linesCleared } = clearBoardLines(state.board);
   state.board = newBoard;
 
-  spawnNextPiece(state, randomizer, rotationSystem);
+  spawnNextPiece(state, randomizer, rotationSystem, state.config);
   state.queue.canHold = true;
   return { linesCleared, tSpin, tSpinMini };
 }
@@ -72,7 +73,8 @@ export function lockPiece(
 export function holdPiece(
   state: GameState,
   randomizer: IBagRandomizer,
-  rotationSystem: IRotationSystem
+  rotationSystem: IRotationSystem,
+  config: GameConfig
 ): void {
   if (!state.queue.canHold || !state.activePiece) return;
 
@@ -81,10 +83,10 @@ export function holdPiece(
 
   if (heldType === null) {
     state.queue.hold = activeType;
-    spawnNextPiece(state, randomizer, rotationSystem);
+    spawnNextPiece(state, randomizer, rotationSystem, config);
   } else {
     state.queue.hold = activeType;
-    const spawn = rotationSystem.getInitialState(heldType);
+    const spawn = rotationSystem.getInitialState(heldType, config);
     state.activePiece = {
       type: heldType,
       x: spawn.x,

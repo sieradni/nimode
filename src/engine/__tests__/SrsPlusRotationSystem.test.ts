@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
 import { createEmptyBoard } from '../boardUtils';
-import { ActivePiece, PieceType, BoardMatrix } from '../types';
+import { ActivePiece, PieceType, BoardMatrix, DEFAULT_CONFIG } from '../types';
 
 function setCell(board: BoardMatrix, y: number, x: number, value: number): void {
   const row = board[y];
@@ -12,12 +12,13 @@ function setCell(board: BoardMatrix, y: number, x: number, value: number): void 
 
 describe('SrsPlusRotationSystem', () => {
   const rotationSystem = new SrsPlusRotationSystem();
+  const testConfig = { ...DEFAULT_CONFIG };
 
   it('should return initial spawn position for pieces', () => {
-    const spawnI = rotationSystem.getInitialState(1);
+    const spawnI = rotationSystem.getInitialState(1, testConfig);
     expect(spawnI).toEqual({ x: 3, y: 20, rotation: 0 });
 
-    const spawnO = rotationSystem.getInitialState(4);
+    const spawnO = rotationSystem.getInitialState(4, testConfig);
     expect(spawnO).toEqual({ x: 4, y: 20, rotation: 0 });
   });
 
@@ -56,7 +57,7 @@ describe('SrsPlusRotationSystem', () => {
     const pieceTypes: PieceType[] = [1, 2, 3, 5, 6, 7];
 
     for (const type of pieceTypes) {
-      const spawn = rotationSystem.getInitialState(type);
+      const spawn = rotationSystem.getInitialState(type, testConfig);
       const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: 0 };
 
       const result = rotationSystem.rotate(board, piece, 2);
@@ -72,7 +73,7 @@ describe('SrsPlusRotationSystem', () => {
     const pieceTypes: PieceType[] = [1, 2, 3, 5, 6, 7];
 
     for (const type of pieceTypes) {
-      const spawn = rotationSystem.getInitialState(type);
+      const spawn = rotationSystem.getInitialState(type, testConfig);
       const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: 0 };
 
       const result = rotationSystem.rotate(board, piece, 1);
@@ -86,7 +87,7 @@ describe('SrsPlusRotationSystem', () => {
     const pieceTypes: PieceType[] = [1, 2, 3, 5, 6, 7];
 
     for (const type of pieceTypes) {
-      const spawn = rotationSystem.getInitialState(type);
+      const spawn = rotationSystem.getInitialState(type, testConfig);
       const piece: ActivePiece = { type, x: spawn.x, y: spawn.y, rotation: 0 };
 
       const result = rotationSystem.rotate(board, piece, -1);

@@ -29,7 +29,7 @@ export class EngineCore implements IEngineCore {
     this.rotationSystem = deps.rotationSystem;
     this.bagRandomizer = deps.bagRandomizer;
     this.state = createInitialGameState(this.bagRandomizer, this.config);
-    spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem);
+    spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem, this.config);
     this.playerStats.onPieceSpawn(this.state.activePiece);
     this.saveSnapshot();
   }
@@ -141,7 +141,7 @@ export class EngineCore implements IEngineCore {
   }
   canUndo(): boolean { return this.undoRedoEngine.canUndo(); }
   canRedo(): boolean { return this.undoRedoEngine.canRedo(); }
-  reset(): void { this.bagRandomizer.reset(); this.state = createInitialGameState(this.bagRandomizer, this.config); this.inputHandler.reset(); this.gravityTimer = this.accumulator = 0; this.lockDelayState = createLockDelayState(); this.playerStats.reset(); this.rotationOccurred = false; this.undoRedoEngine.clear(); spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem); this.playerStats.onPieceSpawn(this.state.activePiece); this.saveSnapshot(); }
+  reset(): void { this.bagRandomizer.reset(); this.state = createInitialGameState(this.bagRandomizer, this.config); this.inputHandler.reset(); this.gravityTimer = this.accumulator = 0; this.lockDelayState = createLockDelayState(); this.playerStats.reset(); this.rotationOccurred = false; this.undoRedoEngine.clear(); spawnNextPiece(this.state, this.bagRandomizer, this.rotationSystem, this.config); this.playerStats.onPieceSpawn(this.state.activePiece); this.saveSnapshot(); }
 
   setQueue(pieces: PieceType[]): void { this.state.queue.queue = [...pieces]; }
 }

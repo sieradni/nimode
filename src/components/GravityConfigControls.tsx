@@ -28,6 +28,13 @@ export function GravityConfigControls({ store }: GravityConfigControlsProps) {
     store.setSubzero(e.target.checked);
   };
 
+  const handleSpawnOffsetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!Number.isNaN(value) && value >= 0 && value <= 5) {
+      store.setSpawnOffset(value);
+    }
+  };
+
   return (
     <div className="mb-4 space-y-3">
       <div>
@@ -65,6 +72,32 @@ export function GravityConfigControls({ store }: GravityConfigControlsProps) {
         <label htmlFor="subzero" className="text-sm text-slate-300">
           Subzero (no lock-on-contact, lock on hard drop only)
         </label>
+      </div>
+      <div>
+        <label className="block text-sm text-slate-300 mb-1">
+          Spawn Offset: {config.spawnOffset} (row {19 + config.spawnOffset})
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={5}
+          value={config.spawnOffset}
+          onChange={handleSpawnOffsetChange}
+          className="w-full"
+          aria-label="Spawn Offset"
+        />
+        <input
+          type="number"
+          min={0}
+          max={5}
+          value={config.spawnOffset}
+          onChange={handleSpawnOffsetChange}
+          className="w-16 mt-1 px-1 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200"
+          aria-label="Spawn Offset value"
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Default: 1 (TETR.IO). 0=row 19, 1=row 20, 2=row 21 (TE:C), etc.
+        </p>
       </div>
     </div>
   );

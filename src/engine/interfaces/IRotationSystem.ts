@@ -1,9 +1,10 @@
 import { PieceType, RotationState, RotationDirection, BoardMatrix, ActivePiece, RotationResult } from '../types';
+import { GameConfig } from '../types';
 
 export interface IRotationSystem {
   id: string;
   name: string;
-  getInitialState(type: PieceType): { x: number; y: number; rotation: RotationState };
+  getInitialState(type: PieceType, config: GameConfig): { x: number; y: number; rotation: RotationState };
   rotate(
     board: BoardMatrix,
     piece: ActivePiece,

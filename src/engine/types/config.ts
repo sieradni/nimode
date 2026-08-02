@@ -43,6 +43,7 @@ export interface GameConfig {
   gravity: number;
   subzero: boolean;
   autoColor: boolean;
+  spawnOffset: number;
 }
 
 export const DEFAULT_CONFIG: GameConfig = {
@@ -55,4 +56,5 @@ export const DEFAULT_CONFIG: GameConfig = {
   gravity: 0,
   subzero: false,
   autoColor: true,
+  spawnOffset: 1,
 };

@@ -64,7 +64,7 @@ export function runFixedTick(
   if (actions.ccw) { rotated = callbacks.rotate(-1) || rotated; callbacks.onKeyPress(); }
   if (actions.rotate180) { rotated = callbacks.rotate(2) || rotated; callbacks.onKeyPress(); }
   if (actions.hold) {
-    holdPiece(state, bagRandomizer, rotationSystem);
+    holdPiece(state, bagRandomizer, rotationSystem, config);
     callbacks.onKeyPress();
     callbacks.onHold();
     lockDelayState = createLockDelayState();
