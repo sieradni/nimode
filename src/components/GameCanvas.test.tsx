@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
-import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT } from '../engine/types';
 import { MIN_CELL_SIZE, computePreviewCellSize } from './canvas/useBoardScale';
 import { renderBoard } from '../render/BoardRenderer';
 import { renderQueue, renderHold } from '../render/QueueHoldRenderer';
@@ -111,7 +111,7 @@ describe('GameCanvas', () => {
     );
     const canvas = screen.getByTestId('board-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(BOARD_WIDTH * MIN_CELL_SIZE);
-    expect(canvas.height).toBe(VISIBLE_HEIGHT * MIN_CELL_SIZE);
+    expect(canvas.height).toBe(RENDER_HEIGHT * MIN_CELL_SIZE);
   });
 
   it('sizes the hold canvas to one 4x4 preview slot at the preview cell size', () => {

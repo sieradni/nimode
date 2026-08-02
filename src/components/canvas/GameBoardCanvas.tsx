@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT } from '../../engine/types';
 import { EngineState } from '../../engine/interfaces/IEngineCore';
 import { renderBoard } from '../../render/BoardRenderer';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
@@ -54,7 +54,7 @@ export function GameBoardCanvas({
   });
 
   const width = BOARD_WIDTH * cellSize;
-  const height = VISIBLE_HEIGHT * cellSize;
+  const height = RENDER_HEIGHT * cellSize;
 
   useEffect(() => {
     const canvas = canvasRef.current;

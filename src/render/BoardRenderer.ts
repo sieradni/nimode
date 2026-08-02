@@ -1,12 +1,13 @@
-import { BoardMatrix, ActivePiece, PIECE_COLORS, BOARD_WIDTH, VISIBLE_HEIGHT, VISIBLE_Y_OFFSET, BOARD_HEIGHT, AnnotationMatrix } from '../engine/types';
+import { BoardMatrix, ActivePiece, PIECE_COLORS, BOARD_WIDTH, RENDER_HEIGHT, RENDER_TOP_Y, RENDER_BUFFER_ROWS, BOARD_HEIGHT, VISIBLE_HEIGHT, AnnotationMatrix } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
 import { checkCollision } from '../engine/boardUtils';
 import {
-  BOARD_BACKGROUND, GHOST_COLOR, GHOST_LINE_WIDTH, GRID_COLOR, GRID_LINE_WIDTH,
+  BOARD_BACKGROUND, BUFFER_AREA_BG, GHOST_COLOR, GHOST_LINE_WIDTH,
   CELL_BORDER_COLOR, CELL_BORDER_WIDTH, ANNOTATION_ALPHA, ANNOTATION_BORDER_COLOR,
   ANNOTATION_BORDER_WIDTH, crisp,
 } from './renderConstants';
 import { resolveAnnotationColor } from './annotationColors';
+import { drawGrid } from './renderGrid';
 
 export interface RenderOptions {
   cellSize?: number;
@@ -42,8 +43,8 @@ function drawPieceShape(
     for (let x = 0; x < size; x++) {
       if (!matrix[y]?.[x]) continue;
       const sx = (piece.x + x) * cellSize;
-      const sy = (piece.y + y - VISIBLE_Y_OFFSET) * cellSize;
-      if (sy < -cellSize || sy >= VISIBLE_HEIGHT * cellSize) continue;
+      const sy = (piece.y + y - RENDER_TOP_Y) * cellSize;
+      if (sy < -cellSize || sy >= RENDER_HEIGHT * cellSize) continue;
 
       if (ghost) {
         // A thick white outline reads as a shadow without borrowing the
@@ -67,25 +68,6 @@ function computeGhostY(board: BoardMatrix, piece: ActivePiece): number {
   return y;
 }
 
-function drawGrid(ctx: CanvasRenderingContext2D, cellSize: number, width: number, height: number): void {
-  ctx.strokeStyle = GRID_COLOR;
-  ctx.lineWidth = GRID_LINE_WIDTH;
-  for (let x = 0; x <= BOARD_WIDTH; x++) {
-    const gx = crisp(x * cellSize);
-    ctx.beginPath();
-    ctx.moveTo(gx, 0);
-    ctx.lineTo(gx, height);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= VISIBLE_HEIGHT; y++) {
-    const gy = crisp(y * cellSize);
-    ctx.beginPath();
-    ctx.moveTo(0, gy);
-    ctx.lineTo(width, gy);
-    ctx.stroke();
-  }
-}
-
 export function renderBoard(
   ctx: CanvasRenderingContext2D,
   board: BoardMatrix,
@@ -95,12 +77,15 @@ export function renderBoard(
 ): void {
   const cellSize = options.cellSize ?? 30;
   const width = BOARD_WIDTH * cellSize;
-  const height = VISIBLE_HEIGHT * cellSize;
+  const height = RENDER_HEIGHT * cellSize;
 
+  // Darker background for the spawn-area buffer rows above the visible field.
+  ctx.fillStyle = BUFFER_AREA_BG;
+  ctx.fillRect(0, 0, width, RENDER_BUFFER_ROWS * cellSize);
   ctx.fillStyle = BOARD_BACKGROUND;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, RENDER_BUFFER_ROWS * cellSize, width, VISIBLE_HEIGHT * cellSize);
 
-  for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
+  for (let by = RENDER_TOP_Y; by < BOARD_HEIGHT; by++) {
     const row = board[by];
     if (!row) continue;
     for (let bx = 0; bx < BOARD_WIDTH; bx++) {
@@ -109,21 +94,21 @@ export function renderBoard(
       drawCell(
         ctx,
         bx * cellSize,
-        (by - VISIBLE_Y_OFFSET) * cellSize,
+        (by - RENDER_TOP_Y) * cellSize,
         cellSize,
         resolveAnnotationColor(cell, options.palette),
       );
     }
   }
 
-  for (let by = VISIBLE_Y_OFFSET; by < BOARD_HEIGHT; by++) {
+  for (let by = RENDER_TOP_Y; by < BOARD_HEIGHT; by++) {
     const row = annotations[by];
     if (!row) continue;
     for (let bx = 0; bx < BOARD_WIDTH; bx++) {
       const cell = row[bx];
       if (!cell || cell === 0) continue;
       const sx = bx * cellSize;
-      const sy = (by - VISIBLE_Y_OFFSET) * cellSize;
+      const sy = (by - RENDER_TOP_Y) * cellSize;
       ctx.fillStyle = resolveAnnotationColor(cell, options.palette);
       ctx.globalAlpha = ANNOTATION_ALPHA;
       ctx.fillRect(sx, sy, cellSize, cellSize);

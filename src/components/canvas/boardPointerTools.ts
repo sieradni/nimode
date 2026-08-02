@@ -1,5 +1,5 @@
 import { BOARD_CELL_SIZE } from './canvasConstants';
-import { VISIBLE_HEIGHT } from '../../engine/types';
+import { RENDER_TOP_Y } from '../../engine/types';
 
 export interface BoardCoord {
   x: number;
@@ -38,6 +38,6 @@ export function getCanvasCoordinates(
   }
 
   const x = Math.floor((clientX - rect.left) / cellSize);
-  const y = Math.floor((clientY - rect.top) / cellSize) + (40 - VISIBLE_HEIGHT);
+  const y = Math.floor((clientY - rect.top) / cellSize) + RENDER_TOP_Y;
   return { x, y };
 }

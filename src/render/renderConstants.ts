@@ -25,6 +25,15 @@ export const ANNOTATION_BORDER_COLOR = 'rgba(255,255,255,0.5)';
 export const ANNOTATION_BORDER_WIDTH = 2;
 
 /**
+ * Spawn-area buffer rows (above the visible field) get a slightly darker
+ * background and a divider line so players can distinguish the spawn zone
+ * from the playable field at a glance.
+ */
+export const BUFFER_AREA_BG = '#0f0f1a';
+export const FIELD_DIVIDER_COLOR = 'rgba(255,255,255,0.2)';
+export const FIELD_DIVIDER_WIDTH = 2;
+
+/**
  * Snaps a coordinate to a half-pixel centre. A 1px stroke centred on an integer
  * coordinate spans two device pixels and renders blurry; offsetting by half a
  * pixel maps it onto exactly one.

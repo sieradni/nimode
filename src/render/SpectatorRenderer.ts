@@ -3,12 +3,9 @@ import {
   PieceType,
   RotationState,
   BOARD_WIDTH,
-  BOARD_HEIGHT,
-  VISIBLE_Y_OFFSET,
 } from '../engine/types';
 import { renderBoard } from './BoardRenderer';
 import { renderQueue, renderHold } from './QueueHoldRenderer';
-import { resolveAnnotationColor } from './annotationColors';
 import type { InterpolatedState } from '../p2p/SpectatorBuffer';
 
 export interface SpectatorRenderOptions {
@@ -22,30 +19,10 @@ const DEFAULT_PREVIEW_CELL_SIZE = 20;
 export const PREVIEW_SLOT = 4;
 const PREVIEW_GAP = 4;
 
-export function renderAnnotations(
-  ctx: CanvasRenderingContext2D,
-  annotations: number[][],
-  cellSize: number,
-  palette: ReadonlyArray<string> = [],
-): void {
-  ctx.globalAlpha = 0.5;
-  for (let y = VISIBLE_Y_OFFSET; y < BOARD_HEIGHT; y++) {
-    const row = annotations[y];
-    if (!row) continue;
-    for (let x = 0; x < BOARD_WIDTH; x++) {
-      const cell = row[x];
-      if (!cell || cell === 0) continue;
-      ctx.fillStyle = resolveAnnotationColor(cell, palette);
-      ctx.fillRect(x * cellSize, (y - VISIBLE_Y_OFFSET) * cellSize, cellSize, cellSize);
-    }
-  }
-  ctx.globalAlpha = 1;
-}
-
 export function renderSpectatorState(
   ctx: CanvasRenderingContext2D,
   state: InterpolatedState,
-  options?: SpectatorRenderOptions
+  options?: SpectatorRenderOptions,
 ): void {
   if (!state.hasData) return;
 
@@ -65,7 +42,6 @@ export function renderSpectatorState(
     cellSize: boardCellSize,
     palette: options?.palette ?? state.userPalette,
   });
-  // renderAnnotations is now handled inside renderBoard
 
   const boardWidth = BOARD_WIDTH * boardCellSize;
 

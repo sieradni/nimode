@@ -7,10 +7,10 @@ import {
 
 describe('computeCellSize', () => {
   it('fits the board to the available height when height is the constraint', () => {
-    // 20 visible rows; 800px tall viewport => 40px per cell, but width
-    // (10 cols) would allow more, so height wins.
+    // 24 render rows (20 visible + 4 buffer); 800px tall viewport => 33px per cell,
+    // but width (10 cols) would allow more, so height wins.
     const size = computeCellSize(2000, 800);
-    expect(size).toBe(40);
+    expect(size).toBe(33);
   });
 
   it('fits the board to the available width when width is the constraint', () => {

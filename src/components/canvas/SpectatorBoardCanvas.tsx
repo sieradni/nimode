@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT } from '../../engine/types';
 import type { SpectatorBuffer } from '../../p2p/SpectatorBuffer';
 import { renderSpectatorState, PREVIEW_SLOT } from '../../render/SpectatorRenderer';
 
@@ -33,7 +33,7 @@ export function SpectatorBoardCanvas({ buffer }: { buffer: SpectatorBuffer }) {
       ref={canvasRef}
       data-testid="spectator-canvas"
       width={BOARD_WIDTH * BOARD_CELL_SIZE + PREVIEW_SLOT * PREVIEW_CELL_SIZE}
-      height={VISIBLE_HEIGHT * BOARD_CELL_SIZE}
+       height={RENDER_HEIGHT * BOARD_CELL_SIZE}
       className="rounded-lg border border-slate-800"
     />
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState, RefObject } from 'react';
-import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT } from '../../engine/types';
 
 /** Below this the board stops being readable; above it, it stops being useful. */
 export const MIN_CELL_SIZE = 8;
@@ -27,7 +27,7 @@ const RESERVED_GAPS_PX = 2 * LAYOUT_GAP_PX;
 /** Largest whole-pixel cell size that fits the board inside the given box. */
 export function computeCellSize(availableWidth: number, availableHeight: number): number {
   const byWidth = availableWidth / BOARD_WIDTH;
-  const byHeight = availableHeight / VISIBLE_HEIGHT;
+  const byHeight = availableHeight / RENDER_HEIGHT;
   const fitted = Math.floor(Math.min(byWidth, byHeight));
 
   if (!Number.isFinite(fitted)) return MIN_CELL_SIZE;
@@ -41,7 +41,7 @@ export function computeCellSize(availableWidth: number, availableHeight: number)
  */
 export function computeLayoutCellSize(availableWidth: number, availableHeight: number): number {
   const byWidth = (availableWidth - RESERVED_GAPS_PX) / (BOARD_WIDTH + FLANK_CELL_COEFFICIENT);
-  const byHeight = availableHeight / VISIBLE_HEIGHT;
+  const byHeight = availableHeight / RENDER_HEIGHT;
   const fitted = Math.floor(Math.min(byWidth, byHeight));
 
   if (!Number.isFinite(fitted)) return MIN_CELL_SIZE;

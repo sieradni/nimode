@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
-import { BOARD_WIDTH, VISIBLE_HEIGHT } from '../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT } from '../engine/types';
 import { GameBoardCanvas, BOARD_CELL_SIZE } from '../components/canvas/GameBoardCanvas';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 
@@ -21,13 +21,13 @@ const baseState = {
 
 function setupCanvas(canvas: HTMLCanvasElement): void {
   Object.defineProperty(canvas, 'width', { value: BOARD_WIDTH * BOARD_CELL_SIZE, configurable: true });
-  Object.defineProperty(canvas, 'height', { value: VISIBLE_HEIGHT * BOARD_CELL_SIZE, configurable: true });
+  Object.defineProperty(canvas, 'height', { value: RENDER_HEIGHT * BOARD_CELL_SIZE, configurable: true });
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     top: 0,
     width: BOARD_WIDTH * BOARD_CELL_SIZE,
-    height: VISIBLE_HEIGHT * BOARD_CELL_SIZE,
-    bottom: VISIBLE_HEIGHT * BOARD_CELL_SIZE,
+    height: RENDER_HEIGHT * BOARD_CELL_SIZE,
+    bottom: RENDER_HEIGHT * BOARD_CELL_SIZE,
     right: BOARD_WIDTH * BOARD_CELL_SIZE,
     x: 0,
     y: 0,
