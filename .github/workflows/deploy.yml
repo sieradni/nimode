@@ -31,6 +31,9 @@ jobs:
         env:
           VITE_BASE_PATH: './'
           VITE_DISCORD_CLIENT_ID: ${{ secrets.VITE_DISCORD_CLIENT_ID }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_RELAY_FUNCTION_URL: ${{ secrets.VITE_RELAY_FUNCTION_URL }}
 
       - name: Deploy to GitHub Pages
         if: success()

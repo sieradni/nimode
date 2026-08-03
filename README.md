@@ -41,7 +41,14 @@ VITE_BASE_PATH=./
 
 ### 2.1 Provide the Discord Client ID to CI / deployment
 
-`VITE_DISCORD_CLIENT_ID` must be present at **build time** (Vite inlines `import.meta.env` into the bundle). `.env.local` covers local dev only — it is gitignored and never reaches CI. For GitHub Actions, create a repository secret named `VITE_DISCORD_CLIENT_ID` (Settings → Secrets and variables → Actions → New repository secret) with your Discord Application **Client ID**, and the `deploy.yml` Build step will inject it automatically.
+`VITE_DISCORD_CLIENT_ID` must be present at **build time** (Vite inlines `import.meta.env` into the bundle). `.env.local` covers local dev only — it is gitignored and never reaches CI. For GitHub Actions, create repository secrets for the values your build needs (**Settings → Secrets and variables → Actions → New repository secret**):
+
+- `VITE_DISCORD_CLIENT_ID` — your Discord Application **Client ID**.
+- `VITE_SUPABASE_URL` — your Supabase project URL (`https://<ref>.supabase.co`). *Client-safe (anon).*
+- `VITE_SUPABASE_ANON_KEY` — your Supabase **anon public** key. *Client-safe.*
+- `VITE_RELAY_FUNCTION_URL` — your deployed `authorize-activity` function URL.
+
+The `deploy.yml` workflow injects these into the Vite build so they are inlined into the bundle.
 
 ### 2.1 Supabase Realtime Relay
 
