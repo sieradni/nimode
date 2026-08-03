@@ -9,7 +9,6 @@ export const ACTION_LABELS: Record<InputAction, string> = {
   ROTATE_CCW: 'Rotate CCW',
   ROTATE_180: 'Rotate 180',
   HOLD: 'Hold',
-  CLEAR_HOLD: 'Clear Hold',
   RESET: 'Reset',
   UNDO: 'Undo',
   REDO: 'Redo',
@@ -17,6 +16,6 @@ export const ACTION_LABELS: Record<InputAction, string> = {
 
 export const ALL_ACTIONS: InputAction[] = [
   'MOVE_LEFT', 'MOVE_RIGHT', 'SOFT_DROP', 'HARD_DROP',
-  'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'CLEAR_HOLD',
+  'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD',
   'RESET', 'UNDO', 'REDO',
 ];

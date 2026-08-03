@@ -18,17 +18,17 @@ function loadFromStorage(): KeyBindings {
       return { ...DEFAULT_KEYBINDINGS };
     }
     const parsed: Record<string, unknown> = JSON.parse(raw);
-    const actions: InputAction[] = [
-      'MOVE_LEFT', 'MOVE_RIGHT', 'SOFT_DROP', 'HARD_DROP',
-      'ROTATE_CW', 'ROTATE_CCW', 'ROTATE_180', 'HOLD', 'CLEAR_HOLD',
-      'RESET', 'UNDO', 'REDO',
-    ];
-    for (const action of actions) {
+    // Rebuild only from the known action keys so stale persisted bindings
+    // (e.g. the removed CLEAR_HOLD keybind) never leak back into settings
+    // or exports.
+    const result: Record<string, unknown> = {};
+    for (const action of Object.keys(DEFAULT_KEYBINDINGS) as InputAction[]) {
       if (typeof parsed[action] !== 'string') {
         return { ...DEFAULT_KEYBINDINGS };
       }
+      result[action] = parsed[action];
     }
-    return parsed as unknown as KeyBindings;
+    return result as unknown as KeyBindings;
   } catch (_err: unknown) {
     return { ...DEFAULT_KEYBINDINGS };
   }

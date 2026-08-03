@@ -57,7 +57,7 @@ describe('GravityConfigControls', () => {
     render(<GravityConfigControls store={store} />);
     const checkbox = screen.getByLabelText('Subzero') as HTMLInputElement;
     fireEvent.click(checkbox);
-    expect(spy).toHaveBeenCalledWith(true);
+    expect(spy).toHaveBeenCalledWith(false);
   });
 
   it('should update display when store changes externally', () => {

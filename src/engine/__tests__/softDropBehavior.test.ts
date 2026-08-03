@@ -31,7 +31,7 @@ describe('EngineCore soft drop (US-8.8 / US-8.9)', () => {
   });
 
   it('a soft-dropped piece locks via the normal lock delay, not instantly', () => {
-    const engine = createEngine({ sdfFactor: MAX_SOFT_DROP_FACTOR });
+    const engine = createEngine({ sdfFactor: MAX_SOFT_DROP_FACTOR, subzero: false });
     engine.handleInput({ type: 'SOFT_DROP', pressed: true });
     engine.tick(1000 / 60);
     engine.handleInput({ type: 'SOFT_DROP', pressed: false });
@@ -42,7 +42,7 @@ describe('EngineCore soft drop (US-8.8 / US-8.9)', () => {
   });
 
   it('KPP counts one soft drop press, not one per dropped cell', () => {
-    const engine = createEngine({ sdfFactor: MAX_SOFT_DROP_FACTOR });
+    const engine = createEngine({ sdfFactor: MAX_SOFT_DROP_FACTOR, subzero: false });
     engine.handleInput({ type: 'SOFT_DROP', pressed: true });
     engine.tick(1000 / 60);
     engine.handleInput({ type: 'SOFT_DROP', pressed: false });

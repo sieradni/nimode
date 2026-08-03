@@ -7,7 +7,6 @@ export type InputAction =
   | 'ROTATE_CCW'
   | 'ROTATE_180'
   | 'HOLD'
-  | 'CLEAR_HOLD'
   | 'RESET'
   | 'UNDO'
   | 'REDO';

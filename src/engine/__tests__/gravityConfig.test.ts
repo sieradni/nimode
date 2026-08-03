@@ -11,8 +11,8 @@ describe('GameConfig gravity & subzero fields', () => {
     expect(DEFAULT_CONFIG.autoColor).toBe(true);
   });
 
-  it('DEFAULT_CONFIG should include subzero defaulting to false', () => {
-    expect(DEFAULT_CONFIG.subzero).toBe(false);
+  it('DEFAULT_CONFIG should include subzero defaulting to true', () => {
+    expect(DEFAULT_CONFIG.subzero).toBe(true);
   });
 
   it('GameConfig type should accept gravity in range 0-20', () => {

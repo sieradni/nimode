@@ -139,11 +139,11 @@ export interface SpectatorPayload {
 ```
 
 ## Gravity & Subzero Configuration
-`GameConfig` extends with `gravity` (guideline G level, default `1`) and `subzero` (boolean, default `false`):
-- `gravity`: `0G` floats the piece (soft drop only); `20G` drops the piece instantly to its landing position.
+`GameConfig` extends with `gravity` (guideline G level, default `0`), `subzero` (boolean, default `true`) and `spawnOffset` (default `1`):
+- `gravity`: `0G` floats the piece (soft drop only); `1G` falls one cell per second; `20G` drops the piece instantly to its landing position.
 - `subzero`: disables lock-on-contact; a grounded piece locks **only** on hard drop.
 
-`EngineCore.applyGravity` (`src/engine/EngineCore.ts:91`) consumes `config.gravity` instead of the hardcoded `1000/60` rate, and lock-on-contact is gated by `config.subzero`.
+`EngineCore.runFixedTick` → `stepGravityAndLockDelay` (`src/engine/gravityEngine.ts`) consumes `config.gravity` (rate = `1000 / gravity` ms per cell, so 1G = 1 cell/sec), and lock-on-contact is gated by `config.subzero`.
 
 ---
 

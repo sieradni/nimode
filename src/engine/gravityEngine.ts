@@ -29,7 +29,9 @@ export function applyGravityToState(
   }
 
   let timer = gravityTimer + dt;
-  const gravityRate = 1000 / (60 * config.gravity);
+  // Guideline G: 1G = one cell per second, and higher G falls proportionally
+  // faster (e.g. 10G = ten cells per second). 20G is handled above as instant.
+  const gravityRate = 1000 / config.gravity;
 
   while (timer >= gravityRate) {
     if (!movePiece(state, 0, 1)) {

@@ -57,7 +57,7 @@ describe('SettingsModal gravity controls', () => {
     const checkbox = screen.getByLabelText('Subzero') as HTMLInputElement;
 
     fireEvent.click(checkbox);
-    expect(store.getConfig().subzero).toBe(true);
-    expect(localStorage.getItem('nimode_config')).toContain('"subzero":true');
+    expect(store.getConfig().subzero).toBe(false);
+    expect(localStorage.getItem('nimode_config')).toContain('"subzero":false');
   });
 });

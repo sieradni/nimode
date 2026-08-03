@@ -39,11 +39,11 @@ When the user draws marks in Annotation mode (stroke auto-color, on by default):
 4. **Default:** New instances default to `isPrivate: false` (Public) to match the existing behavior of full visibility.
 
 ## Gravity & Lock Domain Rules
-1. **G Unit:** Gravity is measured in guideline G levels, where `1G` = one cell of downward movement per frame at 60 fps (60 cells/sec).
+1. **G Unit:** Gravity is measured in guideline G levels, where `1G` = one cell of downward movement per **second** (cells/sec). Higher G falls proportionally faster (e.g. `10G` = 10 cells/sec).
 2. **Range:** Gravity is adjustable from `0G` (no gravitational fall) up to `20G` (instant drop — piece spawns directly on its landing surface).
 3. **0G Float Mode:** At `0G`, the active piece never falls on its own; soft drop is the only downward movement.
 4. **Subzero Mode:** When subzero is enabled, landing on the stack never triggers a lock. A grounded piece locks **only** on hard drop. Subzero is independent of the gravity level.
-5. **Defaults:** Default gravity is `1G`; subzero defaults to off (normal lock-on-contact behavior).
+5. **Defaults:** Default gravity is `0G` (float), subzero is **on**, and spawn offset is `1` (TETR.IO spawn, row 18).
 
 ---
 

@@ -23,13 +23,13 @@ describe('stepLockDelay', () => {
 
   it('locks immediately on landing at 20G', () => {
     const state: LockDelayState = createLockDelayState();
-    const result = stepLockDelay(state, makeConfig({ gravity: 20 }), 16.67, true, 'none');
+    const result = stepLockDelay(state, makeConfig({ gravity: 20, subzero: false }), 16.67, true, 'none');
     expect(result).toBe('lock');
   });
 
   it('locks after the lock delay expires on the ground', () => {
     const state: LockDelayState = createLockDelayState();
-    const config = makeConfig({ lockDelay: 500 });
+    const config = makeConfig({ lockDelay: 500, subzero: false });
     const first = stepLockDelay(state, config, 499, true, 'none');
     expect(first).toBe('waiting');
     const second = stepLockDelay(state, config, 1, true, 'none');
@@ -38,7 +38,7 @@ describe('stepLockDelay', () => {
 
   it('resets the timer on movement until max lock resets is exhausted', () => {
     const state: LockDelayState = createLockDelayState();
-    const config = makeConfig({ lockDelay: 500, maxLockResets: 2 });
+    const config = makeConfig({ lockDelay: 500, maxLockResets: 2, subzero: false });
     stepLockDelay(state, config, 400, true, 'moved');
     expect(state.timer).toBe(400);
     expect(state.resets).toBe(1);

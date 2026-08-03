@@ -30,12 +30,12 @@ describe('applyGravityToState', () => {
     expect(state.activePiece?.y).toBe(38);
   });
 
-  it('falls one row downward per tick at gravity 1', () => {
+  it('falls one row downward per second at gravity 1', () => {
     const state = createMockState(37);
     const config: GameConfig = { ...DEFAULT_CONFIG, gravity: 1 };
-    const result = applyGravityToState(state, config, 0, 16.67);
+    const result = applyGravityToState(state, config, 0, 1000);
     expect(state.activePiece?.y).toBe(38);
-    expect(result).toBeCloseTo(0);
+    expect(result).toBe(0);
   });
 
   it('instantly drops piece to the landing row at gravity 20', () => {
@@ -47,8 +47,8 @@ describe('applyGravityToState', () => {
 
   it('stops at the landing row without locking when subzero is true', () => {
     const state = createMockState(1);
-    const config: GameConfig = { ...DEFAULT_CONFIG, gravity: 1, subzero: true };
-    applyGravityToState(state, config, 0, 1000);
+    const config: GameConfig = { ...DEFAULT_CONFIG, gravity: 20, subzero: true };
+    applyGravityToState(state, config, 0, 16.67);
     expect(state.activePiece?.y).toBe(38);
     expect(state.activePiece).not.toBeNull();
   });

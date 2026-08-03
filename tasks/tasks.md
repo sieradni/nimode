@@ -61,7 +61,7 @@
 - [x] **T-9.3:** Configure Vite `base` for Discord Activity (relative `./` paths) vs GitHub Pages (`/nimode/`).
 
 ## Phase 10: Gravity Modes & Subzero (from architecture.md lines 140-144)
-- [x] **T-10.1:** Extend GameConfig with `gravity` (number, guideline G level 0-20, default 1) and `subzero` (boolean, default false).
+- [x] **T-10.1:** Extend GameConfig with `gravity` (number, guideline G level 0-20, default 0) and `subzero` (boolean, default true).
 - [x] **T-10.2:** Refactor EngineCore.applyGravity to consume config.gravity (0G = no auto-fall, 20G = instant drop).
 - [x] **T-10.3:** Implement subzero mode: disable lock-on-contact, only lock on hard drop.
 - [x] **T-10.4:** Add gravity/subzero controls to SettingsModal with persistence.
@@ -111,9 +111,15 @@
 - **Phase 11 (Alternate Systems)** deferred — ARS rotation, 14-Bag, Memoryless Bag not yet scoped.
 - **Phase 12 (UI/UX)** — all 12 tasks complete.
 - **Undo/Redo** fully functional via `Ctrl+Z`/`Ctrl+Y`; no UI buttons added per decision.
-- **Hold clear** available via ✕ button on Hold display; `CLEAR_HOLD` keybinding (`Shift+C`) retained as alternative.
+- **Hold clear** available via ✕ button on Hold display only; the dedicated `CLEAR_HOLD` keybind has been removed (button dispatch via `{ type: 'CLEAR_HOLD' }` retained).
 - **Spawn position:** Fixed T-12.7 by adding configurable `spawnOffset` (default 1) to GameConfig. TETR.IO spawns at "height + 1" row (row 21 with 20 visible rows). Updated `SrsPlusRotationSystem.getInitialState()` to compute spawn Y from `VISIBLE_Y_OFFSET - 1 + spawnOffset`. Added UI control in GravityConfigControls (range 0-5, supports NES/TE:C/PPT rulesets).
 - **All 520 tests pass**, `npm run verify` clean (typecheck, lint, tests).
+
+### This session (2026-08-02)
+- **Defaults changed:** gravity defaults to `0G` (float), subzero defaults **on**, spawn offset stays `1`. `DEFAULT_CONFIG.subzero = true`.
+- **Gravity re-scaled to cells/sec:** `applyGravityToState` now uses `gravityRate = 1000 / gravity` ms/cell (`1G` = 1 cell/sec) instead of `1000 / (60 * gravity)` (`1G` = 60 cells/sec). Previously even small G values behaved like very high gravity (piece reached the bottom in ~0.35s at 1G). `20G` remains instant drop and instant lock-on-contact. Updated `gravityEngine`, `gravityBehavior`, `subzeroMode`, `lockDelayEngine` tests to the new rate and to the subzero-on default.
+- **CLEAR_HOLD keybind removed:** dropped `CLEAR_HOLD` from `KeyBindings`, `DEFAULT_KEYBINDINGS`, `InputAction`, `keyboardInput.ts`, `settingsConstants.ts`, and `keybindingsStore` (which now strips stale persisted keys). The ✕ button on the Hold display keeps working via the `{ type: 'CLEAR_HOLD' }` engine event / `InputState.clearHold` pipeline. Updated `keyboardInput.test.ts` and `settingsIO.import.test.ts` fixtures.
+- **Subzero-on ripple:** tests exercising lock-on-ground under the default config now opt out explicitly with `subzero: false` (e.g. `softDropBehavior`, `gravityBehavior`, `lockDelayEngine`).
 
 ### Remaining known gaps
 - **`setQueue`** has no UI (engine-level API only); no queue/hold editor for the upcoming queue.
