@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 import { BOARD_WIDTH, RENDER_HEIGHT, DEFAULT_GAME_STATS } from '../engine/types';
 import { MIN_CELL_SIZE, computePreviewCellSize } from './canvas/useBoardScale';
@@ -46,6 +46,7 @@ function createMockEngine(): IEngineCore {
     reset: vi.fn(),
     clearBoard: vi.fn(),
     setQueue: vi.fn(),
+    setPaused: vi.fn(),
     undo: vi.fn().mockReturnValue(true),
     redo: vi.fn().mockReturnValue(true),
     canUndo: vi.fn().mockReturnValue(true),
@@ -251,5 +252,46 @@ describe('GameCanvas', () => {
       />
     );
     expect(screen.queryByLabelText('Clear hold')).not.toBeInTheDocument();
+  });
+
+  it('pauses the engine when the queue editor is opened and resumes on cancel', () => {
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationColor="#ffffff"
+        editMode="annotations"
+        onReset={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Edit upcoming queue'));
+    expect(mockEngine.setPaused).toHaveBeenCalledWith(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockEngine.setPaused).toHaveBeenCalledWith(false);
+  });
+
+  it('resumes the engine and applies the new queue when confirmed', () => {
+    render(
+      <GameCanvas
+        state={createState()}
+        engine={mockEngine}
+        annotationTool="pen"
+        annotationColor="#ffffff"
+        editMode="annotations"
+        onReset={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Edit upcoming queue'));
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'TZO' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+    expect(mockEngine.setQueue).toHaveBeenCalledWith([6, 7, 4, 4, 5, 6]);
+    expect(mockEngine.setPaused).toHaveBeenCalledWith(false);
   });
 });

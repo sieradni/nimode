@@ -1,5 +1,6 @@
 import { PieceType, PIECE_COLORS } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
+import { getBagBoundaryPositions } from './bagBoundaries';
 
 export const QUEUE_PREVIEW_SIZE = 4;
 export const QUEUE_GAP = 4;
@@ -66,8 +67,7 @@ export function renderQueue(
 
 /**
  * Draws subtle horizontal separators between queue slots where one 7-bag ends
- * and the next begins. The current bag has `bagRemaining` pieces remaining;
- * every subsequent bag contributes 7 pieces, so boundaries recur every 7 slots.
+ * and the next begins, using the shared boundary-offset math.
  */
 function drawBagBoundaries(
   ctx: CanvasRenderingContext2D,
@@ -77,13 +77,15 @@ function drawBagBoundaries(
   options: { startX: number; startY: number; bagRemaining?: number }
 ): void {
   const bagRemaining = options.bagRemaining;
-  if (bagRemaining === undefined || bagRemaining < 1) return;
-  if (bagRemaining > queueLength) return;
+  if (bagRemaining === undefined) return;
+
+  const positions = getBagBoundaryPositions(queueLength, bagRemaining);
+  if (positions.length === 0) return;
 
   ctx.strokeStyle = 'rgba(255,255,255,0.18)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  for (let boundary = bagRemaining; boundary < queueLength; boundary += 7) {
+  for (const boundary of positions) {
     const y = options.startY + boundary * (slotHeight + QUEUE_GAP) - QUEUE_GAP / 2;
     ctx.moveTo(options.startX + 2, y + 0.5);
     ctx.lineTo(options.startX + width - 2, y + 0.5);

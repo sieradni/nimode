@@ -143,4 +143,46 @@ describe('KeyboardInputAdapter', () => {
      expect(onInput).toHaveBeenCalledWith({ type: 'ROTATE_CW' });
      adapter.detach();
    });
+
+  it('keeps native behaviour for keys typed into an input element', () => {
+    const adapter = new KeyboardInputAdapter({ onInput, resolveAction: createResolve() });
+    adapter.attach();
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+
+    expect(onInput).not.toHaveBeenCalled();
+    input.dispatchEvent(new KeyboardEvent('keyup', { code: 'ArrowLeft', bubbles: true }));
+    expect(onInput).not.toHaveBeenCalled();
+    input.remove();
+    adapter.detach();
+  });
+
+  it('keeps native behaviour for keys inside a textarea element', () => {
+    const adapter = new KeyboardInputAdapter({ onInput, resolveAction: createResolve() });
+    adapter.attach();
+
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+
+    expect(onInput).not.toHaveBeenCalled();
+    textarea.remove();
+    adapter.detach();
+  });
+
+  it('keeps native behaviour for keys inside a contenteditable element', () => {
+    const adapter = new KeyboardInputAdapter({ onInput, resolveAction: createResolve() });
+    adapter.attach();
+
+    const editable = document.createElement('div');
+    editable.contentEditable = 'true';
+    document.body.appendChild(editable);
+    editable.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+
+    expect(onInput).not.toHaveBeenCalled();
+    editable.remove();
+    adapter.detach();
+  });
 });

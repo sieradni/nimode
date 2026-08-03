@@ -23,6 +23,7 @@ vi.mock('../engine/EngineCore', () => ({
     tick: mockTick,
     getState: mockGetState,
     updateConfig: vi.fn(),
+    setPaused: vi.fn(),
   })),
 }));
 

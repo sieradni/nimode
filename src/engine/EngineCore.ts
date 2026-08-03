@@ -142,5 +142,9 @@ export class EngineCore implements IEngineCore {
     this.saveSnapshot();
     this.state.board = createEmptyBoard();
   }
-  setQueue(pieces: PieceType[]): void { this.state.queue.queue = [...pieces]; }
+  setQueue(pieces: PieceType[]): void {
+    this.state.queue.queue = [...pieces];
+    this.saveSnapshot();
+  }
+  setPaused(paused: boolean): void { this.state.paused = paused; }
 }

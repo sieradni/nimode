@@ -42,6 +42,7 @@ vi.mock('../engine/EngineCore', () => ({
     tick: vi.fn(),
     getState: vi.fn(() => createState()),
     updateConfig: vi.fn(),
+    setPaused: vi.fn(),
   })),
 }));
 

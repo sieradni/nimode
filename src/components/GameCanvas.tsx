@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { EngineState } from '../engine/interfaces/IEngineCore';
 import { IEngineCore } from '../engine/interfaces/IEngineCore';
 import { HoldCanvas } from './canvas/HoldCanvas';
@@ -84,14 +84,28 @@ export function GameCanvas({
     engine.handleInput({ type: 'CLEAR_HOLD' });
   }, [engine]);
 
-  const handleQueueOpen = useCallback(() => setQueueModalOpen(true), []);
-  const handleQueueClose = useCallback(() => setQueueModalOpen(false), []);
+  const handleQueueOpen = useCallback(() => {
+    engine.setPaused(true);
+    setQueueModalOpen(true);
+  }, [engine]);
 
-  const handleQueueConfirm = useCallback((pieces: PieceType[]) => {
-    const nextQueue = [...pieces, ...state.queue.slice(pieces.length)];
-    engine.setQueue(nextQueue);
+  const handleQueueClose = useCallback(() => {
+    engine.setPaused(false);
     setQueueModalOpen(false);
-  }, [state.queue, engine]);
+  }, [engine]);
+
+  useEffect(() => {
+    return () => engine.setPaused(false);
+  }, [engine]);
+
+  const handleQueueConfirm = useCallback(
+    (resultQueue: PieceType[]) => {
+      engine.setQueue(resultQueue);
+      engine.setPaused(false);
+      setQueueModalOpen(false);
+    },
+    [engine]
+  );
 
   const gap = LAYOUT_GAP_PX;
   const previewColumnWidth = previewCellSize * 4;
@@ -136,7 +150,9 @@ export function GameCanvas({
 
       {queueModalOpen && (
         <QueueEditModal
-          currentPieces={state.queue.slice(0, 5)}
+          activePiece={state.activePiece?.type ?? null}
+          queue={state.queue}
+          bagRemaining={state.bagRemaining}
           onConfirm={handleQueueConfirm}
           onClose={handleQueueClose}
         />

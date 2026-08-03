@@ -60,6 +60,7 @@ function makeMockEngine(
     getState: vi.fn(() => state),
     reset: vi.fn(),
     setQueue: vi.fn(),
+    setPaused: vi.fn(),
   } as unknown as IEngineCore;
 }
 

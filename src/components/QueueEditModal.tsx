@@ -2,11 +2,15 @@ import { useState, useCallback } from 'react';
 import { PieceType, PIECE_COLORS } from '../engine/types';
 import { getPieceMatrix } from '../engine/systems/SrsPlusRotationSystem';
 import { parsePieceInput, pieceToLetter } from '../engine/pieceInput';
+import { getBagBoundaryPositions } from '../render/bagBoundaries';
 
 const QUEUE_PREVIEW_CELL = 20;
+const PREVIEW_SLOT_COUNT = 8;
 
 interface QueueEditModalProps {
-  currentPieces: PieceType[];
+  activePiece: PieceType | null;
+  queue: PieceType[];
+  bagRemaining: number;
   onConfirm: (pieces: PieceType[]) => void;
   onClose: () => void;
 }
@@ -15,8 +19,16 @@ interface QueueEditModalProps {
  * Modal for editing the upcoming queue. Mounted only while open so the input
  * always starts from the current queue contents.
  */
-export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditModalProps) {
-  const [input, setInput] = useState(() => currentPieces.map((p) => pieceToLetter(p)).join(''));
+export function QueueEditModal({
+  activePiece,
+  queue,
+  bagRemaining,
+  onConfirm,
+  onClose,
+}: QueueEditModalProps) {
+  const [input, setInput] = useState(() =>
+    queue.slice(0, PREVIEW_SLOT_COUNT - 1).map((p) => pieceToLetter(p)).join('')
+  );
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     // Auto-capitalize: store uppercase letters; whitespace/commas allowed but
@@ -24,17 +36,41 @@ export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditM
     setInput(e.target.value.toUpperCase());
   }, []);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      onConfirm(parsePieceInput(input));
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  }, [input, onConfirm, onClose]);
-
   const parsed = parsePieceInput(input);
+
+  const confirmFrom = useCallback(
+    (typed: PieceType[]) => {
+      // The actual queue after the edit: typed pieces replace the same-numbered
+      // front of the current queue, and everything past the typed length is kept.
+      const resultQueue: PieceType[] = [...typed, ...queue.slice(typed.length)];
+      onConfirm(resultQueue);
+    },
+    [queue, onConfirm]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmFrom(parsePieceInput(input));
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    },
+    [input, confirmFrom, onClose]
+  );
+
+  // Preview = current falling piece (slot 0) + next 7 upcoming (8 slots total).
+  const resultQueue: PieceType[] = [...parsed, ...queue.slice(parsed.length)];
+  const upcoming = resultQueue.slice(0, PREVIEW_SLOT_COUNT - 1);
+  const preview: (PieceType | null)[] = [activePiece, ...upcoming];
+  // The falling piece consumes a slot of the current 7-bag, so boundary offsets
+  // shift by +1 in the composite preview; every subsequent line recurs at +7.
+  const boundaryPositions = getBagBoundaryPositions(
+    PREVIEW_SLOT_COUNT,
+    bagRemaining + 1
+  );
 
   return (
     <div
@@ -42,7 +78,7 @@ export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditM
       onClick={onClose}
     >
       <div
-        className="relative bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-sm shadow-xl"
+        className="relative bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-md shadow-xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -50,22 +86,28 @@ export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditM
       >
         <h2 className="text-base font-bold text-slate-200 mb-4">Edit Upcoming Queue</h2>
 
-        <div className="mb-4 flex flex-wrap gap-1.5 min-h-[36px]">
-          {parsed.length > 0 ? (
-            parsed.map((piece, index) => (
-              <span
-                key={`${piece}-${index}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded bg-slate-800"
-                title={pieceToLetter(piece)}
-                aria-hidden="true"
-              >
-                <PieceIcon piece={piece} />
-              </span>
-            ))
-          ) : (
+        <fieldset className="mb-4 border border-slate-800 rounded-lg p-2">
+          <legend className="px-1 text-[10px] uppercase tracking-wide text-slate-500">
+            Result preview (next {PREVIEW_SLOT_COUNT} pieces)
+          </legend>
+          {preview.every((p) => p === null) ? (
             <span className="text-xs text-slate-500">Type tetromino letters…</span>
+          ) : (
+            <div className="flex flex-wrap items-center gap-1">
+              {preview.map((piece, index) => {
+                if (index > 0 && boundaryPositions.includes(index)) {
+                  return (
+                    <span key={`boundary-${index}`} className="flex items-center" aria-hidden="true">
+                      <span data-testid="bag-boundary" className="mr-1 h-6 w-px bg-slate-500/50" />
+                      {renderSlot(piece, `slot-${index}`)}
+                    </span>
+                  );
+                }
+                return renderSlot(piece, `slot-${index}`);
+              })}
+            </div>
           )}
-        </div>
+        </fieldset>
 
         <input
           autoFocus
@@ -91,7 +133,7 @@ export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditM
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(parsed)}
+            onClick={() => confirmFrom(parsed)}
             disabled={parsed.length === 0}
             className="px-4 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -100,6 +142,21 @@ export function QueueEditModal({ currentPieces, onConfirm, onClose }: QueueEditM
         </div>
       </div>
     </div>
+  );
+}
+
+function renderSlot(piece: PieceType | null, key: string) {
+  return (
+    <span
+      key={key}
+      data-testid="preview-slot"
+      className={`inline-flex h-9 w-9 items-center justify-center rounded ${
+        piece === null ? 'bg-slate-800/60' : 'bg-slate-800'
+      }`}
+      aria-hidden="true"
+    >
+      {piece !== null ? <PieceIcon piece={piece} /> : null}
+    </span>
   );
 }
 

@@ -3,6 +3,7 @@ import { EngineCore } from '../EngineCore';
 import { SevenBagRandomizer } from '../systems/SevenBagRandomizer';
 import { SrsPlusRotationSystem } from '../systems/SrsPlusRotationSystem';
 import type { PieceType } from '../types';
+import { DEFAULT_CONFIG } from '../types';
 
 describe('EngineCore', () => {
   function createEngine() {
@@ -79,6 +80,56 @@ describe('EngineCore', () => {
     const state = engine.getState();
     expect(state.activePiece).not.toBeNull();
     expect(state.gameOver).toBe(false);
+  });
+
+  it('setQueue is undoable: undo restores the previous queue and redo re-applies the edit', () => {
+    const engine = createEngine();
+    const previousQueue = engine.getState().queue;
+    const customQueue: PieceType[] = [1, 2, 3, 4, 5];
+
+    engine.setQueue(customQueue);
+    expect(engine.getState().queue).toEqual([1, 2, 3, 4, 5]);
+
+    engine.undo();
+    expect(engine.getState().queue).toEqual(previousQueue);
+
+    engine.redo();
+    expect(engine.getState().queue).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  describe('setPaused', () => {
+    function engineWithGravity(): EngineCore {
+      const engine = createEngine();
+      engine.updateConfig({ ...DEFAULT_CONFIG, gravity: 1 });
+      return engine;
+    }
+
+    it('freezes gravity and spawning while paused', () => {
+      const engine = engineWithGravity();
+      engine.setPaused(true);
+      const before = engine.getState().activePiece;
+
+      engine.tick(1000);
+
+      expect(engine.getState().paused).toBe(true);
+      expect(engine.getState().activePiece).toEqual(before);
+    });
+
+    it('resumes ticking when unpaused', () => {
+      const engine = engineWithGravity();
+      engine.setPaused(true);
+      engine.setPaused(false);
+      engine.tick(1000);
+
+      expect(engine.getState().paused).toBe(false);
+      expect(engine.getState().activePiece).not.toBeNull();
+    });
+
+    it('pausing is not itself an undoable action', () => {
+      const engine = createEngine();
+      engine.setPaused(true);
+      expect(engine.canUndo()).toBe(false);
+    });
   });
 
   describe('CLEAR_HOLD', () => {

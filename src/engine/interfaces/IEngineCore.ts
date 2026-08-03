@@ -52,6 +52,7 @@ export interface IEngineCore {
   reset(): void;
   clearBoard(): void;
   setQueue(pieces: PieceType[]): void;
+  setPaused(paused: boolean): void;
   undo(): boolean;
   redo(): boolean;
   canUndo(): boolean;

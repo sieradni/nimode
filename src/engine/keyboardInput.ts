@@ -74,6 +74,19 @@ export class KeyboardInputAdapter {
 
   private onKeyEvent(event: KeyboardEvent, pressed: boolean): void {
     if (!this.isEnabled()) return;
+    // Keys typed into form fields (inputs, textareas, selects, contenteditable)
+    // must keep their native behaviour (e.g. arrow-key caret navigation) and
+    // never trigger game actions. `isContentEditable` is checked as well as
+    // `contentEditable` because some environments (jsdom) only expose one.
+    const target = event.target as HTMLElement | null;
+    if (target
+      && (target instanceof HTMLInputElement
+        || target instanceof HTMLTextAreaElement
+        || target instanceof HTMLSelectElement
+        || target.isContentEditable
+        || target.contentEditable === 'true')) {
+      return;
+    }
     const action = this.resolveAction(event);
     if (action === null) return;
     // A bound key must not also trigger the browser's own shortcut
