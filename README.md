@@ -8,9 +8,9 @@ A high-performance singleplayer Tetris practice tool designed to run as a Discor
 - **Practice Tools**: Hold clear/lock, queue manipulation, adjustable gravity (0G–20G), 0G float mode, subzero mode
 - **Cursor Annotation**: Draw on the board, auto-color recognized tetromino shapes, clear tools
 - **Full Keybinding Customization**: Rebinding with localStorage persistence, JSON import/export
-- **Spectating**: Supabase Realtime relay (each peer broadcasts its own state; viewers connect to the spectated instance via the relay), presence roster, private instance toggle
+- **Spectating**: HTTP relay (each peer broadcasts its own state via the Edge Function; viewers poll for updates), presence roster, private instance toggle
 - **Statistics**: Real-time PPS, APM, KPP, Finesse, lines, quads, T-spins
-- **$0 Infrastructure**: Static hosting on GitHub Pages, localStorage persistence, Supabase Realtime relay
+- **$0 Infrastructure**: Static hosting on GitHub Pages, localStorage persistence, Supabase Edge Function relay
 
 ## Discord Activity Setup
 
@@ -77,7 +77,7 @@ nimode uses a Supabase Realtime relay (instead of P2P WebRTC) for cross-client s
    VITE_DISCORD_CLIENT_ID=<discord application client id>
    ```
 
-**How the relay works:** each client exchanges its Discord `access_token` (obtained via the Embedded App SDK) through the `authorize-activity` function. The function verifies the token against `https://discord.com/api/users/@me`, then mints a Supabase signed JWT encoding the user + instance. The client uses that JWT to authenticate a Supabase Realtime channel for its instance. Each peer broadcasts its own engine state on that channel; viewers spectate by listening to another peer's broadcast. Private instances never broadcast state. No host election — every user only ever sees their own instance, and leaving/stopping spectate returns them to their local board.
+**How the relay works:** each client exchanges its Discord `access_token` (obtained via the Embedded App SDK) through the `authorize-activity` function. The function verifies the token against `https://discord.com/api/users/@me`, then mints a Supabase signed JWT encoding the user + instance. The client uses that JWT to authenticate requests to the Edge Function. Each peer POSTs its engine state to the Edge Function; viewers poll the Edge Function for other peers' latest state. Private instances never broadcast state. No host election — every user only ever sees their own instance, and leaving/stopping spectate returns them to their local board.
 
 ### 3. Local Development
 
@@ -121,12 +121,12 @@ src/
 ├── render/           # Canvas 2D renderers (board, queue, hold, stats, spectator)
 ├── components/       # React components (GameCanvas, SettingsModal, PresenceRoster)
 ├── discord/          # Discord Embedded App SDK wrapper
-├── p2p/              # Supabase Realtime relay, HostBroadcaster, SpectatorBuffer, ViewStateController
+├── p2p/              # HTTP relay transport, HostBroadcaster, SpectatorBuffer, ViewStateController
 └── __tests__/        # Integration tests
 
 supabase/
 ├── functions/
-│   └── authorize-activity/   # Edge Function: verifies Discord token, mints Supabase relay JWT
+│   └── authorize-activity/   # Edge Function: verifies Discord token, stores & relays state via HTTP
 └── config.toml               # Supabase project config
 ```
 
