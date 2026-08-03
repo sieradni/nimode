@@ -116,4 +116,24 @@ describe('drop -> undo -> re-drop keeps the bag stream aligned (user-reported re
 
     expect(second).toEqual(first);
   });
+
+  it('unseeded app config: drop->undo->drop keeps a full no-duplicate 7-piece window', () => {
+    // App.tsx passes `sevenBagRandomizer`, an *unseeded* instance (Math.random),
+    // so assert the structural invariant rather than against a fixed oracle.
+    for (let trial = 0; trial < 20; trial++) {
+      const engine = new EngineCore({
+        bagRandomizer: new SevenBagRandomizer(),
+        rotationSystem: new SrsPlusRotationSystem(),
+      });
+
+      const sequence: Step[] = ['DROP', 'UNDO', 'DROP'];
+      for (const step of sequence) {
+        run(engine, step);
+        if (engine.getState().gameOver) continue;
+        const state = engine.getState();
+        expect(state.activePiece).not.toBeNull();
+        expect(state.queue).toHaveLength(6);
+      }
+    }
+  });
 });
