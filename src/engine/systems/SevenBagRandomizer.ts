@@ -101,12 +101,13 @@ export class SevenBagRandomizer implements IBagRandomizer {
   }
 
   snapshot(): BagState {
-    return { current: [...this.bag], next: [...this.nextBag] };
+    return { current: [...this.bag], next: [...this.nextBag], seed: this.seed };
   }
 
   restore(state: BagState): void {
     this.bag = [...state.current];
     this.nextBag = [...state.next];
+    this.seed = state.seed;
   }
 }
 

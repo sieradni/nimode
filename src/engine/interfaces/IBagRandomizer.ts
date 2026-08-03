@@ -3,6 +3,7 @@ import { PieceType } from '../types';
 export interface BagState {
   current: PieceType[];
   next: PieceType[];
+  seed?: number;
 }
 
 export interface IBagRandomizer {
