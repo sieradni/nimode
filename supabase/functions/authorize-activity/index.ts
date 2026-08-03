@@ -53,9 +53,7 @@ Deno.serve(async (req: Request) => {
       {
         algorithm: 'HS256',
         issuer: supabaseUrl.replace('https://', ''),
-        subject: discordUser.id,
         expiresIn: JWT_TTL_SECONDS,
-        noTimestamp: false,
       },
     );
 
