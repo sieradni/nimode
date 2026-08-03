@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { IEngineCore, EngineState } from '../../engine/interfaces/IEngineCore';
 import { HostBroadcaster } from '../HostBroadcaster';
 import type { SpectatorPayload } from '../../engine/types/instance';
-import type { PeerJSManager } from '../PeerJSManager';
+import type { PresenceTransport } from '../transport';
 import { InstanceConfigStore } from '../InstanceConfigStore';
 
 function createMockStorage(): Storage {
@@ -50,9 +50,7 @@ function makeEngineState(overrides: Partial<EngineState> = {}): EngineState {
   };
 }
 
-function makeMockEngine(
-  state: EngineState = makeEngineState()
-): IEngineCore {
+function makeMockEngine(state: EngineState = makeEngineState()): IEngineCore {
   return {
     initialize: vi.fn(),
     tick: vi.fn(),
@@ -65,24 +63,35 @@ function makeMockEngine(
 }
 
 function makeMockPeerManager(): {
-  peerManager: PeerJSManager;
+  peerManager: PresenceTransport;
   broadcast: ReturnType<typeof vi.fn>;
+  setState: (open: boolean) => void;
 } {
   const broadcast = vi.fn();
+  let open = true;
   const peerManager = {
-    id: 'mock-host',
-    role: 'host',
-    open: true,
-    init: vi.fn(),
+    get open() {
+      return open;
+    },
     broadcast,
     on: vi.fn(),
     off: vi.fn(),
     close: vi.fn(),
-  } as unknown as PeerJSManager;
-  return { peerManager, broadcast };
+  } as unknown as PresenceTransport;
+  return {
+    peerManager,
+    broadcast,
+    setState: (value: boolean) => {
+      open = value;
+    },
+  };
 }
 
 const USER_ID = 'test-user';
+
+function makeBroadcaster(engine: IEngineCore, peerManager: PresenceTransport, configStore: InstanceConfigStore) {
+  return new HostBroadcaster({ engine, peerManager, configStore, userId: USER_ID });
+}
 
 describe('HostBroadcaster', () => {
   beforeEach(() => {
@@ -100,12 +109,7 @@ describe('HostBroadcaster', () => {
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
     configStore.setPrivate(true);
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(50);
@@ -114,16 +118,25 @@ describe('HostBroadcaster', () => {
     broadcaster.stop();
   });
 
-  it('broadcasts at 50 Hz when instance is public', () => {
+  it('does not broadcast when not connected to the relay', () => {
+    const engine = makeMockEngine();
+    const { peerManager, broadcast, setState } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
+    setState(false);
+
+    broadcaster.start();
+    vi.advanceTimersByTime(50);
+
+    expect(broadcast).not.toHaveBeenCalled();
+    broadcaster.stop();
+  });
+
+  it('broadcasts at 50 Hz when instance is public and client is connected', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(20);
@@ -136,12 +149,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(100);
@@ -154,12 +162,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(100);
@@ -174,12 +177,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     broadcaster.start();
@@ -193,12 +191,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(50);
@@ -217,12 +210,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine(makeEngineState({ activePiece: null }));
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(50);
@@ -234,18 +222,11 @@ describe('HostBroadcaster', () => {
 
   it('payload maps activePiece fields correctly', () => {
     const engine = makeMockEngine(
-      makeEngineState({
-        activePiece: { type: 1, x: 3, y: 20, rotation: 2 },
-      })
+      makeEngineState({ activePiece: { type: 1, x: 3, y: 20, rotation: 2 } }),
     );
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(50);
@@ -256,7 +237,7 @@ describe('HostBroadcaster', () => {
   });
 
   it('payload maps stats fields correctly', () => {
-    const     engine = makeMockEngine(
+    const engine = makeMockEngine(
       makeEngineState({
         stats: {
           piecesPlaced: 42,
@@ -275,16 +256,11 @@ describe('HostBroadcaster', () => {
           attack: 0,
           time: 5,
         },
-      })
+      }),
     );
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(50);
@@ -303,12 +279,7 @@ describe('HostBroadcaster', () => {
     const engine = makeMockEngine();
     const { peerManager, broadcast } = makeMockPeerManager();
     const configStore = new InstanceConfigStore();
-    const broadcaster = new HostBroadcaster({
-      engine,
-      peerManager,
-      configStore,
-      userId: USER_ID,
-    });
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
 
     broadcaster.start();
     vi.advanceTimersByTime(20);
@@ -322,6 +293,23 @@ describe('HostBroadcaster', () => {
     vi.advanceTimersByTime(20);
     expect(broadcast).toHaveBeenCalledTimes(2);
 
+    broadcaster.stop();
+  });
+
+  it('resumes broadcasting when the relay connection is restored mid-run', () => {
+    const engine = makeMockEngine();
+    const { peerManager, broadcast, setState } = makeMockPeerManager();
+    const configStore = new InstanceConfigStore();
+    const broadcaster = makeBroadcaster(engine, peerManager, configStore);
+
+    setState(false);
+    broadcaster.start();
+    vi.advanceTimersByTime(20);
+    expect(broadcast).not.toHaveBeenCalled();
+
+    setState(true);
+    vi.advanceTimersByTime(20);
+    expect(broadcast).toHaveBeenCalledTimes(1);
     broadcaster.stop();
   });
 });

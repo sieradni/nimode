@@ -2,9 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { DiscordAuth } from '../discord/types';
 
-const { mockInit, mockCreatePeer } = vi.hoisted(() => ({
+const { mockInit } = vi.hoisted(() => ({
   mockInit: vi.fn(),
-  mockCreatePeer: vi.fn(),
 }));
 
 vi.mock('../discord/sdk', () => ({
@@ -14,8 +13,22 @@ vi.mock('../discord/sdk', () => ({
   })),
 }));
 
-vi.mock('../p2p/peerFactory', () => ({
-  createPeerJSInstance: mockCreatePeer,
+vi.mock('../p2p/relayTransportFactory', () => ({
+  createRelayTransport: vi.fn(() => ({
+    open: true,
+    on: vi.fn(),
+    off: vi.fn(),
+    openTransport: vi.fn(async () => {}),
+    close: vi.fn(),
+    sendPresence: vi.fn(),
+    broadcast: vi.fn(),
+    connectToPeer: vi.fn(),
+  })),
+}));
+
+vi.mock('../p2p/relayAuth', () => ({
+  authorizeRelaySession: vi.fn(async () => ({ accessToken: 'relay-jwt' })),
+  clearRelayAuthCache: vi.fn(),
 }));
 
 import App from '../App';
@@ -32,8 +45,6 @@ describe('App Discord integration', () => {
   beforeEach(() => {
     import.meta.env.VITE_DISCORD_CLIENT_ID = 'test-client-id';
     mockInit.mockReset();
-    mockCreatePeer.mockReset();
-    mockCreatePeer.mockReturnValue({ on: vi.fn(), connect: vi.fn(), destroy: vi.fn() });
   });
 
   afterEach(() => {

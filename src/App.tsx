@@ -32,13 +32,17 @@ function App() {
 
   const instanceId = discordAuth.status === 'authenticated' ? discordAuth.auth.instanceId : null;
   const userId = discordAuth.status === 'authenticated' ? discordAuth.auth.userId : 'local-player';
+  const displayName =
+    discordAuth.status === 'authenticated' ? discordAuth.auth.userId : 'local-player';
+  const discordAccessToken =
+    discordAuth.status === 'authenticated' ? discordAuth.auth.accessToken : null;
   const peerSession = usePeerSession({
     instanceId,
     userId,
+    displayName,
     engine,
     configStore: instanceConfigStore,
-    fetchParticipants: discordAuth.status === 'authenticated' ? sdk.getInstanceConnectedParticipants : undefined,
-    onParticipantsUpdate: discordAuth.status === 'authenticated' ? sdk.onParticipantsUpdate : undefined,
+    discordAccessToken,
   });
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());
@@ -111,8 +115,8 @@ function App() {
       />
 
       {peerSession.connectionError && (
-        <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 -translate-x-1/2 text-xs text-slate-500">
-          P2P error: {peerSession.connectionError}
+        <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 -translate-x-1/2 text-xs text-slate-400">
+          Multiplayer: {peerSession.connectionError}
         </div>
       )}
 

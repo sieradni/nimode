@@ -2,28 +2,35 @@ import { useEffect, useRef, useState } from 'react';
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
 import type { SpectatorPayload } from '../engine/types/instance';
 import type { ConnectedParticipant } from '../discord/types';
-import type { PeerFactory } from './types';
 import type { InstanceConfigStore } from './InstanceConfigStore';
-import { PeerJSManager } from './PeerJSManager';
+import type { PresenceTransport, PresenceTransportOptions } from './transport';
+import type { PeerMetadata } from './types';
+import { createRelayTransport } from './relayTransportFactory';
 import { HostBroadcaster } from './HostBroadcaster';
 import { SpectatorBuffer } from './SpectatorBuffer';
 import { PresenceRoster } from './PresenceRoster';
 import { ViewStateController } from './ViewStateController';
 import type { ActiveView } from './ViewStateController';
-import { STUN_SERVERS, makeMetadata, buildConnectToTarget } from './peerSessionSetup';
+import { clearRelayAuthCache } from './relayAuth';
 
 export interface UsePeerSessionOptions {
   instanceId: string | null;
   userId: string;
+  displayName: string;
   engine: IEngineCore;
   configStore: InstanceConfigStore;
-  createPeer?: PeerFactory;
-  fetchParticipants?: () => Promise<ConnectedParticipant[]>;
-  onParticipantsUpdate?: (cb: (participants: ConnectedParticipant[]) => void) => () => void;
+  /**
+   * The Discord OAuth `access_token` used to authorize with the relay Edge
+   * Function. When null (standalone/dev), the hook runs in local-single-player
+   * mode with no transport.
+   */
+  discordAccessToken: string | null;
+  /** Optional override for tests to inject a fake transport. */
+  createTransport?: () => PresenceTransport;
 }
 
 export interface PeerSession {
-  peerManager: PeerJSManager | null;
+  peerManager: PresenceTransport | null;
   spectatorBuffer: SpectatorBuffer | null;
   view: ActiveView;
   selectTarget: (userId: string) => boolean;
@@ -32,151 +39,143 @@ export interface PeerSession {
   participants: ConnectedParticipant[];
 }
 
-const FATAL_PEER_ERROR_TYPES = new Set([
-  'browser-incompatible',
-  'invalid-id',
-  'invalid-key',
-  'unavailable-id',
-  'network',
-  'server-error',
-  'socket-error',
-  'socket-closed',
-  'ssl-unavailable',
-]);
-
-function isFatalPeerError(error: Error): boolean {
-  const type = (error as Error & { type?: unknown }).type;
-  return typeof type !== 'string' || FATAL_PEER_ERROR_TYPES.has(type);
-}
-
 export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
-  const {
-    instanceId,
-    userId,
-    engine,
-    configStore,
-    createPeer,
-    fetchParticipants,
-    onParticipantsUpdate,
-  } = options;
-  const [peerManager, setPeerManager] = useState<PeerJSManager | null>(null);
+  const { instanceId, userId, displayName, engine, configStore, discordAccessToken } = options;
+  const createTransportOverride = options.createTransport;
+  const [peerManager, setPeerManager] = useState<PresenceTransport | null>(null);
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
   const [view, setView] = useState<ActiveView>('LOCAL_ACTIVE');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ConnectedParticipant[]>([]);
   const controllerRef = useRef<ViewStateController | null>(null);
-  const managerRef = useRef<PeerJSManager | null>(null);
+  const managerRef = useRef<PresenceTransport | null>(null);
 
   useEffect(() => {
-    if (!instanceId && !userId) return;
+    clearRelayAuthCache();
+    if (!instanceId || !discordAccessToken) {
+      return;
+    }
 
-    const effectiveInstanceId = instanceId ?? `${userId}-fallback`;
-    const peerId = `${effectiveInstanceId}-${userId}`;
-    const manager = new PeerJSManager({
-      instanceId: peerId,
-      role: 'host',
-      stunServers: STUN_SERVERS,
-      createPeer,
-      metadata: makeMetadata(userId, configStore),
-    });
+    const createTransport =
+      createTransportOverride ??
+      (() =>
+        createRelayTransport({
+          instanceId,
+          userId,
+          discordAccessToken,
+        }));
+
+    const transport = createTransport();
     const buffer = new SpectatorBuffer();
-    const roster = new PresenceRoster(manager);
+    const roster = new PresenceRoster(transport);
     const controller = new ViewStateController({
       roster,
       buffer,
-      connectToTarget: buildConnectToTarget({ instanceId: effectiveInstanceId, userId, manager, configStore }),
+      connectToTarget: (targetUserId: string) => {
+        transport.connectToPeer?.(targetUserId);
+      },
     });
     controllerRef.current = controller;
-    managerRef.current = manager;
-    let broadcaster: HostBroadcaster | null = null;
-    let unsubscribeParticipants: (() => void) | null = null;
-    let participantVersion = 0;
-
-    const applyParticipants = (discovered: ConnectedParticipant[]): void => {
-      participantVersion += 1;
-      setParticipants(discovered);
-      roster.reconcile(discovered.map((p) => p.id));
-      for (const p of discovered) {
-        if (p.id === userId) continue;
-        roster.seedEntry(
-          {
-            userId: p.id,
-            displayName: p.displayName ?? p.username,
-            isPrivate: false,
-          },
-          false,
-        );
-        manager.connectToPeer(
-          `${effectiveInstanceId}-${p.id}`,
-          makeMetadata(userId, configStore),
-        );
-      }
-    };
-
-    const syncDiscovered = applyParticipants;
-
-    const handleData = (payload: SpectatorPayload) => {
-      buffer.push(payload, performance.now());
-    };
-    const handleOpen = () => {
-      setConnectionError(null);
-      broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
-      broadcaster.start();
-      manager.sendPresence();
-      if (fetchParticipants) {
-        const versionAtFetch = participantVersion;
-        fetchParticipants()
-          .then((discovered) => {
-            if (participantVersion !== versionAtFetch) return;
-            syncDiscovered(discovered);
-          })
-          .catch((error: unknown) => {
-            setConnectionError(error instanceof Error ? error.message : String(error));
-          });
-      }
-      if (onParticipantsUpdate) {
-        unsubscribeParticipants = onParticipantsUpdate(syncDiscovered);
-      }
-    };
-    const handleError = (error: Error) => {
-      if (!isFatalPeerError(error)) return;
-      setConnectionError(error.message);
-    };
-    const handleConfigChange = () => {
-      manager.sendPresence(makeMetadata(userId, configStore));
-    };
-
-    manager.on('data', handleData);
-    manager.on('open', handleOpen);
-    manager.on('error', handleError);
-    configStore.subscribe(handleConfigChange);
+    managerRef.current = transport;
     controller.onViewChange(setView);
     roster.start();
+    let broadcaster: HostBroadcaster | null = null;
 
-    manager
-      .init()
-      .then(() => {
-        setPeerManager(manager);
-        setSpectatorBuffer(buffer);
-      })
-      .catch((err: unknown) => {
-        setConnectionError(err instanceof Error ? err.message : String(err));
+    const toParticipant = (userIdArg: string, displayNameArg: string): ConnectedParticipant => ({
+      id: userIdArg,
+      username: displayNameArg,
+      displayName: displayNameArg,
+    });
+
+    const onPeerJoined = (metadata: PeerMetadata) => {
+      if (metadata.userId === userId) return;
+      setParticipants((prev) =>
+        prev.some((p) => p.id === metadata.userId) ? prev : [...prev, toParticipant(metadata.userId, metadata.displayName)],
+      );
+    };
+    const onPeerLeft = (leftUserId: string) => {
+      if (leftUserId === userId) return;
+      setParticipants((prev) => prev.filter((p) => p.id !== leftUserId));
+    };
+    const onPresence = (metadata: PeerMetadata) => {
+      if (metadata.userId === userId) return;
+      setParticipants((prev) => {
+        const existing = prev.find((p) => p.id === metadata.userId);
+        if (existing && existing.displayName === metadata.displayName) return prev;
+        if (existing) {
+          return prev.map((p) =>
+            p.id === metadata.userId ? toParticipant(metadata.userId, metadata.displayName) : p,
+          );
+        }
+        return [...prev, toParticipant(metadata.userId, metadata.displayName)];
       });
+    };
+    const onData = (payload: SpectatorPayload) => {
+      buffer.push(payload, performance.now());
+    };
+    const onOpen = () => {
+      setConnectionError(null);
+      broadcaster = new HostBroadcaster({
+        engine,
+        peerManager: transport,
+        configStore,
+        userId,
+      });
+      broadcaster.start();
+      transport.sendPresence();
+    };
+    const onError = (error: Error) => {
+      setConnectionError(error.message);
+    };
+    const onClosed = () => {
+      broadcaster?.stop();
+      managerRef.current = null;
+    };
+
+    transport.on('peerJoined', onPeerJoined);
+    transport.on('peerLeft', onPeerLeft);
+    transport.on('presence', onPresence);
+    transport.on('data', onData);
+    transport.on('open', onOpen);
+    transport.on('error', onError);
+    transport.on('closed', onClosed);
+
+    const opts: PresenceTransportOptions = {
+      instanceId,
+      userId,
+      displayName,
+      isPrivate: configStore.getConfig().isPrivate,
+    };
+
+    void Promise.resolve().then(() => {
+      setPeerManager(transport);
+      setSpectatorBuffer(buffer);
+      setParticipants([]);
+    });
+
+    void transport.openTransport(opts);
+
+    const handleConfigChange = () => {
+      transport.sendPresence();
+    };
+    configStore.subscribe(handleConfigChange);
 
     return () => {
       broadcaster?.stop();
-      unsubscribeParticipants?.();
-      manager.off('data', handleData);
-      manager.off('open', handleOpen);
-      manager.off('error', handleError);
       configStore.unsubscribe(handleConfigChange);
-      controller.offViewChange(setView);
+      transport.off('peerJoined', onPeerJoined);
+      transport.off('peerLeft', onPeerLeft);
+      transport.off('presence', onPresence);
+      transport.off('data', onData);
+      transport.off('open', onOpen);
+      transport.off('error', onError);
+      transport.off('closed', onClosed);
+      transport.close();
       roster.stop();
-      manager.close();
       controllerRef.current = null;
       managerRef.current = null;
     };
-  }, [instanceId, userId, engine, configStore, createPeer, fetchParticipants, onParticipantsUpdate]);
+  }, [instanceId, userId, displayName, engine, configStore, discordAccessToken, createTransportOverride]);
 
   return {
     peerManager,

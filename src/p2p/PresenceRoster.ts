@@ -1,4 +1,4 @@
-import type { PeerJSManager } from './PeerJSManager';
+import type { PresenceTransport } from './transport';
 import type { PeerMetadata } from './types';
 import type { SpectatorPayload } from '../engine/types/instance';
 
@@ -12,11 +12,11 @@ export interface PresenceEntry {
 }
 
 export class PresenceRoster {
-  private readonly peerManager: PeerJSManager;
+  private readonly peerManager: PresenceTransport;
   private readonly entries = new Map<string, PresenceEntry>();
   private readonly listeners = new Set<(entries: PresenceEntry[]) => void>();
 
-  constructor(peerManager: PeerJSManager) {
+  constructor(peerManager: PresenceTransport) {
     this.peerManager = peerManager;
   }
 

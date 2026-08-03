@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { PeerJSManager } from '../PeerJSManager';
+import type { PresenceTransport } from '../transport';
 import type { PeerMetadata } from '../types';
 import type { SpectatorPayload } from '../../engine/types/instance';
 import { DEFAULT_GAME_STATS } from '../../engine/types';
@@ -9,11 +9,11 @@ function createMockPeerManager() {
   return {
     on: vi.fn(),
     off: vi.fn(),
-  } as unknown as PeerJSManager;
+  } as unknown as PresenceTransport;
 }
 
 function getHandler(
-  peerManager: PeerJSManager,
+  peerManager: PresenceTransport,
   event: string,
 ): (...args: unknown[]) => void {
   const on = peerManager.on as unknown as {
@@ -61,7 +61,7 @@ describe('PresenceRoster', () => {
     expect(roster.getEntries()).toEqual([]);
   });
 
-  it('start() subscribes to PeerJSManager events', () => {
+  it('start() subscribes to presence transport events', () => {
     const roster = new PresenceRoster(mockPeerManager);
     roster.start();
 

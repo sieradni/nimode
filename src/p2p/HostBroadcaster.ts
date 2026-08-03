@@ -1,5 +1,5 @@
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
-import type { PeerJSManager } from './PeerJSManager';
+import type { PresenceTransport } from './transport';
 import type { SpectatorPayload } from '../engine/types/instance';
 import type { InstanceConfigStore } from './InstanceConfigStore';
 
@@ -7,14 +7,14 @@ const BROADCAST_INTERVAL_MS = 20;
 
 export class HostBroadcaster {
   private readonly engine: IEngineCore;
-  private readonly peerManager: PeerJSManager;
+  private readonly peerManager: PresenceTransport;
   private readonly configStore: InstanceConfigStore;
   private readonly userId: string;
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: {
     engine: IEngineCore;
-    peerManager: PeerJSManager;
+    peerManager: PresenceTransport;
     configStore: InstanceConfigStore;
     userId: string;
   }) {
@@ -37,6 +37,7 @@ export class HostBroadcaster {
   }
 
   private tick(): void {
+    if (!this.peerManager.open) return;
     if (this.configStore.getConfig().isPrivate) return;
     const state = this.engine.getState();
     const payload = this.toSpectatorPayload(state);
@@ -58,8 +59,8 @@ export class HostBroadcaster {
       queue: state.queue,
       hold: state.hold,
       annotations: state.annotations,
-       userPalette: state.userPalette,
-       stats: state.stats,
-     };
+      userPalette: state.userPalette,
+      stats: state.stats,
+    };
   }
 }

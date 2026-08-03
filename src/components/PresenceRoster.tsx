@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { PresenceRoster as PresenceRosterManager } from '../p2p/PresenceRoster';
 import type { PresenceEntry } from '../p2p/PresenceRoster';
-import type { PeerJSManager } from '../p2p/PeerJSManager';
+import type { PresenceTransport } from '../p2p/transport';
 import type { InstanceConfigStore } from '../p2p/InstanceConfigStore';
 import type { ConnectedParticipant } from '../discord/types';
 
 interface PresenceRosterProps {
-  peerManager: PeerJSManager;
+  peerManager: PresenceTransport;
   instanceConfigStore: InstanceConfigStore;
   localUserId: string;
   localDisplayName: string;

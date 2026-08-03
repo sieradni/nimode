@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import type { PeerJSManager } from '../p2p/PeerJSManager';
+import type { PresenceTransport } from '../p2p/transport';
 import type { InstanceConfigStore } from '../p2p/InstanceConfigStore';
 import type { PeerMetadata } from '../p2p/types';
 import { PresenceRoster } from './PresenceRoster';
@@ -9,7 +9,8 @@ function createMockPeerManager() {
   return {
     on: vi.fn(),
     off: vi.fn(),
-  } as unknown as PeerJSManager;
+    open: true,
+  } as unknown as PresenceTransport;
 }
 
 function createMockConfigStore(isPrivate = false) {
@@ -22,7 +23,7 @@ function createMockConfigStore(isPrivate = false) {
 }
 
 function getHandler(
-  peerManager: PeerJSManager,
+  peerManager: PresenceTransport,
   event: string,
 ): (...args: unknown[]) => void {
   const on = peerManager.on as unknown as {
@@ -71,7 +72,7 @@ describe('PresenceRoster component', () => {
     expect(screen.getByText('2.50')).toBeInTheDocument();
   });
 
-  it('renders remote peer entries from PeerJSManager events', () => {
+  it('renders remote peer entries from presence events', () => {
     render(
       <PresenceRoster
         peerManager={mockPeerManager}
