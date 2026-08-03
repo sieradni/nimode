@@ -10,7 +10,7 @@ vi.mock('../../render/QueueHoldRenderer', () => ({
   QUEUE_GAP: 4,
 }));
 
-function createState(): EngineState {
+function createState(overrides: Partial<EngineState> = {}): EngineState {
   const board = Array.from({ length: 40 }, () => Array(10).fill(0));
   const annotations = Array.from({ length: 40 }, () => Array(10).fill(0));
   return {
@@ -38,6 +38,8 @@ function createState(): EngineState {
     gameOver: false,
     paused: false,
     annotations,
+    bagRemaining: 6,
+    ...overrides,
   } as EngineState;
 }
 
@@ -53,29 +55,37 @@ describe('QueueCanvas', () => {
   });
 
   it('renders queue canvas', () => {
-    render(<QueueCanvas state={createState()} cellSize={20} />);
+    render(<QueueCanvas state={createState()} cellSize={20} onClick={() => {}} />);
     expect(screen.getByTestId('queue-canvas')).toBeInTheDocument();
   });
 
   it('sizes the queue canvas to five preview slots plus gaps', () => {
-    render(<QueueCanvas state={createState()} cellSize={20} />);
+    render(<QueueCanvas state={createState()} cellSize={20} onClick={() => {}} />);
     const canvas = screen.getByTestId('queue-canvas') as HTMLCanvasElement;
     expect(canvas.width).toBe(4 * 20);
     expect(canvas.height).toBe(5 * 4 * 20 + 4 * 4);
   });
 
-  it('renders the queue sliced to 5 previews', () => {
-    const state = createState();
-    render(<QueueCanvas state={state} cellSize={20} />);
+  it('renders the queue sliced to 5 previews with bagRemaining', () => {
+    const state = createState({ bagRemaining: 3 });
+    render(<QueueCanvas state={state} cellSize={20} onClick={() => {}} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
       cellSize: 20,
+      bagRemaining: 3,
     });
   });
 
   it('redraws when a new state object is provided', () => {
-    const { rerender } = render(<QueueCanvas state={createState()} cellSize={20} />);
+    const { rerender } = render(<QueueCanvas state={createState()} cellSize={20} onClick={() => {}} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledTimes(1);
-    rerender(<QueueCanvas state={createState()} cellSize={20} />);
+    rerender(<QueueCanvas state={createState()} cellSize={20} onClick={() => {}} />);
     expect(vi.mocked(renderQueue)).toHaveBeenCalledTimes(2);
+  });
+
+  it('invokes onClick when the queue is clicked', () => {
+    const onClick = vi.fn();
+    render(<QueueCanvas state={createState()} cellSize={20} onClick={onClick} />);
+    screen.getByTestId('queue-canvas').click();
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

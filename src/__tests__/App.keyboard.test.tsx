@@ -42,6 +42,7 @@ function createState(): EngineState {
     paused: false,
     annotations,
     userPalette: ['#ffffff'],
+    bagRemaining: 6,
   };
 }
 

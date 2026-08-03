@@ -32,6 +32,7 @@ function createState(): EngineState {
     paused: false,
     annotations,
     userPalette: ['#ffffff'],
+    bagRemaining: 6,
   };
 }
 
@@ -178,6 +179,7 @@ describe('GameCanvas', () => {
     );
     expect(vi.mocked(renderQueue)).toHaveBeenCalledWith(mockCtx, [1, 2, 3, 4, 5], {
       cellSize: previewCellSize,
+      bagRemaining: 6,
     });
   });
 

@@ -111,7 +111,7 @@ export class EngineCore implements IEngineCore {
     this.saveSnapshot();
   }
   getState(): EngineState {
-    return { board: this.state.board.map(r => [...r]), activePiece: this.state.activePiece ? {...this.state.activePiece} : null, queue: [...this.state.queue.queue], hold: this.state.queue.hold, canHold: this.state.queue.canHold, stats: this.playerStats.getStats(), gameOver: this.state.gameOver, paused: this.state.paused, annotations: this.state.annotations.map(r => [...r]), userPalette: [...this.state.userPalette] };
+    return { board: this.state.board.map(r => [...r]), activePiece: this.state.activePiece ? {...this.state.activePiece} : null, queue: [...this.state.queue.queue], hold: this.state.queue.hold, canHold: this.state.queue.canHold, stats: this.playerStats.getStats(), gameOver: this.state.gameOver, paused: this.state.paused, annotations: this.state.annotations.map(r => [...r]), userPalette: [...this.state.userPalette], bagRemaining: this.bagRandomizer.snapshot().current.length };
   }
   undo(): boolean { return this.applyRestore(this.undoRedo.undo(this.state)); }
   redo(): boolean { return this.applyRestore(this.undoRedo.redo(this.state)); }

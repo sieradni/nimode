@@ -4,7 +4,8 @@ import { IEngineCore } from '../engine/interfaces/IEngineCore';
 import { HoldCanvas } from './canvas/HoldCanvas';
 import { GameBoardCanvas } from './canvas/GameBoardCanvas';
 import { QueueCanvas } from './canvas/QueueCanvas';
-import { AnnotationTool, EditMode, RENDER_HEIGHT } from '../engine/types';
+import { QueueEditModal } from './QueueEditModal';
+import { AnnotationTool, EditMode, RENDER_HEIGHT, PieceType } from '../engine/types';
 import { StatsPanel } from './StatsPanel';
 import { useBoardScale, computePreviewCellSize, LAYOUT_GAP_PX } from './canvas/useBoardScale';
 import { useAnnotationStroke } from './canvas/useAnnotationStroke';
@@ -27,6 +28,7 @@ export function GameCanvas({
   onReset,
 }: GameCanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
+  const [queueModalOpen, setQueueModalOpen] = useState(false);
   const layoutRef = useRef<HTMLDivElement>(null);
   const cellSize = useBoardScale(layoutRef);
   const previewCellSize = computePreviewCellSize(cellSize);
@@ -82,6 +84,15 @@ export function GameCanvas({
     engine.handleInput({ type: 'CLEAR_HOLD' });
   }, [engine]);
 
+  const handleQueueOpen = useCallback(() => setQueueModalOpen(true), []);
+  const handleQueueClose = useCallback(() => setQueueModalOpen(false), []);
+
+  const handleQueueConfirm = useCallback((pieces: PieceType[]) => {
+    const nextQueue = [...pieces, ...state.queue.slice(pieces.length)];
+    engine.setQueue(nextQueue);
+    setQueueModalOpen(false);
+  }, [state.queue, engine]);
+
   const gap = LAYOUT_GAP_PX;
   const previewColumnWidth = previewCellSize * 4;
   // Offset the side panels down by ~10% of the board's vertical height so they
@@ -120,8 +131,16 @@ export function GameCanvas({
 
       {/* Right column: Queue (top-right adjacent) */}
       <div className="flex flex-col items-center self-start" style={{ width: previewColumnWidth, marginTop: panelTopOffset }}>
-        <QueueCanvas state={state} cellSize={previewCellSize} />
+        <QueueCanvas state={state} cellSize={previewCellSize} onClick={handleQueueOpen} />
       </div>
+
+      {queueModalOpen && (
+        <QueueEditModal
+          currentPieces={state.queue.slice(0, 5)}
+          onConfirm={handleQueueConfirm}
+          onClose={handleQueueClose}
+        />
+      )}
 
       {state.gameOver && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60">

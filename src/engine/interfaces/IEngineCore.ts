@@ -13,6 +13,11 @@ export interface EngineState {
   paused: boolean;
   annotations: AnnotationMatrix;
   userPalette: string[];
+  /**
+   * The number of pieces remaining in the current 7-bag, used to render bag
+   * boundary separators in the queue.
+   */
+  bagRemaining: number;
 }
 
 export type InputEvent =

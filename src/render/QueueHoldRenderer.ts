@@ -8,6 +8,12 @@ export interface QueueHoldOptions {
   cellSize?: number;
   startX?: number;
   startY?: number;
+  /**
+   * Number of pieces remaining in the current 7-bag. When provided, a subtle
+   * separator line is drawn after the last piece of each bag to mark the
+   * boundary where the next bag begins.
+   */
+  bagRemaining?: number;
 }
 
 export function renderQueue(
@@ -50,6 +56,39 @@ export function renderQueue(
       }
     }
   }
+
+  drawBagBoundaries(ctx, queue.length, slotHeight, width, {
+    startX,
+    startY,
+    bagRemaining: options?.bagRemaining,
+  });
+}
+
+/**
+ * Draws subtle horizontal separators between queue slots where one 7-bag ends
+ * and the next begins. The current bag has `bagRemaining` pieces remaining;
+ * every subsequent bag contributes 7 pieces, so boundaries recur every 7 slots.
+ */
+function drawBagBoundaries(
+  ctx: CanvasRenderingContext2D,
+  queueLength: number,
+  slotHeight: number,
+  width: number,
+  options: { startX: number; startY: number; bagRemaining?: number }
+): void {
+  const bagRemaining = options.bagRemaining;
+  if (bagRemaining === undefined || bagRemaining < 1) return;
+  if (bagRemaining > queueLength) return;
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let boundary = bagRemaining; boundary < queueLength; boundary += 7) {
+    const y = options.startY + boundary * (slotHeight + QUEUE_GAP) - QUEUE_GAP / 2;
+    ctx.moveTo(options.startX + 2, y + 0.5);
+    ctx.lineTo(options.startX + width - 2, y + 0.5);
+  }
+  ctx.stroke();
 }
 
 export function renderHold(

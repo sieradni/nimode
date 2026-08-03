@@ -45,6 +45,7 @@ function makeEngineState(overrides: Partial<EngineState> = {}): EngineState {
     paused: false,
     annotations: Array.from({ length: 40 }, () => Array(10).fill(0)),
     userPalette: ['#ffffff'],
+    bagRemaining: 7,
     ...overrides,
   };
 }
