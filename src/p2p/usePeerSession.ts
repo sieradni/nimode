@@ -32,6 +32,7 @@ export interface UsePeerSessionOptions {
 export interface PeerSession {
   peerManager: PresenceTransport | null;
   spectatorBuffer: SpectatorBuffer | null;
+  roster: PresenceRoster | null;
   view: ActiveView;
   selectTarget: (userId: string) => boolean;
   returnToLocal: () => void;
@@ -44,11 +45,13 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
   const createTransportOverride = options.createTransport;
   const [peerManager, setPeerManager] = useState<PresenceTransport | null>(null);
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
+  const [roster, setRoster] = useState<PresenceRoster | null>(null);
   const [view, setView] = useState<ActiveView>('LOCAL_ACTIVE');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ConnectedParticipant[]>([]);
   const controllerRef = useRef<ViewStateController | null>(null);
   const managerRef = useRef<PresenceTransport | null>(null);
+  const rosterRef = useRef<PresenceRoster | null>(null);
 
   useEffect(() => {
     clearRelayAuthCache();
@@ -67,9 +70,9 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
 
     const transport = createTransport();
     const buffer = new SpectatorBuffer();
-    const roster = new PresenceRoster(transport);
+    const newRoster = new PresenceRoster(transport);
     const controller = new ViewStateController({
-      roster,
+      roster: newRoster,
       buffer,
       connectToTarget: (targetUserId: string) => {
         transport.connectToPeer?.(targetUserId);
@@ -77,8 +80,9 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     });
     controllerRef.current = controller;
     managerRef.current = transport;
+    rosterRef.current = newRoster;
     controller.onViewChange(setView);
-    roster.start();
+    newRoster.start();
     let broadcaster: HostBroadcaster | null = null;
 
     const toParticipant = (userIdArg: string, displayNameArg: string): ConnectedParticipant => ({
@@ -150,6 +154,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     void Promise.resolve().then(() => {
       setPeerManager(transport);
       setSpectatorBuffer(buffer);
+      setRoster(newRoster);
       setParticipants([]);
     });
 
@@ -171,15 +176,17 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       transport.off('error', onError);
       transport.off('closed', onClosed);
       transport.close();
-      roster.stop();
+      newRoster.stop();
       controllerRef.current = null;
       managerRef.current = null;
+      rosterRef.current = null;
     };
   }, [instanceId, userId, displayName, engine, configStore, discordAccessToken, createTransportOverride]);
 
   return {
     peerManager,
     spectatorBuffer,
+    roster,
     view,
     selectTarget: (id: string) => controllerRef.current?.selectTarget(id) ?? false,
     returnToLocal: () => {

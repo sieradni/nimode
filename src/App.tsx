@@ -136,12 +136,11 @@ function App() {
       {peerSession.peerManager && (
         <div className="fixed bottom-4 right-4 z-30">
           <PresenceRoster
-            peerManager={peerSession.peerManager}
+            roster={peerSession.roster}
             instanceConfigStore={instanceConfigStore}
             localUserId={userId}
-            localDisplayName={userId}
+            localDisplayName={displayName}
             localPps={gameState.stats.pps}
-            discoveredParticipants={peerSession.participants}
             onSelectParticipant={peerSession.selectTarget}
           />
         </div>

@@ -1,16 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import type { PresenceTransport } from '../p2p/transport';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { InstanceConfigStore } from '../p2p/InstanceConfigStore';
-import type { PeerMetadata } from '../p2p/types';
+import type { PresenceRoster as PresenceRosterManager } from '../p2p/PresenceRoster';
 import { PresenceRoster } from './PresenceRoster';
 
-function createMockPeerManager() {
+interface MockPresenceRoster {
+  onUpdate: ReturnType<typeof vi.fn>;
+  offUpdate: ReturnType<typeof vi.fn>;
+  getEntries: ReturnType<typeof vi.fn>;
+  reconcile: ReturnType<typeof vi.fn>;
+  seedEntry: ReturnType<typeof vi.fn>;
+  stop: ReturnType<typeof vi.fn>;
+}
+
+function createMockRoster(): MockPresenceRoster {
   return {
-    on: vi.fn(),
-    off: vi.fn(),
-    open: true,
-  } as unknown as PresenceTransport;
+    onUpdate: vi.fn(),
+    offUpdate: vi.fn(),
+    getEntries: vi.fn().mockReturnValue([]),
+    reconcile: vi.fn(),
+    seedEntry: vi.fn(),
+    stop: vi.fn(),
+  };
 }
 
 function createMockConfigStore(isPrivate = false) {
@@ -22,36 +33,13 @@ function createMockConfigStore(isPrivate = false) {
   } as unknown as InstanceConfigStore;
 }
 
-function getHandler(
-  peerManager: PresenceTransport,
-  event: string,
-): (...args: unknown[]) => void {
-  const on = peerManager.on as unknown as {
-    mock: { calls: unknown[][] };
-  };
-  const call = on.mock.calls.find((c) => c[0] === event);
-  if (!call) throw new Error(`Handler for "${event}" not found`);
-  return call[1] as (...args: unknown[]) => void;
-}
-
-function makeMetadata(
-  overrides: Partial<PeerMetadata> = {},
-): PeerMetadata {
-  return {
-    userId: 'user-1',
-    displayName: 'Alice',
-    isPrivate: false,
-    ...overrides,
-  };
-}
-
 describe('PresenceRoster component', () => {
-  let mockPeerManager: ReturnType<typeof createMockPeerManager>;
+  let mockRoster: MockPresenceRoster;
   let mockConfigStore: ReturnType<typeof createMockConfigStore>;
   let onSelect: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockPeerManager = createMockPeerManager();
+    mockRoster = createMockRoster();
     mockConfigStore = createMockConfigStore();
     onSelect = vi.fn();
   });
@@ -59,7 +47,7 @@ describe('PresenceRoster component', () => {
   it('renders local user entry with displayName and PPS', () => {
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -72,10 +60,14 @@ describe('PresenceRoster component', () => {
     expect(screen.getByText('2.50')).toBeInTheDocument();
   });
 
-  it('renders remote peer entries from presence events', () => {
+  it('renders remote peer entries from roster updates', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'Alice', isPrivate: false, pps: 1.5, isConnected: true, isLocal: false },
+    ]);
+
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -84,20 +76,16 @@ describe('PresenceRoster component', () => {
       />,
     );
 
-    const joined = getHandler(mockPeerManager, 'peerJoined');
-    act(() => {
-      joined(makeMetadata({ userId: 'remote-1', displayName: 'Alice' }));
-    });
-
     expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('1.50')).toBeInTheDocument();
   });
 
-  it('shows Private badge for private instances', () => {
+  it('shows Private badge for private local instance', () => {
     mockConfigStore.getConfig = vi.fn(() => ({ isPrivate: true }));
 
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -112,7 +100,7 @@ describe('PresenceRoster component', () => {
   it('shows (You) indicator for local user', () => {
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -125,9 +113,13 @@ describe('PresenceRoster component', () => {
   });
 
   it('clicking non-private remote participant calls onSelectParticipant', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'Alice', isPrivate: false, pps: 1.5, isConnected: true, isLocal: false },
+    ]);
+
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -135,20 +127,19 @@ describe('PresenceRoster component', () => {
         onSelectParticipant={onSelect}
       />,
     );
-
-    const joined = getHandler(mockPeerManager, 'peerJoined');
-    act(() => {
-      joined(makeMetadata({ userId: 'remote-1', displayName: 'Alice', isPrivate: false }));
-    });
 
     fireEvent.click(screen.getByRole('button', { name: /spectate/i }));
     expect(onSelect).toHaveBeenCalledWith('remote-1');
   });
 
   it('clicking private participant does NOT call onSelectParticipant', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'Alice', isPrivate: true, pps: 1.5, isConnected: true, isLocal: false },
+    ]);
+
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -156,11 +147,6 @@ describe('PresenceRoster component', () => {
         onSelectParticipant={onSelect}
       />,
     );
-
-    const joined = getHandler(mockPeerManager, 'peerJoined');
-    act(() => {
-      joined(makeMetadata({ userId: 'remote-1', displayName: 'Alice', isPrivate: true }));
-    });
 
     expect(screen.queryByRole('button', { name: /spectate/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Alice'));
@@ -170,7 +156,7 @@ describe('PresenceRoster component', () => {
   it('clicking local user does NOT call onSelectParticipant', () => {
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -185,9 +171,13 @@ describe('PresenceRoster component', () => {
   });
 
   it('does not show Spectate button for private or local entries', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'PrivatePeer', isPrivate: true, pps: 1.5, isConnected: true, isLocal: false },
+    ]);
+
     render(
       <PresenceRoster
-        peerManager={mockPeerManager}
+        roster={mockRoster as unknown as PresenceRosterManager}
         instanceConfigStore={mockConfigStore}
         localUserId="local-1"
         localDisplayName="Me"
@@ -195,11 +185,6 @@ describe('PresenceRoster component', () => {
         onSelectParticipant={onSelect}
       />,
     );
-
-    const joined = getHandler(mockPeerManager, 'peerJoined');
-    act(() => {
-      joined(makeMetadata({ userId: 'remote-1', displayName: 'PrivatePeer', isPrivate: true }));
-    });
 
     expect(screen.queryByRole('button', { name: /spectate/i })).not.toBeInTheDocument();
   });

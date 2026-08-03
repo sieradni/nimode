@@ -1,64 +1,38 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { PresenceRoster as PresenceRosterManager } from '../p2p/PresenceRoster';
 import type { PresenceEntry } from '../p2p/PresenceRoster';
-import type { PresenceTransport } from '../p2p/transport';
 import type { InstanceConfigStore } from '../p2p/InstanceConfigStore';
-import type { ConnectedParticipant } from '../discord/types';
 
 interface PresenceRosterProps {
-  peerManager: PresenceTransport;
+  roster: PresenceRosterManager | null;
   instanceConfigStore: InstanceConfigStore;
   localUserId: string;
   localDisplayName: string;
   localPps: number;
-  discoveredParticipants?: ConnectedParticipant[];
   onSelectParticipant: (userId: string) => void;
 }
 
 export function PresenceRoster({
-  peerManager,
+  roster,
   instanceConfigStore,
   localUserId,
   localDisplayName,
   localPps,
-  discoveredParticipants,
   onSelectParticipant,
 }: PresenceRosterProps) {
-  const [remoteEntries, setRemoteEntries] = useState<PresenceEntry[]>([]);
+  const [remoteEntries, setRemoteEntries] = useState<PresenceEntry[]>(() => roster?.getEntries() ?? []);
   const [config, setConfig] = useState(() => instanceConfigStore.getConfig());
-  const rosterRef = useRef<PresenceRosterManager | null>(null);
 
   useEffect(() => {
-    const roster = new PresenceRosterManager(peerManager);
-    rosterRef.current = roster;
-    roster.start();
+    if (!roster) return;
 
     const handleUpdate = (entries: PresenceEntry[]) => setRemoteEntries(entries);
     roster.onUpdate(handleUpdate);
 
     return () => {
       roster.offUpdate(handleUpdate);
-      roster.stop();
-      rosterRef.current = null;
     };
-  }, [peerManager]);
-
-  useEffect(() => {
-    const roster = rosterRef.current;
-    if (!roster || !discoveredParticipants) return;
-    roster.reconcile(discoveredParticipants.map((p) => p.id));
-    for (const participant of discoveredParticipants) {
-      if (participant.id === localUserId) continue;
-      roster.seedEntry(
-        {
-          userId: participant.id,
-          displayName: participant.displayName ?? participant.username,
-          isPrivate: false,
-        },
-        false,
-      );
-    }
-  }, [discoveredParticipants, localUserId]);
+  }, [roster]);
 
   useEffect(() => {
     const handleChange = () => setConfig(instanceConfigStore.getConfig());
