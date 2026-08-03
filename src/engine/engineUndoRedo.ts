@@ -18,7 +18,7 @@ export function restoreSnapshot(
 ): UndoRedoResult {
   targetState.board = snapshot.state.board.map(row => [...row]);
   targetState.activePiece = snapshot.state.activePiece ? { ...snapshot.state.activePiece, type: snapshot.state.activePiece.type as PieceType, rotation: snapshot.state.activePiece.rotation as RotationState } : null;
-  targetState.queue.queue = snapshot.state.queue as PieceType[];
+  targetState.queue.queue = [...snapshot.state.queue] as PieceType[];
   targetState.queue.hold = snapshot.state.hold as PieceType | null;
   targetState.queue.canHold = snapshot.state.canHold;
   targetState.annotations = snapshot.state.annotations.map(row => [...row]);

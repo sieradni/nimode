@@ -136,4 +136,52 @@ describe('drop -> undo -> re-drop keeps the bag stream aligned (user-reported re
       }
     }
   });
+
+  it('repeated drop->undo rewinds the queue to the original window each cycle (regression: queue snapshot mutated by reference)', () => {
+    // Undo restores the queue by reference, and the following drop mutates it
+    // in place (shift/push), corrupting the stored snapshot so the next undo
+    // fails to bring the piece back. This asserts the piece recurs each cycle.
+    const seed = 2026;
+    const engine = createEngine(seed);
+
+    run(engine, 'DROP');
+    run(engine, 'UNDO');
+    const original = engine.getState();
+
+    // DROP -> UNDO -> DROP -> UNDO: the second drop mutates whichever snapshot
+    // the first undo restored, so check the queue returns to `original`.
+    for (let cycle = 0; cycle < 5; cycle++) {
+      run(engine, 'DROP');
+      expect(engine.getState().activePiece?.type).not.toBeNull();
+      run(engine, 'UNDO');
+      const afterUndo = engine.getState();
+      expect(afterUndo.activePiece?.type).toBe(original.activePiece?.type);
+      expect(afterUndo.queue).toEqual(original.queue);
+      expect(afterUndo.queue).toHaveLength(original.queue.length);
+    }
+  });
+
+  it('repeated drop/undo/redo cycles keep the queue window consistent (no shrink or duplicate consumption)', () => {
+    const seed = 77;
+    const engine = createEngine(seed);
+
+    run(engine, 'DROP');
+    run(engine, 'UNDO');
+    const original = engine.getState();
+
+    const sequence: Step[] = [
+      'DROP', 'DROP',
+      'UNDO', 'UNDO',
+      'REDO', 'REDO',
+      'DROP', 'UNDO',
+      'DROP', 'UNDO',
+      'DROP',
+    ];
+    for (const step of sequence) {
+      run(engine, step);
+      if (engine.getState().gameOver) break;
+      const state = engine.getState();
+      expect(state.queue.length).toBe(original.queue.length);
+    }
+  });
 });
