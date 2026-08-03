@@ -18,6 +18,6 @@ export function getRelayFunctionUrl(): string {
   const url = import.meta.env.VITE_RELAY_FUNCTION_URL;
   if (url) return url;
   const base = getSupabaseUrl();
-  const project = base.replace(/^https:\/\//, '');
+  const project = base.replace(/^https?:\/\//, '');
   return `https://${project}.supabase.co/functions/v1/authorize-activity`;
 }
