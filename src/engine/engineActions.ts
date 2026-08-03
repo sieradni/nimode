@@ -89,8 +89,8 @@ export function holdPiece(
   randomizer: IBagRandomizer,
   rotationSystem: IRotationSystem,
   config: GameConfig
-): void {
-  if (!state.queue.canHold || !state.activePiece) return;
+): boolean {
+  if (!state.queue.canHold || !state.activePiece) return false;
 
   const heldType = state.queue.hold;
   const activeType = state.activePiece.type;
@@ -109,6 +109,7 @@ export function holdPiece(
     };
   }
   state.queue.canHold = true;
+  return true;
 }
 
 export function hardDrop(

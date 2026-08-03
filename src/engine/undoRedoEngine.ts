@@ -56,11 +56,6 @@ export interface IUndoRedoEngine {
 export class UndoRedoEngine implements IUndoRedoEngine {
   private history: FullSnapshot[] = [];
   private future: FullSnapshot[] = [];
-  private readonly maxSize: number;
-
-  constructor(maxSize: number = 100) {
-    this.maxSize = maxSize;
-  }
 
   saveSnapshot(state: GameState, stats: PlayerStatsSnapshot, gravityTimer: number, lock: LockDelayState, bagState: BagState): void {
     const snapshot: FullSnapshot = {
@@ -69,9 +64,6 @@ export class UndoRedoEngine implements IUndoRedoEngine {
     };
 
     this.history.push(snapshot);
-    if (this.history.length > this.maxSize) {
-      this.history.shift();
-    }
     this.future = [];
   }
 

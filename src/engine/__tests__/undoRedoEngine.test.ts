@@ -56,7 +56,7 @@ describe('UndoRedoEngine', () => {
   let engine: IUndoRedoEngine;
 
   beforeEach(() => {
-    engine = new UndoRedoEngine(5);
+    engine = new UndoRedoEngine();
   });
 
   it('should save snapshots and allow undo', () => {
@@ -110,18 +110,31 @@ describe('UndoRedoEngine', () => {
     expect(engine.canRedo()).toBe(false);
   });
 
-  it('should respect max history size', () => {
-    const engine = new UndoRedoEngine(2);
+  it('should allow unlimited history and redo depth after undo', () => {
     const stats = createMockStatsSnapshot();
     const lockDelay = createMockLockDelayState();
-    for (let i = 0; i < 5; i++) {
+    const states: import('../types').GameState[] = [];
+    for (let i = 0; i < 10; i++) {
       const state = createMockGameState({ activePiece: { type: (i + 1) as import('../types').PieceType, x: i, y: i, rotation: 0 } });
+      states.push(state);
       engine.saveSnapshot(state, stats, 0, lockDelay, createBagState());
     }
-    expect(engine.canUndo()).toBe(true);
-    engine.undo();
-    engine.undo();
+    // History is unbounded: we can undo all the way back to the first snapshot.
+    for (let i = 0; i < 9; i++) {
+      expect(engine.canUndo()).toBe(true);
+      expect(engine.undo()).toBeDefined();
+    }
     expect(engine.canUndo()).toBe(false);
+
+    // Undoing 9 steps moved 9 snapshots into `future`, which is also unbounded.
+    // Redo all the way back to the newest snapshot.
+    for (let i = 0; i < 9; i++) {
+      expect(engine.canRedo()).toBe(true);
+      const redone = engine.redo();
+      expect(redone).toBeDefined();
+      expect(redone?.state.activePiece?.type).toBe((2 + i) as import('../types').PieceType);
+    }
+    expect(engine.canRedo()).toBe(false);
   });
 
   it('should clear history on clear()', () => {
