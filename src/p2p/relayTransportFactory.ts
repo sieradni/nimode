@@ -1,9 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseRelayTransport } from './SupabaseRelayTransport';
-import type { SupabaseRelayDeps } from './SupabaseRelayTransport';
 import { authorizeRelaySession } from './relayAuth';
-import { getSupabaseUrl, getSupabaseAnonKey } from './supabaseEnv';
 import type { DiscordAuth } from '../discord/types';
 
 export interface RelayTransportFactoryDeps {
@@ -27,19 +23,5 @@ export function createRelayTransport(deps: RelayTransportFactoryDeps): SupabaseR
     return result?.accessToken ?? null;
   };
 
-  const supabaseDeps: SupabaseRelayDeps = {
-    createClient: (jwt: string): SupabaseClient =>
-      createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-        accessToken: async () => jwt,
-        realtime: {
-          params: {
-            apikey: getSupabaseAnonKey(),
-            instance_id: instanceId,
-          },
-        },
-      }),
-    getJwt,
-  };
-
-  return new SupabaseRelayTransport(supabaseDeps);
+  return new SupabaseRelayTransport({ getJwt });
 }
