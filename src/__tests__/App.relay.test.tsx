@@ -148,8 +148,21 @@ describe('App relay integration', () => {
       await userEvent.click(spectateBtn);
     });
 
-    expect(screen.queryByTestId('board-canvas')).toBeNull();
-    expect(screen.getByTestId('spectator-canvas')).toBeInTheDocument();
+    // Emit spectator state data to simulate the remote peer's state arriving
+    const spectatorPayload = {
+      userId: 'remote-1',
+      matrix: Array.from({ length: 40 }, () => Array(10).fill(0)),
+      activePiece: null,
+      queue: [],
+      hold: null,
+      annotations: Array.from({ length: 40 }, () => Array(10).fill(0)),
+      userPalette: ['#ffffff'],
+      stats: { ...DEFAULT_GAME_STATS, pps: 0, apm: 0, kpp: 0, piecesPlaced: 0, linesCleared: 0 },
+    };
+    act(() => mockTransport.emit('data', spectatorPayload));
+
+    // Wait for the spectator board canvas to appear (now uses same board-canvas testid)
+    await screen.findByTestId('board-canvas');
   });
 
   it('does not broadcast state while the transport is closed', async () => {

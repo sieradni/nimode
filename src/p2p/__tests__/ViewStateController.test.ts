@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { PresenceRoster, PresenceEntry } from '../PresenceRoster';
 import type { SpectatorBuffer } from '../SpectatorBuffer';
 import { ViewStateController } from '../ViewStateController';
@@ -31,6 +31,7 @@ describe('ViewStateController', () => {
   let controller: ViewStateController;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     const rosterMock = createMockRoster();
     roster = rosterMock.roster;
     canSpectate = rosterMock.canSpectate;
@@ -40,6 +41,10 @@ describe('ViewStateController', () => {
     setTarget = bufferMock.setTarget;
     connectToTarget = vi.fn();
     controller = new ViewStateController({ roster, buffer, connectToTarget });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('starts in LOCAL_ACTIVE with null target', () => {
@@ -162,7 +167,7 @@ describe('ViewStateController', () => {
     expect(setTarget).toHaveBeenCalledTimes(1);
   });
 
-  it('auto-returns to local when the spectated target becomes private', () => {
+  it('auto-returns to local when the spectated target becomes private after grace period', () => {
     canSpectate.mockReturnValue(true);
     controller.selectTarget('user-1');
 
@@ -175,6 +180,10 @@ describe('ViewStateController', () => {
     updateHandler([
       { userId: 'user-1', displayName: 'Bob', isPrivate: true, pps: 0, isConnected: true, isLocal: false },
     ]);
+
+    expect(controller.getView()).toBe('SPECTATING_TARGET');
+
+    vi.advanceTimersByTime(3000);
 
     expect(controller.getView()).toBe('LOCAL_ACTIVE');
     expect(controller.getTargetId()).toBeNull();
@@ -198,7 +207,7 @@ describe('ViewStateController', () => {
     expect(setTarget).not.toHaveBeenCalledWith(null);
   });
 
-  it('auto-returns to local when the spectated target disconnects from the roster', () => {
+  it('auto-returns to local when the spectated target disconnects from the roster after grace period', () => {
     canSpectate.mockReturnValue(true);
     controller.selectTarget('user-1');
 
@@ -210,9 +219,34 @@ describe('ViewStateController', () => {
     ) => void;
     updateHandler([]);
 
+    expect(controller.getView()).toBe('SPECTATING_TARGET');
+
+    vi.advanceTimersByTime(3000);
+
     expect(controller.getView()).toBe('LOCAL_ACTIVE');
     expect(controller.getTargetId()).toBeNull();
     expect(listener).toHaveBeenCalledWith('LOCAL_ACTIVE');
     expect(setTarget).toHaveBeenLastCalledWith(null);
+  });
+
+  it('cancels the return-to-local grace period when the target reappears', () => {
+    canSpectate.mockReturnValue(true);
+    controller.selectTarget('user-1');
+
+    const updateHandler = onUpdate.mock.calls[0]?.[0] as (
+      entries: PresenceEntry[],
+    ) => void;
+    updateHandler([]);
+
+    vi.advanceTimersByTime(1500);
+
+    updateHandler([
+      { userId: 'user-1', displayName: 'Bob', isPrivate: false, pps: 12, isConnected: true, isLocal: false },
+    ]);
+
+    vi.advanceTimersByTime(3000);
+
+    expect(controller.getView()).toBe('SPECTATING_TARGET');
+    expect(controller.getTargetId()).toBe('user-1');
   });
 });

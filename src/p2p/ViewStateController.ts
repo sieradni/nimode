@@ -3,6 +3,8 @@ import type { SpectatorBuffer } from './SpectatorBuffer';
 
 export type ActiveView = 'LOCAL_ACTIVE' | 'SPECTATING_TARGET';
 
+const GRACE_PERIOD_MS = 3000;
+
 export class ViewStateController {
   private readonly roster: PresenceRoster;
   private readonly buffer: SpectatorBuffer;
@@ -10,6 +12,7 @@ export class ViewStateController {
   private view: ActiveView = 'LOCAL_ACTIVE';
   private targetId: string | null = null;
   private readonly listeners = new Set<(view: ActiveView) => void>();
+  private graceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(options: {
     roster: PresenceRoster;
@@ -43,6 +46,10 @@ export class ViewStateController {
   }
 
   returnToLocal(): void {
+    if (this.graceTimer !== null) {
+      clearTimeout(this.graceTimer);
+      this.graceTimer = null;
+    }
     this.buffer.setTarget(null);
     this.targetId = null;
     this.view = 'LOCAL_ACTIVE';
@@ -65,7 +72,17 @@ export class ViewStateController {
     if (this.view !== 'SPECTATING_TARGET' || this.targetId === null) return;
     const target = entries.find((entry) => entry.userId === this.targetId);
     if (!target || target.isPrivate) {
-      this.returnToLocal();
+      if (this.graceTimer === null) {
+        this.graceTimer = setTimeout(() => {
+          this.graceTimer = null;
+          this.returnToLocal();
+        }, GRACE_PERIOD_MS);
+      }
+    } else {
+      if (this.graceTimer !== null) {
+        clearTimeout(this.graceTimer);
+        this.graceTimer = null;
+      }
     }
   };
 }

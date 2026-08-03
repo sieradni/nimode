@@ -1,3 +1,4 @@
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { sign } from 'https://esm.sh/jsonwebtoken@9.0.2';
 
 interface DiscordUser {
@@ -26,31 +27,24 @@ interface RelayMessage {
 const JWT_TTL_SECONDS = 3600;
 const PEER_TTL_MS = 10_000;
 
-const relayStore = new Map<
-  string,
-  Map<string, { payload: Record<string, unknown>; timestamp: number }>
->();
-
-function getInstanceStore(instanceId: string): Map<string, { payload: Record<string, unknown>; timestamp: number }> {
-  let store = relayStore.get(instanceId);
-  if (!store) {
-    store = new Map();
-    relayStore.set(instanceId, store);
+function getSupabase() {
+  const url = Deno.env.get('SUPABASE_URL');
+  const serviceRole = Deno.env.get('SERVICE_ROLE_KEY');
+  if (!url || !serviceRole) {
+    throw new Error('Supabase environment variables missing');
   }
-  return store;
+  return createClient(url, serviceRole);
 }
 
-function pruneInstanceStore(instanceId: string): void {
-  const store = relayStore.get(instanceId);
-  if (!store) return;
-  const now = Date.now();
-  for (const [userId, entry] of store) {
-    if (now - entry.timestamp > PEER_TTL_MS) {
-      store.delete(userId);
-    }
-  }
-  if (store.size === 0) {
-    relayStore.delete(instanceId);
+async function pruneInstanceStore(supabase: ReturnType<typeof getSupabase>, instanceId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - PEER_TTL_MS).toISOString();
+  const { error } = await supabase
+    .from('relay_states')
+    .delete()
+    .eq('instance_id', instanceId)
+    .lt('updated_at', cutoff);
+  if (error) {
+    console.error('prune error:', error.message);
   }
 }
 
@@ -64,6 +58,8 @@ Deno.serve(async (req: Request) => {
     if (!isAuth) {
       return new Response(JSON.stringify({ error: 'not found' }), { status: 404 });
     }
+
+    const supabase = getSupabase();
 
     if (req.method === 'POST') {
       const body = (await req.json().catch(() => null)) as
@@ -117,11 +113,50 @@ Deno.serve(async (req: Request) => {
 
       if ('type' in body && (body.type === 'state' || body.type === 'presence')) {
         const relayMsg = body as RelayMessage;
-        const store = getInstanceStore(relayMsg.instanceId);
-        store.set(relayMsg.userId, {
-          payload: relayMsg.payload ?? relayMsg.metadata ?? {},
-          timestamp: relayMsg.timestamp ?? Date.now(),
-        });
+        const now = new Date(relayMsg.timestamp ?? Date.now()).toISOString();
+
+        if (relayMsg.type === 'presence') {
+          const metadata = relayMsg.metadata ?? {
+            userId: relayMsg.userId,
+            displayName: relayMsg.displayName,
+            isPrivate: false,
+          };
+          const { error } = await supabase
+            .from('relay_states')
+            .upsert({
+              instance_id: relayMsg.instanceId,
+              user_id: relayMsg.userId,
+              display_name: metadata.displayName ?? relayMsg.displayName,
+              is_private: metadata.isPrivate ?? false,
+              payload: relayMsg.metadata ?? {},
+              updated_at: now,
+            }, { onConflict: 'instance_id,user_id' });
+          if (error) {
+            console.error('presence upsert error:', error.message);
+          }
+          return new Response(JSON.stringify({ ok: true }), { status: 200 });
+        }
+
+        const { data: existing } = await supabase
+          .from('relay_states')
+          .select('display_name, is_private')
+          .eq('instance_id', relayMsg.instanceId)
+          .eq('user_id', relayMsg.userId)
+          .single();
+
+        const { error } = await supabase
+          .from('relay_states')
+          .upsert({
+            instance_id: relayMsg.instanceId,
+            user_id: relayMsg.userId,
+            display_name: existing?.display_name ?? relayMsg.displayName,
+            is_private: existing?.is_private ?? false,
+            payload: relayMsg.payload ?? {},
+            updated_at: now,
+          }, { onConflict: 'instance_id,user_id' });
+        if (error) {
+          console.error('state upsert error:', error.message);
+        }
         return new Response(JSON.stringify({ ok: true }), { status: 200 });
       }
 
@@ -136,31 +171,29 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ error: 'missing instanceId or userId' }), { status: 400 });
       }
 
-      pruneInstanceStore(instanceId);
-      const store = getInstanceStore(instanceId);
-      const peers: Array<{ userId: string; displayName: string; isPrivate: boolean; payload: Record<string, unknown>; timestamp: number }> = [];
-      const now = Date.now();
+      await pruneInstanceStore(supabase, instanceId);
 
-      for (const [peerId, entry] of store) {
-        if (peerId === userId) continue;
-        if (now - entry.timestamp > PEER_TTL_MS) continue;
-        const payload = entry.payload;
-        const displayName =
-          typeof payload === 'object' && payload !== null && 'displayName' in payload
-            ? String(payload.displayName)
-            : peerId;
-        const isPrivate =
-          typeof payload === 'object' && payload !== null && 'isPrivate' in payload
-            ? Boolean(payload.isPrivate)
-            : false;
-        peers.push({
-          userId: peerId,
-          displayName,
-          isPrivate,
-          payload,
-          timestamp: entry.timestamp,
-        });
+      const cutoff = new Date(Date.now() - PEER_TTL_MS).toISOString();
+      const { data, error } = await supabase
+        .from('relay_states')
+        .select('user_id, display_name, is_private, payload, updated_at')
+        .eq('instance_id', instanceId)
+        .neq('user_id', userId)
+        .gte('updated_at', cutoff)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('select error:', error.message);
+        return new Response(JSON.stringify({ error: 'internal error' }), { status: 500 });
       }
+
+      const peers = (data ?? []).map((row) => ({
+        userId: row.user_id,
+        displayName: row.display_name ?? row.user_id,
+        isPrivate: row.is_private ?? false,
+        payload: row.payload,
+        timestamp: new Date(row.updated_at).getTime(),
+      }));
 
       return new Response(
         JSON.stringify({ peers }),

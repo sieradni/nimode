@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { EngineState } from '../engine/interfaces/IEngineCore';
 import { IEngineCore } from '../engine/interfaces/IEngineCore';
 import { HoldCanvas } from './canvas/HoldCanvas';
@@ -17,6 +17,7 @@ interface GameCanvasProps {
   annotationColor: string;
   editMode: EditMode;
   onReset: () => void;
+  readOnly?: boolean;
 }
 
 export function GameCanvas({
@@ -26,6 +27,7 @@ export function GameCanvas({
   annotationColor,
   editMode,
   onReset,
+  readOnly = false,
 }: GameCanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [queueModalOpen, setQueueModalOpen] = useState(false);
@@ -34,77 +36,81 @@ export function GameCanvas({
   const previewCellSize = computePreviewCellSize(cellSize);
   const stroke = useAnnotationStroke();
 
-  const handlePen = useCallback((x: number, y: number, color: string) => {
+const handlePen = useCallback((x: number, y: number, color: string) => {
+    if (readOnly) return;
     if (editMode === 'blocks') {
       engine.handleInput({ type: 'BOARD_PEN', x, y, color });
     } else {
       engine.handleInput({ type: 'ANNOTATE_PEN', x, y, color });
     }
-  }, [engine, editMode]);
+  }, [engine, editMode, readOnly]);
 
   const handleErase = useCallback((x: number, y: number) => {
+    if (readOnly) return;
     if (editMode === 'blocks') {
       engine.handleInput({ type: 'BOARD_ERASE', x, y });
     } else {
       engine.handleInput({ type: 'ANNOTATE_ERASE', x, y });
     }
-  }, [engine, editMode]);
+  }, [engine, editMode, readOnly]);
 
   const handleFloodErase = useCallback((x: number, y: number) => {
+    if (readOnly) return;
     if (editMode === 'blocks') {
       engine.handleInput({ type: 'BOARD_FLOOD_ERASE', x, y });
     } else {
       engine.handleInput({ type: 'ANNOTATE_FLOOD_ERASE', x, y });
     }
-  }, [engine, editMode]);
+  }, [engine, editMode, readOnly]);
 
   const handleRectFill = useCallback((x1: number, y1: number, x2: number, y2: number, color: string) => {
+    if (readOnly) return;
     if (editMode === 'blocks') {
       engine.handleInput({ type: 'BOARD_RECT_FILL', x1, y1, x2, y2, color });
     } else {
       engine.handleInput({ type: 'ANNOTATE_RECT_FILL', x1, y1, x2, y2, color });
     }
-  }, [engine, editMode]);
+  }, [engine, editMode, readOnly]);
 
   const handleDrawingStart = useCallback(() => {
+    if (readOnly) return;
     stroke.begin();
     engine.handleInput({ type: 'EDIT_BEGIN', mode: editMode });
     setIsDrawing(true);
-  }, [stroke, engine, editMode]);
+  }, [stroke, engine, editMode, readOnly]);
 
   const handleDrawingEnd = useCallback(() => {
+    if (readOnly) return;
     setIsDrawing(false);
     const cells = stroke.end();
-    // Closing the transaction commits the whole gesture as one undo step and
-    // folds stroke auto-color into the same snapshot.
     engine.handleInput({ type: 'EDIT_COMMIT', cells });
-  }, [stroke, engine]);
+  }, [stroke, engine, readOnly]);
 
   const handleClearHold = useCallback(() => {
+    if (readOnly) return;
     engine.handleInput({ type: 'CLEAR_HOLD' });
-  }, [engine]);
+  }, [engine, readOnly]);
 
   const handleQueueOpen = useCallback(() => {
+    if (readOnly) return;
     engine.setPaused(true);
     setQueueModalOpen(true);
-  }, [engine]);
+  }, [engine, readOnly]);
 
   const handleQueueClose = useCallback(() => {
+    if (readOnly) return;
     engine.setPaused(false);
     setQueueModalOpen(false);
-  }, [engine]);
-
-  useEffect(() => {
-    return () => engine.setPaused(false);
-  }, [engine]);
+  }, [engine, readOnly]);
 
   const handleQueueConfirm = useCallback(
     (resultQueue: PieceType[]) => {
+      if (readOnly) return;
       engine.setQueue(resultQueue);
       engine.setPaused(false);
       setQueueModalOpen(false);
     },
-    [engine]
+    [engine, readOnly]
   );
 
   const gap = LAYOUT_GAP_PX;

@@ -130,8 +130,7 @@ function App() {
           editMode={editMode}
           onReset={() => { engine.reset(); setGameState(engine.getState()); }}
           spectatorBuffer={peerSession.spectatorBuffer}
-          onReturnToLocal={peerSession.returnToLocal}
-        />
+         />
       </main>
 
       {peerSession.peerManager && (
