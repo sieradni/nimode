@@ -4,6 +4,9 @@ const mockAuthorize = vi.fn();
 const mockAuthenticate = vi.fn();
 const mockReady = vi.fn();
 const mockFetch = vi.fn();
+const mockGetParticipants = vi.fn();
+const mockSubscribe = vi.fn();
+const mockUnsubscribe = vi.fn();
 
 vi.mock('@discord/embedded-app-sdk', () => ({
   DiscordSDK: vi.fn().mockImplementation(() => ({
@@ -11,7 +14,10 @@ vi.mock('@discord/embedded-app-sdk', () => ({
     commands: { 
       authorize: mockAuthorize,
       authenticate: mockAuthenticate,
+      getInstanceConnectedParticipants: mockGetParticipants,
     },
+    subscribe: mockSubscribe,
+    unsubscribe: mockUnsubscribe,
     channelId: 'test-channel-id',
     instanceId: 'test-instance-id',
     guildId: 'test-guild-id',
@@ -32,11 +38,15 @@ describe('DiscordSdkWrapper', () => {
   let createDiscordSdk: typeof import('../sdk').createDiscordSdk;
 
   beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch);
     // Reset all mocks to default implementations
     mockReady.mockReset();
     mockAuthorize.mockReset();
     mockAuthenticate.mockReset();
     mockFetch.mockReset();
+    mockGetParticipants.mockReset();
+    mockSubscribe.mockReset();
+    mockUnsubscribe.mockReset();
     vi.resetModules();
     
     mockReady.mockResolvedValue(undefined);
@@ -115,5 +125,55 @@ describe('DiscordSdkWrapper', () => {
     mockAuthenticate.mockRejectedValue(new Error('Auth denied'));
     const wrapper = createDiscordSdk('test-client-id');
     await expect(wrapper.init()).rejects.toThrow('Auth denied');
+  });
+
+  it('should map getInstanceConnectedParticipants to ConnectedParticipant[]', async () => {
+    mockGetParticipants.mockResolvedValue({
+      participants: [
+        { id: 'user-1', username: 'alice', discriminator: '0', global_name: 'Alice', bot: false, flags: 0 },
+        { id: 'user-2', username: 'bob', discriminator: '0', global_name: null, bot: false, flags: 0 },
+      ],
+    });
+    const wrapper = createDiscordSdk('test-client-id');
+    await wrapper.init();
+
+    const participants = await wrapper.getInstanceConnectedParticipants();
+
+    expect(participants).toEqual([
+      { id: 'user-1', username: 'alice', displayName: 'Alice' },
+      { id: 'user-2', username: 'bob', displayName: 'bob' },
+    ]);
+  });
+
+  it('should subscribe and map ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE payloads', async () => {
+    const wrapper = createDiscordSdk('test-client-id');
+    await wrapper.init();
+
+    const callback = vi.fn();
+    const unsubscribe = wrapper.onParticipantsUpdate(callback);
+
+    expect(mockSubscribe).toHaveBeenCalledWith(
+      'ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE',
+      expect.any(Function),
+    );
+    const listener = mockSubscribe.mock.calls[0]?.[1] as (data: {
+      participants?: Array<{ id: string; username: string; global_name?: string | null }>;
+    }) => void;
+
+    listener({
+      participants: [
+        { id: 'user-9', username: 'carol', global_name: 'Carol' },
+      ],
+    });
+
+    expect(callback).toHaveBeenCalledWith([
+      { id: 'user-9', username: 'carol', displayName: 'Carol' },
+    ]);
+
+    unsubscribe();
+    expect(mockUnsubscribe).toHaveBeenCalledWith(
+      'ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE',
+      expect.any(Function),
+    );
   });
 });

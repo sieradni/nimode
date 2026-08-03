@@ -38,6 +38,7 @@ function App() {
     engine,
     configStore: instanceConfigStore,
     fetchParticipants: discordAuth.status === 'authenticated' ? sdk.getInstanceConnectedParticipants : undefined,
+    onParticipantsUpdate: discordAuth.status === 'authenticated' ? sdk.onParticipantsUpdate : undefined,
   });
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());

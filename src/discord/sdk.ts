@@ -56,6 +56,14 @@ async function exchangeCodeForToken(
   return data.access_token;
 }
 
+function mapParticipant(p: {
+  id: string;
+  username: string;
+  global_name?: string | null;
+}): ConnectedParticipant {
+  return { id: p.id, username: p.username, displayName: p.global_name ?? p.username };
+}
+
 export function createDiscordSdk(clientId: string): DiscordSdkWrapper {
   let sdk: DiscordSDK | null = null;
 
@@ -96,11 +104,19 @@ export function createDiscordSdk(clientId: string): DiscordSdkWrapper {
     async getInstanceConnectedParticipants(): Promise<ConnectedParticipant[]> {
       if (!sdk) throw new Error('Discord SDK not initialized; call init() first');
       const { participants } = await sdk.commands.getInstanceConnectedParticipants();
-      return participants.map((p) => ({
-        id: p.id,
-        username: p.username,
-        displayName: p.global_name ?? p.username,
-      }));
+      return participants.map(mapParticipant);
+    },
+    onParticipantsUpdate(cb: (participants: ConnectedParticipant[]) => void): () => void {
+      if (!sdk) throw new Error('Discord SDK not initialized; call init() first');
+      const listener = (data: { participants?: Array<{ id: string; username: string; global_name?: string | null }> }) => {
+        if (Array.isArray(data.participants)) {
+          cb(data.participants.map(mapParticipant));
+        }
+      };
+      void sdk.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', listener);
+      return () => {
+        void sdk?.unsubscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', listener);
+      };
     },
   };
 }

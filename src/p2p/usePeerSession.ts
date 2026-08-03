@@ -19,6 +19,7 @@ export interface UsePeerSessionOptions {
   configStore: InstanceConfigStore;
   createPeer?: PeerFactory;
   fetchParticipants?: () => Promise<ConnectedParticipant[]>;
+  onParticipantsUpdate?: (cb: (participants: ConnectedParticipant[]) => void) => () => void;
 }
 
 export interface PeerSession {
@@ -31,8 +32,33 @@ export interface PeerSession {
   participants: ConnectedParticipant[];
 }
 
+const FATAL_PEER_ERROR_TYPES = new Set([
+  'browser-incompatible',
+  'invalid-id',
+  'invalid-key',
+  'unavailable-id',
+  'network',
+  'server-error',
+  'socket-error',
+  'socket-closed',
+  'ssl-unavailable',
+]);
+
+function isFatalPeerError(error: Error): boolean {
+  const type = (error as Error & { type?: unknown }).type;
+  return typeof type !== 'string' || FATAL_PEER_ERROR_TYPES.has(type);
+}
+
 export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
-  const { instanceId, userId, engine, configStore, createPeer, fetchParticipants } = options;
+  const {
+    instanceId,
+    userId,
+    engine,
+    configStore,
+    createPeer,
+    fetchParticipants,
+    onParticipantsUpdate,
+  } = options;
   const [peerManager, setPeerManager] = useState<PeerJSManager | null>(null);
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
   const [view, setView] = useState<ActiveView>('LOCAL_ACTIVE');
@@ -63,36 +89,57 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     controllerRef.current = controller;
     managerRef.current = manager;
     let broadcaster: HostBroadcaster | null = null;
+    let unsubscribeParticipants: (() => void) | null = null;
+    let participantVersion = 0;
+
+    const applyParticipants = (discovered: ConnectedParticipant[]): void => {
+      participantVersion += 1;
+      setParticipants(discovered);
+      roster.reconcile(discovered.map((p) => p.id));
+      for (const p of discovered) {
+        if (p.id === userId) continue;
+        roster.seedEntry(
+          {
+            userId: p.id,
+            displayName: p.displayName ?? p.username,
+            isPrivate: false,
+          },
+          false,
+        );
+        manager.connectToPeer(
+          `${effectiveInstanceId}-${p.id}`,
+          makeMetadata(userId, configStore),
+        );
+      }
+    };
+
+    const syncDiscovered = applyParticipants;
 
     const handleData = (payload: SpectatorPayload) => {
       buffer.push(payload, performance.now());
     };
-                 const handleOpen = () => {
-                  broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
-                  broadcaster.start();
-                  manager.sendPresence();
-                  if (fetchParticipants) {
-                    fetchParticipants()
-                      .then((discovered) => {
-                        setParticipants(discovered);
-                        for (const p of discovered) {
-                          if (p.id === userId) continue;
-                          roster.seedEntry(
-                            { userId: p.id, displayName: p.displayName ?? p.username, isPrivate: false },
-                            false,
-                          );
-                          manager.connectToPeer(
-                            `${effectiveInstanceId}-${p.id}`,
-                            makeMetadata(userId, configStore),
-                          );
-                        }
-                      })
-                      .catch(() => {
-                        // Discovery is best-effort; the roster remains connection-driven.
-                      });
-                  }
-                };
+    const handleOpen = () => {
+      setConnectionError(null);
+      broadcaster = new HostBroadcaster({ engine, peerManager: manager, configStore, userId });
+      broadcaster.start();
+      manager.sendPresence();
+      if (fetchParticipants) {
+        const versionAtFetch = participantVersion;
+        fetchParticipants()
+          .then((discovered) => {
+            if (participantVersion !== versionAtFetch) return;
+            syncDiscovered(discovered);
+          })
+          .catch((error: unknown) => {
+            setConnectionError(error instanceof Error ? error.message : String(error));
+          });
+      }
+      if (onParticipantsUpdate) {
+        unsubscribeParticipants = onParticipantsUpdate(syncDiscovered);
+      }
+    };
     const handleError = (error: Error) => {
+      if (!isFatalPeerError(error)) return;
       setConnectionError(error.message);
     };
     const handleConfigChange = () => {
@@ -118,6 +165,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
 
     return () => {
       broadcaster?.stop();
+      unsubscribeParticipants?.();
       manager.off('data', handleData);
       manager.off('open', handleOpen);
       manager.off('error', handleError);
@@ -128,7 +176,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       controllerRef.current = null;
       managerRef.current = null;
     };
-  }, [instanceId, userId, engine, configStore, createPeer, fetchParticipants]);
+  }, [instanceId, userId, engine, configStore, createPeer, fetchParticipants, onParticipantsUpdate]);
 
   return {
     peerManager,

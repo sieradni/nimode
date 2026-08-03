@@ -16,4 +16,5 @@ export interface DiscordSdkWrapper {
   readonly clientId: string;
   init(): Promise<DiscordAuth>;
   getInstanceConnectedParticipants(): Promise<ConnectedParticipant[]>;
+  onParticipantsUpdate(cb: (participants: ConnectedParticipant[]) => void): () => void;
 }

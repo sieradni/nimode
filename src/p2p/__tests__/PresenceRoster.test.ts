@@ -253,6 +253,68 @@ describe('PresenceRoster', () => {
     );
   });
 
+  it('removeEntry removes the entry and notifies listeners', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    const updateHandler = vi.fn();
+    roster.onUpdate(updateHandler);
+
+    roster.seedEntry(makeMetadata({ userId: 'discovered-1', displayName: 'Carol' }), false);
+    updateHandler.mockClear();
+
+    roster.removeEntry('discovered-1');
+
+    expect(roster.getEntries()).toEqual([]);
+    expect(updateHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeEntry on an unknown userId does not notify', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    const updateHandler = vi.fn();
+    roster.onUpdate(updateHandler);
+
+    roster.removeEntry('ghost');
+
+    expect(updateHandler).not.toHaveBeenCalled();
+  });
+
+  it('reconcile removes seeded (unconnected) participants that left', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+
+    roster.seedEntry(makeMetadata({ userId: 'present-user', displayName: 'Alice' }), false);
+    roster.seedEntry(makeMetadata({ userId: 'gone-user', displayName: 'Bob' }), false);
+
+    roster.reconcile(['present-user']);
+
+    const userIds = roster.getEntries().map((entry) => entry.userId);
+    expect(userIds).toEqual(['present-user']);
+  });
+
+  it('reconcile keeps connected entries even when absent from the participant list', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: 'connected-user', displayName: 'Zed' }));
+
+    roster.reconcile([]);
+
+    expect(roster.getEntries()).toHaveLength(1);
+    expect(roster.getEntries()[0]!.userId).toBe('connected-user');
+  });
+
+  it('reconcile notifies listeners when entries are dropped', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    const updateHandler = vi.fn();
+    roster.onUpdate(updateHandler);
+
+    roster.seedEntry(makeMetadata({ userId: 'stale-user', displayName: 'Old' }), false);
+    updateHandler.mockClear();
+
+    roster.reconcile([]);
+
+    expect(updateHandler).toHaveBeenCalledTimes(1);
+  });
+
   it('stop() unsubscribes and clears entries', () => {
     const roster = new PresenceRoster(mockPeerManager);
     roster.start();

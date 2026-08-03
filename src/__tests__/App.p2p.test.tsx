@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { DiscordAuth } from '../discord/types';
+import type { ConnectedParticipant } from '../discord/types';
 import type { SpectatorPayload } from '../engine/types/instance';
 import { DEFAULT_GAME_STATS } from '../engine/types';
 import { instanceConfigStore } from '../p2p/InstanceConfigStore';
 
-const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers } =
+const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connHandlers, peerHandlers, participantListeners, mockSdkSubscribe, mockSdkUnsubscribe } =
   vi.hoisted(() => {
   const peerHandlers: Record<string, Array<(...args: unknown[]) => void>> = {};
   const connHandlers: Record<string, Array<(...args: unknown[]) => void>> = {};
+  const participantListeners: Array<(participants: ConnectedParticipant[]) => void> = [];
 
   const mockConn = {
     peer: 'remote-peer',
@@ -46,6 +48,9 @@ const { mockInit, mockGetParticipants, mockCreatePeer, mockPeer, mockConn, connH
     mockConn,
     connHandlers,
     peerHandlers,
+    participantListeners,
+    mockSdkSubscribe: vi.fn(),
+    mockSdkUnsubscribe: vi.fn(),
   };
 });
 
@@ -54,6 +59,11 @@ vi.mock('../discord/sdk', () => ({
     clientId: 'test-client-id',
     init: mockInit,
     getInstanceConnectedParticipants: mockGetParticipants,
+    onParticipantsUpdate: (cb: (ps: ConnectedParticipant[]) => void) => {
+      participantListeners.push(cb);
+      mockSdkSubscribe();
+      return mockSdkUnsubscribe;
+    },
   })),
 }));
 
@@ -114,6 +124,9 @@ describe('App P2P integration', () => {
     mockConn.metadata = {};
     Object.keys(peerHandlers).forEach((key) => delete peerHandlers[key]);
     Object.keys(connHandlers).forEach((key) => delete connHandlers[key]);
+    participantListeners.length = 0;
+    mockSdkSubscribe.mockReset();
+    mockSdkUnsubscribe.mockReset();
     instanceConfigStore.setPrivate(false);
   });
 
@@ -290,5 +303,45 @@ describe('App P2P integration', () => {
 
     expect(screen.queryByRole('button', { name: /spectate/i })).toBeNull();
     expect(screen.getByText(/private/i)).toBeInTheDocument();
+  });
+
+  it('detects participants who join mid-session via ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', async () => {
+    mockPeer.connect.mockReturnValue(mockConn);
+    mockGetParticipants.mockResolvedValue([]);
+    render(<App />);
+    await flushAuth();
+    act(() => mockPeer._emit('open', 'instance-1-user-123'));
+
+    expect(screen.queryByText('Newcomer')).toBeNull();
+
+    act(() => {
+      for (const cb of participantListeners) {
+        cb([{ id: 'remote-2', username: 'newcomer', displayName: 'Newcomer' }]);
+      }
+    });
+
+    expect(await screen.findByText('Newcomer')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /spectate/i })).toBeInTheDocument();
+    expect(mockPeer.connect).toHaveBeenCalledWith('instance-1-remote-2', expect.anything());
+  });
+
+  it('removes a departed participant from the roster on update', async () => {
+    mockPeer.connect.mockReturnValue(mockConn);
+    mockGetParticipants.mockResolvedValue([
+      { id: 'remote-2', username: 'transient', displayName: 'Transient' },
+    ]);
+    render(<App />);
+    await flushAuth();
+    act(() => mockPeer._emit('open', 'instance-1-user-123'));
+
+    expect(await screen.findByText('Transient')).toBeInTheDocument();
+
+    act(() => {
+      for (const cb of participantListeners) {
+        cb([]);
+      }
+    });
+
+    expect(screen.queryByText('Transient')).not.toBeInTheDocument();
   });
 });

@@ -46,6 +46,7 @@ export function PresenceRoster({
   useEffect(() => {
     const roster = rosterRef.current;
     if (!roster || !discoveredParticipants) return;
+    roster.reconcile(discoveredParticipants.map((p) => p.id));
     for (const participant of discoveredParticipants) {
       if (participant.id === localUserId) continue;
       roster.seedEntry(

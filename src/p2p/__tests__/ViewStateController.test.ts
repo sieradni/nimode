@@ -197,4 +197,22 @@ describe('ViewStateController', () => {
     expect(controller.getTargetId()).toBe('user-1');
     expect(setTarget).not.toHaveBeenCalledWith(null);
   });
+
+  it('auto-returns to local when the spectated target disconnects from the roster', () => {
+    canSpectate.mockReturnValue(true);
+    controller.selectTarget('user-1');
+
+    const listener = vi.fn();
+    controller.onViewChange(listener);
+
+    const updateHandler = onUpdate.mock.calls[0]?.[0] as (
+      entries: PresenceEntry[],
+    ) => void;
+    updateHandler([]);
+
+    expect(controller.getView()).toBe('LOCAL_ACTIVE');
+    expect(controller.getTargetId()).toBeNull();
+    expect(listener).toHaveBeenCalledWith('LOCAL_ACTIVE');
+    expect(setTarget).toHaveBeenLastCalledWith(null);
+  });
 });

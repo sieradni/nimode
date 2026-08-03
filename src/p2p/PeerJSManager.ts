@@ -94,7 +94,6 @@ export class PeerJSManager extends TypedEventEmitter<PeerConnectionEvents> {
     const conn = this.peer.connect(peerId, { serialization: 'json', metadata: meta });
     if (!conn) return;
     this.connections.set(peerId, { peerId, metadata: meta, connection: conn });
-    conn.on('open', () => this.emit('peerJoined', meta));
     this.wireConnection(conn, peerId, meta.userId);
   }
 

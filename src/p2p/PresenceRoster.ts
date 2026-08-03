@@ -54,6 +54,26 @@ export class PresenceRoster {
     return !entry.isPrivate;
   }
 
+  removeEntry(userId: string): void {
+    if (this.entries.delete(userId)) {
+      this.notify();
+    }
+  }
+
+  reconcile(participantIds: Iterable<string>): void {
+    const present = new Set(participantIds);
+    let changed = false;
+    for (const [userId, entry] of this.entries) {
+      if (!entry.isConnected && !present.has(userId)) {
+        this.entries.delete(userId);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.notify();
+    }
+  }
+
   seedEntry(metadata: PeerMetadata, isConnected: boolean): void {
     const existing = this.entries.get(metadata.userId);
     if (existing?.isConnected) return;

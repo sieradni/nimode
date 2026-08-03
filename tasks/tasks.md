@@ -124,7 +124,14 @@
 ### Remaining known gaps
 - **`setQueue`** has no UI (engine-level API only); no queue/hold editor for the upcoming queue.
 - **Alternate systems** (T-11.1–T-11.4: ARS, 14-Bag, Memoryless) not implemented — deferred (per decision).
-- Peerjs discovery relies on `getInstanceConnectedParticipants` at session start; roster refreshes only on connect/disconnect events.
+
+### This session (2026-08-03) — Spectate/reliability fixes
+- **Live participant discovery:** `DiscordSdkWrapper.onParticipantsUpdate()` subscribes to `ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE`; `usePeerSession` re-fetches/reconciles on every event so mid-session joiners/leavers appear/drop instead of relying on a single fetch at peer open. A generation counter prevents the initial `getInstanceConnectedParticipants` snapshot from clobbering a newer update.
+- **`PresenceRoster.reconcile()` / `removeEntry()`:** departed participants are pruned from the roster; the PresenceRoster UI and session roster both reconcile.
+- **Outbound-connection self-entry removed:** `PeerJSManager.connectToPeer` no longer emits `peerJoined` with the local metadata (the remote is learned via its presence handshake), so a user no longer appears twice / spectates themselves.
+- **Auto-return on target loss:** `ViewStateController` returns to `LOCAL_ACTIVE` when the spectated target's roster entry disappears (not just when it goes private).
+- **Waiting overlay:** `SpectatorBoardCanvas` shows a "Waiting for player…" overlay while `SpectatorBuffer` has no data.
+- **Error gating:** `usePeerSession` only surfaces fatal PeerJS error types (network, id/ssl/server, socket) as the persistent banner; transient errors (`peer-unavailable`, `webrtc`, negotiation/connection-closed, disconnected, not-open-yet) are ignored, and the banner clears on the next successful peer `open`. Discovery failures now surface instead of an empty `catch`.
 
 ### Next steps (prioritized)
 1. Implement alternate rotation systems & bag randomizers (T-11.x) when scoped.

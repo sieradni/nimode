@@ -16,6 +16,7 @@ function createWrapper(init: DiscordSdkWrapper['init']): DiscordSdkWrapper {
     clientId: 'test-client-id',
     init,
     getInstanceConnectedParticipants: () => Promise.resolve([]),
+    onParticipantsUpdate: () => () => {},
   };
 }
 

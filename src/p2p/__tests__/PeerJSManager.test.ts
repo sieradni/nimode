@@ -316,7 +316,7 @@ describe('PeerJSManager', () => {
       );
     });
 
-    it('emits peerJoined when the outgoing connection opens', async () => {
+    it('does not emit peerJoined when the outgoing connection opens (remote is learned via presence)', async () => {
       const createPeer = vi.fn(() => mockPeer);
       const manager = new PeerJSManager({
         instanceId: 'spectator-id',
@@ -335,7 +335,28 @@ describe('PeerJSManager', () => {
       });
       mockConn._emit('open');
 
-      expect(joinedHandler).toHaveBeenCalledWith({
+      expect(joinedHandler).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the remote via presence when the outgoing connection opens', async () => {
+      const createPeer = vi.fn(() => mockPeer);
+      const manager = new PeerJSManager({
+        instanceId: 'spectator-id',
+        role: 'host',
+        stunServers: ['stun:stun.l.google.com:19302'],
+        createPeer,
+      });
+      const presenceHandler = vi.fn();
+      manager.on('presence', presenceHandler);
+
+      await manager.init();
+      manager.connectToPeer('host-id');
+      mockConn._emit('data', {
+        kind: 'presence',
+        metadata: { userId: 'host-user', displayName: 'Host', isPrivate: false },
+      });
+
+      expect(presenceHandler).toHaveBeenCalledWith({
         userId: 'host-user',
         displayName: 'Host',
         isPrivate: false,
