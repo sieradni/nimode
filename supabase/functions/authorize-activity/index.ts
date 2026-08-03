@@ -138,16 +138,26 @@ Deno.serve(async (req: Request) => {
 
       pruneInstanceStore(instanceId);
       const store = getInstanceStore(instanceId);
-      const peers: Array<{ userId: string; displayName: string; payload: Record<string, unknown>; timestamp: number }> = [];
+      const peers: Array<{ userId: string; displayName: string; isPrivate: boolean; payload: Record<string, unknown>; timestamp: number }> = [];
       const now = Date.now();
 
       for (const [peerId, entry] of store) {
         if (peerId === userId) continue;
         if (now - entry.timestamp > PEER_TTL_MS) continue;
+        const payload = entry.payload;
+        const displayName =
+          typeof payload === 'object' && payload !== null && 'displayName' in payload
+            ? String(payload.displayName)
+            : peerId;
+        const isPrivate =
+          typeof payload === 'object' && payload !== null && 'isPrivate' in payload
+            ? Boolean(payload.isPrivate)
+            : false;
         peers.push({
           userId: peerId,
-          displayName: peerId,
-          payload: entry.payload,
+          displayName,
+          isPrivate,
+          payload,
           timestamp: entry.timestamp,
         });
       }

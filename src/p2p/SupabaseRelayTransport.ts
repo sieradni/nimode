@@ -83,7 +83,9 @@ export class SupabaseRelayTransport
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) return;
-      const data = (await res.json()) as { peers: Array<{ userId: string; displayName: string; payload: SpectatorPayload; timestamp: number }> };
+       const data = (await res.json()) as {
+          peers: Array<{ userId: string; displayName: string; isPrivate: boolean; payload: SpectatorPayload; timestamp: number }>;
+        };
       const now = Date.now();
       const activePeers = new Set<string>();
       for (const peer of data.peers ?? []) {
@@ -92,7 +94,7 @@ export class SupabaseRelayTransport
         const meta: PeerMetadata = {
           userId: peer.userId,
           displayName: peer.displayName,
-          isPrivate: false,
+          isPrivate: peer.isPrivate,
         };
         if (!prev || JSON.stringify(prev) !== JSON.stringify(meta)) {
           this.knownPeers.set(peer.userId, meta);
@@ -109,8 +111,8 @@ export class SupabaseRelayTransport
           this.emit('peerLeft', userId);
         }
       }
-    } catch {
-      // poll failures are best-effort
+    } catch (e) {
+      console.error('SupabaseRelayTransport poll error:', e);
     }
   }
 
@@ -156,8 +158,8 @@ export class SupabaseRelayTransport
           timestamp: Date.now(),
         }),
       });
-    } catch {
-      // broadcast failures are best-effort
+    } catch (e) {
+      console.error('SupabaseRelayTransport sendRelay error:', e);
     }
   }
 

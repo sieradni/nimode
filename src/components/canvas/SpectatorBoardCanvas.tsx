@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BOARD_WIDTH, RENDER_HEIGHT } from '../../engine/types';
 import type { SpectatorBuffer } from '../../p2p/SpectatorBuffer';
 import { renderSpectatorState, PREVIEW_SLOT } from '../../render/SpectatorRenderer';
+import { setupHiDpiCanvas } from './canvasScaling';
 
 const BOARD_CELL_SIZE = 30;
 const PREVIEW_CELL_SIZE = 20;
@@ -13,9 +14,10 @@ export function SpectatorBoardCanvas({ buffer }: { buffer: SpectatorBuffer }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const width = BOARD_WIDTH * BOARD_CELL_SIZE + PREVIEW_SLOT * PREVIEW_CELL_SIZE;
+    const height = RENDER_HEIGHT * BOARD_CELL_SIZE;
+    const ctx = setupHiDpiCanvas(canvas, width, height);
     if (!ctx) return;
-    ctx.imageSmoothingEnabled = false;
 
     let animationFrameId: number;
     const loop = () => {
