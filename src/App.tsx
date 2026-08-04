@@ -11,7 +11,8 @@ import { useDiscordAuth } from './discord/useDiscordAuth';
 import { usePeerSession } from './p2p/usePeerSession';
 import { instanceConfigStore } from './p2p/InstanceConfigStore';
 import { configStore } from './engine/configStore';
-import { PresenceRoster } from './components/PresenceRoster';
+import { ParticipantsDropdown } from './components/ParticipantsDropdown';
+import { usePresenceRoster } from './components/usePresenceRoster';
 import { FloatingControls } from './components/FloatingControls';
 import { ActiveView } from './components/ActiveView';
 import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
@@ -59,6 +60,14 @@ function App() {
   const [editMode, setEditMode] = useState<EditMode>('annotations');
   const [autoColor, setAutoColor] = useState(() => configStore.getConfig().autoColor);
 
+  const rosterEntries = usePresenceRoster({
+    roster: peerSession.roster,
+    instanceConfigStore,
+    localUserId: userId,
+    localDisplayName: displayName,
+    localPps: gameState.stats.pps,
+  });
+
   useEffect(() => {
     const syncConfig = () => {
       engine.updateConfig(configStore.getConfig());
@@ -104,7 +113,17 @@ function App() {
         discordAuth={discordAuth}
         onOpenAnnotationToolbar={() => setAnnotationToolbarOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
-      />
+      >
+        {peerSession.peerManager && (
+          <ParticipantsDropdown
+            entries={rosterEntries}
+            targetId={peerSession.targetId}
+            localUserId={userId}
+            onSelectParticipant={peerSession.selectTarget}
+            onReturnToLocal={peerSession.returnToLocal}
+          />
+        )}
+      </FloatingControls>
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AnnotationToolbar
         isOpen={annotationToolbarOpen}
@@ -139,19 +158,6 @@ function App() {
           spectatorBuffer={peerSession.spectatorBuffer}
          />
       </main>
-
-      {peerSession.peerManager && (
-        <div className="fixed bottom-4 right-4 z-30">
-          <PresenceRoster
-            roster={peerSession.roster}
-            instanceConfigStore={instanceConfigStore}
-            localUserId={userId}
-            localDisplayName={displayName}
-            localPps={gameState.stats.pps}
-            onSelectParticipant={peerSession.selectTarget}
-          />
-        </div>
-      )}
     </div>
   );
 }

@@ -111,6 +111,11 @@ vi.mock('../discord/sdk', () => ({
 
 import App from '../App';
 
+async function openParticipantsDropdown(): Promise<void> {
+  const trigger = await screen.findByRole('button', { name: /(participants|spectating)/i });
+  await userEvent.click(trigger);
+}
+
 describe('App relay integration', () => {
   beforeEach(() => {
     handlers.clear();
@@ -148,9 +153,10 @@ describe('App relay integration', () => {
       isPrivate: false,
     };
     act(() => mockTransport.emit('peerJoined', metadata));
+    await openParticipantsDropdown();
     expect(await screen.findByText('Alice')).toBeInTheDocument();
 
-    const spectateBtn = await screen.findByRole('button', { name: /^spectate$/i });
+    const spectateBtn = await screen.findByRole('button', { name: /spectate/i });
     await act(async () => {
       await userEvent.click(spectateBtn);
     });
@@ -209,6 +215,7 @@ describe('App relay integration', () => {
       render(<App />);
     });
     await screen.findByTestId('board-canvas');
+    await openParticipantsDropdown();
 
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Connecting…')).toBeInTheDocument();
@@ -224,6 +231,7 @@ describe('App relay integration', () => {
       render(<App />);
     });
     await screen.findByTestId('board-canvas');
+    await openParticipantsDropdown();
 
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Connecting…')).toBeInTheDocument();
@@ -234,5 +242,29 @@ describe('App relay integration', () => {
 
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /spectate/i })).toBeInTheDocument();
+  });
+
+  it('returns to the local board from spectating via the participants dropdown', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    await screen.findByTestId('board-canvas');
+
+    act(() =>
+      mockTransport.emit('peerJoined', { userId: 'remote-1', displayName: 'Alice', isPrivate: false }),
+    );
+    await openParticipantsDropdown();
+    await act(async () => {
+      await userEvent.click(await screen.findByRole('button', { name: /spectate/i }));
+    });
+
+    expect(await screen.findByRole('button', { name: /spectating alice/i })).toBeInTheDocument();
+
+    await openParticipantsDropdown();
+    await act(async () => {
+      await userEvent.click(screen.getByRole('button', { name: /return to your board/i }));
+    });
+
+    expect(await screen.findByRole('button', { name: /^participants$/i })).toBeInTheDocument();
   });
 });

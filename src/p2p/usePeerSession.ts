@@ -41,6 +41,8 @@ export interface PeerSession {
   spectatorBuffer: SpectatorBuffer | null;
   roster: PresenceRoster | null;
   view: ActiveView;
+  /** The userId currently being spectated, or null when on the local board. */
+  targetId: string | null;
   selectTarget: (userId: string) => boolean;
   returnToLocal: () => void;
   connectionError: string | null;
@@ -64,6 +66,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
   const [roster, setRoster] = useState<PresenceRoster | null>(null);
   const [view, setView] = useState<ActiveView>('LOCAL_ACTIVE');
+  const [targetId, setTargetId] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ConnectedParticipant[]>([]);
   const controllerRef = useRef<ViewStateController | null>(null);
@@ -100,7 +103,10 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     controllerRef.current = controller;
     managerRef.current = transport;
     rosterRef.current = newRoster;
-    controller.onViewChange(setView);
+    controller.onViewChange(() => {
+      setView(controller.getView());
+      setTargetId(controller.getTargetId());
+    });
     newRoster.start();
     let broadcaster: HostBroadcaster | null = null;
 
@@ -174,6 +180,8 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       setPeerManager(transport);
       setSpectatorBuffer(buffer);
       setRoster(newRoster);
+      setView('LOCAL_ACTIVE');
+      setTargetId(null);
       setParticipants([]);
     });
 
@@ -253,6 +261,7 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
     spectatorBuffer,
     roster,
     view,
+    targetId,
     selectTarget: (id: string) => controllerRef.current?.selectTarget(id) ?? false,
     returnToLocal: () => {
       controllerRef.current?.returnToLocal();

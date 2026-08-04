@@ -61,12 +61,13 @@ describe('App Discord integration', () => {
     expect(screen.getByText(/Connecting/i)).toBeInTheDocument();
   });
 
-  it('shows the connected user when authentication succeeds', async () => {
+  it('does not display the raw user id after authentication succeeds', async () => {
     mockInit.mockResolvedValue(AUTH);
     render(<App />);
-    // The user ID appears in the FloatingControls label (top-left)
-    const label = await screen.findByText(/user-123/i, { selector: 'div[class*="pointer-events-none"]' });
-    expect(label).toBeInTheDocument();
+    await screen.findByTestId('board-canvas');
+    // The numeric Discord id must never appear as UI chrome (top-left label
+    // was removed for a minimal interface).
+    expect(screen.queryByText(/user-123/i)).not.toBeInTheDocument();
   });
 
   it('renders the board and no connection chrome when authentication fails', async () => {

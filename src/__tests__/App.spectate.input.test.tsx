@@ -51,6 +51,7 @@ vi.mock('../p2p/usePeerSession', () => ({
     peerManager: null,
     spectatorBuffer: null,
     view: mockView.current,
+    targetId: null,
     selectTarget: vi.fn(() => true),
     returnToLocal: vi.fn(),
     connectionError: null,
