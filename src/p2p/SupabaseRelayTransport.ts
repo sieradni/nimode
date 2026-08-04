@@ -3,6 +3,7 @@ import type { SpectatorPayload } from '../engine/types/instance';
 import type { PresenceTransport, TransportEventMap, PresenceTransportOptions } from './transport';
 import { getRelayFunctionUrl } from './supabaseEnv';
 import { TypedEventEmitter } from './eventEmitter';
+import { DATA_STALE_MS } from './SpectatorBuffer';
 
 export interface RelayMemberState {
   userId: string;
@@ -19,7 +20,6 @@ export const STATE_EVENT = 'state';
 export const PRESENCE_EVENT = 'presence';
 export const POLL_INTERVAL_MS = 500;
 const BROADCAST_THROTTLE_MS = 50;
-const PEER_TTL_MS = 10_000;
 /**
  * A peer is only considered "left" after this many consecutive polls where it
  * is absent. The Discord proxy / Edge Function can occasionally drop a single
@@ -28,7 +28,6 @@ const PEER_TTL_MS = 10_000;
  * transient miss.
  */
 export const PEER_MISS_THRESHOLD = 3;
-
 function toMetadata(s: RelayMemberState): PeerMetadata {
   return { userId: s.userId, displayName: s.displayName, isPrivate: s.isPrivate };
 }
@@ -113,7 +112,12 @@ export class SupabaseRelayTransport
           this.emit('peerJoined', meta);
           this.emit('presence', meta);
         }
-        if (peer.payload && now - peer.timestamp < PEER_TTL_MS) {
+        // Only relay a peer's payload while it is still fresh (measured from
+        // the server's updated_at timestamp). Once the host has been quiet for
+        // longer than DATA_STALE_MS, stop re-pushing the same frozen snapshot —
+        // otherwise the SpectatorBuffer's receivedAt keeps getting re-stamped
+        // and the stale-snapshot gate never fires.
+        if (peer.payload && now - peer.timestamp < DATA_STALE_MS) {
           this.emit('data', peer.payload);
         }
       }

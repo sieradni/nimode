@@ -4,6 +4,7 @@ import {
   POLL_INTERVAL_MS,
   PEER_MISS_THRESHOLD,
 } from '../SupabaseRelayTransport';
+import { DATA_STALE_MS } from '../SpectatorBuffer';
 import type { PeerMetadata } from '../types';
 
 vi.mock('../supabaseEnv', () => ({
@@ -141,5 +142,70 @@ describe('SupabaseRelayTransport', () => {
     await tickPoll();
 
     expect(peerLeft).not.toHaveBeenCalled();
+  });
+
+  it('does not emit data for payloads older than the freshness window (defeats stale replay)', async () => {
+    const transport = new SupabaseRelayTransport({ getJwt: async () => 'jwt' });
+    const data = vi.fn();
+    transport.on('data', data);
+
+    await open(transport);
+
+    // A payload whose server timestamp is older than DATA_STALE_MS but still
+    // within the server's 10s TTL. The transport must NOT relay it — otherwise
+    // the buffer keeps re-stamping receivedAt and the stale-snapshot gate
+    // never fires (host went quiet for ~3s here).
+    const staleTimestamp = Date.now() - (DATA_STALE_MS + 1000);
+    fetchMock.mockImplementation(async () =>
+      jsonResponse([
+        {
+          ...METADATA,
+          payload: {
+            userId: 'remote-1',
+            matrix: [],
+            activePiece: null,
+            queue: [],
+            hold: null,
+            annotations: [],
+            userPalette: [],
+            stats: {},
+          },
+          timestamp: staleTimestamp,
+        },
+      ]),
+    );
+    await tickPoll();
+
+    expect(data).not.toHaveBeenCalled();
+  });
+
+  it('still emits fresh data within the freshness window', async () => {
+    const transport = new SupabaseRelayTransport({ getJwt: async () => 'jwt' });
+    const data = vi.fn();
+    transport.on('data', data);
+
+    await open(transport);
+
+    fetchMock.mockImplementation(async () =>
+      jsonResponse([
+        {
+          ...METADATA,
+          payload: {
+            userId: 'remote-1',
+            matrix: [],
+            activePiece: null,
+            queue: [],
+            hold: null,
+            annotations: [],
+            userPalette: [],
+            stats: {},
+          },
+          timestamp: Date.now() - 500,
+        },
+      ]),
+    );
+    await tickPoll();
+
+    expect(data).toHaveBeenCalledTimes(1);
   });
 });
