@@ -46,9 +46,33 @@ describe('binding codes with modifiers', () => {
       .toBe('Ctrl+KeyZ');
   });
 
-  it('ignores bare modifier presses', () => {
+  it('maps bare modifier presses to their own binding token', () => {
+    expect(eventToBindingCode({ code: 'ShiftLeft', ctrlKey: false, shiftKey: true, altKey: false, metaKey: false }))
+      .toBe('Shift');
+    expect(eventToBindingCode({ code: 'ShiftRight', ctrlKey: false, shiftKey: true, altKey: false, metaKey: false }))
+      .toBe('Shift');
     expect(eventToBindingCode({ code: 'ControlLeft', ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }))
-      .toBeNull();
+      .toBe('Ctrl');
+    expect(eventToBindingCode({ code: 'ControlRight', ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }))
+      .toBe('Ctrl');
+    expect(eventToBindingCode({ code: 'AltLeft', ctrlKey: false, shiftKey: false, altKey: true, metaKey: false }))
+      .toBe('Alt');
+    expect(eventToBindingCode({ code: 'AltRight', ctrlKey: false, shiftKey: false, altKey: true, metaKey: false }))
+      .toBe('Alt');
+  });
+
+  it('treats Meta (Cmd) as Ctrl for bare modifier presses too', () => {
+    expect(eventToBindingCode({ code: 'MetaLeft', ctrlKey: false, shiftKey: false, altKey: false, metaKey: true }))
+      .toBe('Ctrl');
+  });
+
+  it('parses and formats a bare modifier binding', () => {
+    expect(parseBinding('Shift')).toEqual({ code: 'Shift', ctrl: false, shift: false, alt: false });
+    expect(parseBinding('Ctrl')).toEqual({ code: 'Ctrl', ctrl: false, shift: false, alt: false });
+    expect(parseBinding('Alt')).toEqual({ code: 'Alt', ctrl: false, shift: false, alt: false });
+    expect(formatBinding('Shift')).toBe('Shift');
+    expect(formatBinding('Ctrl')).toBe('Ctrl');
+    expect(formatBinding('Alt')).toBe('Alt');
   });
 
   it('formats a binding for display', () => {
@@ -87,5 +111,29 @@ describe('KeybindingsStore modifier resolution', () => {
     expect(store.getBinding('HARD_DROP')).toBe('Ctrl+Space');
     expect(store.resolveAction({ code: 'Space', ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }))
       .toBe('HARD_DROP');
+  });
+
+  it('resolves a bare modifier binding on press and release', () => {
+    const store = new KeybindingsStore();
+    store.setBinding('MOVE_LEFT', 'Shift');
+    expect(store.resolveAction({ code: 'ShiftLeft', ctrlKey: false, shiftKey: true, altKey: false, metaKey: false }))
+      .toBe('MOVE_LEFT');
+    expect(store.resolveAction({ code: 'ShiftRight', ctrlKey: false, shiftKey: true, altKey: false, metaKey: false }))
+      .toBe('MOVE_LEFT');
+  });
+
+  it('keeps full-combination bindings distinct from a bare modifier binding', () => {
+    const store = new KeybindingsStore();
+    store.setBinding('MOVE_LEFT', 'Ctrl');
+    expect(store.resolveAction({ code: 'ControlLeft', ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }))
+      .toBe('MOVE_LEFT');
+    expect(store.resolveAction({ code: 'KeyZ', ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }))
+      .toBe('UNDO');
+  });
+
+  it('rejects a duplicate bare modifier binding', () => {
+    const store = new KeybindingsStore();
+    store.setBinding('MOVE_LEFT', 'Shift');
+    expect(() => store.setBinding('MOVE_RIGHT', 'Shift')).toThrow();
   });
 });

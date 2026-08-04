@@ -19,16 +19,34 @@ export interface BindableKeyEvent {
   metaKey: boolean;
 }
 
-/** Bare modifier presses can never be a binding on their own. */
-const MODIFIER_CODES = new Set([
-  'ControlLeft', 'ControlRight',
-  'ShiftLeft', 'ShiftRight',
-  'AltLeft', 'AltRight',
-  'MetaLeft', 'MetaRight',
-]);
+/** Maps a modifier key code to its canonical binding token. */
+export function modifierTokenForCode(code: string): string | null {
+  switch (code) {
+    case 'ShiftLeft':
+    case 'ShiftRight':
+      return 'Shift';
+    case 'ControlLeft':
+    case 'ControlRight':
+    case 'MetaLeft':
+    case 'MetaRight':
+      return 'Ctrl';
+    case 'AltLeft':
+    case 'AltRight':
+      return 'Alt';
+    default:
+      return null;
+  }
+}
+
+/** Canonical tokens a bare modifier key binds to. */
+const BARE_MODIFIER_TOKENS = new Set(['Ctrl', 'Shift', 'Alt']);
 
 export function parseBinding(binding: string): ParsedBinding {
   const parts = binding.split('+');
+  const only = parts[0];
+  if (parts.length === 1 && only !== undefined && BARE_MODIFIER_TOKENS.has(only)) {
+    return { code: only, ctrl: false, shift: false, alt: false };
+  }
   const code = parts[parts.length - 1] ?? '';
   return {
     code,
@@ -49,12 +67,14 @@ export function toBindingCode(parsed: ParsedBinding): string {
 
 /**
  * Serialises a keyboard event into a canonical binding code, or `null` when the
- * event carries no bindable key. Meta (Cmd) is folded into Ctrl so the same
- * binding works on macOS and Windows.
+ * event carries no bindable key. Bare modifier presses become their own token
+ * (`Shift`, `Ctrl`, `Alt`) so a modifier can be bound on its own. Meta (Cmd) is
+ * folded into Ctrl so the same binding works on macOS and Windows.
  */
 export function eventToBindingCode(event: BindableKeyEvent): string | null {
-  if (MODIFIER_CODES.has(event.code)) return null;
   if (event.code === '') return null;
+  const bareModifier = modifierTokenForCode(event.code);
+  if (bareModifier !== null) return bareModifier;
   return toBindingCode({
     code: event.code,
     ctrl: event.ctrlKey || event.metaKey,

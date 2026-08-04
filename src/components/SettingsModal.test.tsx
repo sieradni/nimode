@@ -96,6 +96,27 @@ describe('SettingsModal', () => {
     expect(keybindingsStore.getBinding('MOVE_LEFT')).toBe('KeyA');
   });
 
+  it('should bind a bare modifier key on tap and release', () => {
+    render(<SettingsModal isOpen={true} onClose={() => {}} />);
+    fireEvent.click(screen.getByText(ACTION_LABELS.MOVE_LEFT));
+    fireEvent.keyDown(window, { code: 'ShiftLeft', shiftKey: true });
+    expect(screen.getByText(/press a key/i)).toBeInTheDocument();
+    fireEvent.keyUp(window, { code: 'ShiftLeft', shiftKey: true });
+    expect(keybindingsStore.getBinding('MOVE_LEFT')).toBe('Shift');
+    expect(screen.getByText('Shift')).toBeInTheDocument();
+  });
+
+  it('should ignore a bare modifier keydown and bind the full combination on the following key', () => {
+    render(<SettingsModal isOpen={true} onClose={() => {}} />);
+    fireEvent.click(screen.getByText(ACTION_LABELS.MOVE_LEFT));
+    fireEvent.keyDown(window, { code: 'ControlLeft', ctrlKey: true });
+    // Still listening: the bare Ctrl press has not committed anything yet.
+    expect(screen.getByText(/press a key/i)).toBeInTheDocument();
+    fireEvent.keyDown(window, { code: 'KeyA', ctrlKey: true });
+    expect(keybindingsStore.getBinding('MOVE_LEFT')).toBe('Ctrl+KeyA');
+    expect(screen.getByText('Ctrl + A')).toBeInTheDocument();
+  });
+
   it('should show error when duplicate key is assigned', () => {
     render(<SettingsModal isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByText(ACTION_LABELS.MOVE_LEFT));

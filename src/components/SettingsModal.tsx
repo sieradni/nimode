@@ -3,7 +3,7 @@ import { keybindingsStore } from '../engine/keybindingsStore';
 import { InputAction } from '../engine/types';
 import { exportSettingsAsJson, downloadSettingsBlob, importSettingsFromJson } from '../engine/settingsIO';
 import { ACTION_LABELS, ALL_ACTIONS } from '../engine/settingsConstants';
-import { eventToBindingCode, formatBinding } from '../engine/keybindingCodes';
+import { eventToBindingCode, formatBinding, modifierTokenForCode } from '../engine/keybindingCodes';
 import { InstanceConfigStore, instanceConfigStore } from '../p2p/InstanceConfigStore';
 import { PrivateInstanceToggle } from './PrivateInstanceToggle';
 import { GravityConfigControls } from './GravityConfigControls';
@@ -32,6 +32,10 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!listeningAction) return;
     e.preventDefault();
+    // A bare modifier press is buffered so users can combine it with a follow-up
+    // key (e.g. Ctrl then Z). A modifier released without another key commits it
+    // by itself (handled in handleKeyUp).
+    if (modifierTokenForCode(e.code) !== null) return;
     // Wait for a real key so modifiers can be held while choosing a combination.
     const binding = eventToBindingCode(e);
     if (binding === null) return;
@@ -45,10 +49,29 @@ export function SettingsModal({ isOpen, onClose, instanceConfigStore: instanceCo
     refreshBindings();
   }, [listeningAction, refreshBindings]);
 
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    if (!listeningAction) return;
+    const token = modifierTokenForCode(e.code);
+    if (token === null) return;
+    e.preventDefault();
+    try {
+      keybindingsStore.setBinding(listeningAction, token);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
+    setListeningAction(null);
+    refreshBindings();
+  }, [listeningAction, refreshBindings]);
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [handleKeyDown, handleKeyUp]);
 
   const handleResetAll = () => {
     keybindingsStore.resetAllBindings();
