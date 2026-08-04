@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { SpectatorBuffer, INTERPOLATION_DELAY_MS } from '../SpectatorBuffer';
+import {
+  SpectatorBuffer,
+  INTERPOLATION_DELAY_MS,
+  DATA_STALE_MS,
+} from '../SpectatorBuffer';
 import type { SpectatorPayload } from '../../engine/types/instance';
 
 function makePayload(overrides: Partial<SpectatorPayload> = {}): SpectatorPayload {
@@ -233,5 +237,27 @@ describe('SpectatorBuffer', () => {
     expect(buffer.hasData()).toBe(true);
     buffer.setTarget(null);
     expect(buffer.hasData()).toBe(false);
+  });
+
+  it('reports hasData:false when the newest snapshot is older than the staleness window', () => {
+    const buffer = new SpectatorBuffer();
+    buffer.setTarget('user1');
+    buffer.push(makePayload({ userId: 'user1', queue: [1] }), 1000);
+    // Exactly at the boundary is still fresh; beyond it is stale.
+    expect(buffer.getInterpolatedState(1000 + DATA_STALE_MS).hasData).toBe(true);
+    expect(
+      buffer.getInterpolatedState(1000 + DATA_STALE_MS + 1).hasData,
+    ).toBe(false);
+  });
+
+  it('renders a still-fresh snapshot when data keeps arriving on schedule', () => {
+    const buffer = new SpectatorBuffer();
+    buffer.setTarget('user1');
+    buffer.push(makePayload({ userId: 'user1', queue: [1] }), 0);
+    buffer.push(makePayload({ userId: 'user1', queue: [2] }), 250);
+    // 500ms poll cadence: newest is 250ms old, well under the staleness window.
+    const state = buffer.getInterpolatedState(500);
+    expect(state.hasData).toBe(true);
+    expect(state.queue).toEqual([2]);
   });
 });

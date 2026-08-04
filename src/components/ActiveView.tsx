@@ -60,6 +60,10 @@ export function ActiveView({
       const interp = buffer.getInterpolatedState(now);
       if (interp.hasData) {
         setSpectatorState(interpolatedToEngineState(interp));
+      } else {
+        // The remote board has gone quiet/stale: clear it so we don't
+        // keep replaying an old snapshot on the spectated view.
+        setSpectatorState(null);
       }
       rafId = requestAnimationFrame(tick);
     }

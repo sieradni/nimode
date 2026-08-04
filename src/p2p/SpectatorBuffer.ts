@@ -3,6 +3,15 @@ import { GameStats, DEFAULT_GAME_STATS } from '../engine/types';
 
 export const INTERPOLATION_DELAY_MS = 20;
 export const MAX_SNAPSHOTS = 128;
+/**
+ * Snapshots older than this are treated as stale: `getInterpolatedState`
+ * reports `hasData: false` so the renderer can stop replaying a disconnected
+ * host's last frame instead of showing an increasingly-out-of-date board.
+ *
+ * Tuned to tolerate several missed 500ms polls (transient network hiccups)
+ * while detecting a genuinely-quiet host within a couple of seconds.
+ */
+export const DATA_STALE_MS = 2000;
 
 export interface TimestampedSnapshot {
   payload: SpectatorPayload;
@@ -74,19 +83,32 @@ export class SpectatorBuffer {
     return this.snapshots.length > 0;
   }
 
+  private emptyState(): InterpolatedState {
+    return {
+      userId: this.userId ?? '',
+      matrix: [],
+      activePiece: null,
+      queue: [],
+      hold: null,
+      annotations: [],
+      userPalette: [],
+      stats: { ...DEFAULT_GAME_STATS },
+      hasData: false,
+    };
+  }
+
   getInterpolatedState(now: number): InterpolatedState {
     if (this.snapshots.length === 0) {
-      return {
-        userId: this.userId ?? '',
-        matrix: [],
-        activePiece: null,
-        queue: [],
-        hold: null,
-        annotations: [],
-        userPalette: [],
-        stats: { ...DEFAULT_GAME_STATS },
-        hasData: false,
-      };
+      return this.emptyState();
+    }
+
+    const newest = this.snapshots[this.snapshots.length - 1]!;
+    // Stale-gate: when the most recent snapshot is older than the freshness
+    // window, the host can be considered quiet/disconnected. Don't replay an
+    // increasingly-stale board — surface no data so the view can degrade
+    // gracefully instead of showing old snapshots.
+    if (now - newest.receivedAt > DATA_STALE_MS) {
+      return this.emptyState();
     }
 
     const renderTime = now - INTERPOLATION_DELAY_MS;

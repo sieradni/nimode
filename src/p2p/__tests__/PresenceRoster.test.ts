@@ -345,4 +345,64 @@ describe('PresenceRoster', () => {
     const fresh = roster.getEntries();
     expect(fresh[0]!.pps).toBe(0);
   });
+
+  it('does not clobber a usable display name when a rejoin brings a fallback name (the raw user id)', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: '123456789012345678', displayName: 'Alice' }));
+
+    // Relay occasionally emits the fallback display name (the raw user id)
+    // when its stored name is momentarily missing. The roster must keep the
+    // known-good name instead of degrading to the number.
+    joined(makeMetadata({ userId: '123456789012345678', displayName: '123456789012345678' }));
+
+    expect(roster.getEntries()[0]!.displayName).toBe('Alice');
+  });
+
+  it('keeps the relay display name when no usable name is known yet', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: '123456789012345678', displayName: '123456789012345678' }));
+
+    // Stored as-is; the PresenceRoster component is responsible for rendering a
+    // neutral label rather than the raw id. The roster itself does not invent a name.
+    expect(roster.getEntries()[0]!.displayName).toBe('123456789012345678');
+    expect(roster.canSpectate('123456789012345678')).toBe(true);
+  });
+
+  it('does not clobber a usable display name on a presence refresh', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    const presence = getHandler(mockPeerManager, 'presence');
+    joined(makeMetadata({ userId: '123456789012345678', displayName: 'Alice', isPrivate: false }));
+
+    presence(makeMetadata({ userId: '123456789012345678', displayName: '123456789012345678', isPrivate: true }));
+
+    expect(roster.getEntries()[0]!.displayName).toBe('Alice');
+    expect(roster.getEntries()[0]!.isPrivate).toBe(true);
+  });
+
+  it('seedEntry upgrades a fallback name without downgrading connectivity', () => {
+    const roster = new PresenceRoster(mockPeerManager);
+    roster.start();
+
+    const joined = getHandler(mockPeerManager, 'peerJoined');
+    joined(makeMetadata({ userId: '123456789012345678', displayName: '123456789012345678' }));
+    expect(roster.getEntries()[0]!.isConnected).toBe(true);
+
+    // A later Discord participant discovery supplies the real name.
+    roster.seedEntry(
+      makeMetadata({ userId: '123456789012345678', displayName: 'Alice' }),
+      false,
+    );
+
+    expect(roster.getEntries()[0]!.displayName).toBe('Alice');
+    expect(roster.getEntries()[0]!.isConnected).toBe(true);
+  });
 });

@@ -17,9 +17,17 @@ export interface SupabaseRelayDeps {
 
 export const STATE_EVENT = 'state';
 export const PRESENCE_EVENT = 'presence';
-const POLL_INTERVAL_MS = 500;
+export const POLL_INTERVAL_MS = 500;
 const BROADCAST_THROTTLE_MS = 50;
 const PEER_TTL_MS = 10_000;
+/**
+ * A peer is only considered "left" after this many consecutive polls where it
+ * is absent. The Discord proxy / Edge Function can occasionally drop a single
+ * poll's payload, and the server prunes on every read — debouncing the
+ * removal prevents the roster from flickering connect/disconnect on every
+ * transient miss.
+ */
+export const PEER_MISS_THRESHOLD = 3;
 
 function toMetadata(s: RelayMemberState): PeerMetadata {
   return { userId: s.userId, displayName: s.displayName, isPrivate: s.isPrivate };
@@ -35,6 +43,8 @@ export class SupabaseRelayTransport
   private openFlag = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private knownPeers = new Map<string, PeerMetadata>();
+  /** Consecutive polls a peer has been absent from, before emitting peerLeft. */
+  private missCounts = new Map<string, number>();
   private lastBroadcastAt = 0;
   private instanceId = '';
   private userId = '';
@@ -90,6 +100,8 @@ export class SupabaseRelayTransport
       const activePeers = new Set<string>();
       for (const peer of data.peers ?? []) {
         activePeers.add(peer.userId);
+        // Reset the miss counter the moment we see the peer again.
+        this.missCounts.delete(peer.userId);
         const prev = this.knownPeers.get(peer.userId);
         const meta: PeerMetadata = {
           userId: peer.userId,
@@ -106,8 +118,15 @@ export class SupabaseRelayTransport
         }
       }
       for (const [userId] of this.knownPeers) {
-        if (!activePeers.has(userId) && userId !== this.userId) {
+        if (activePeers.has(userId) || userId === this.userId) continue;
+        const misses = (this.missCounts.get(userId) ?? 0) + 1;
+        this.missCounts.set(userId, misses);
+        // Debounce: only treat the peer as gone after several consecutive
+        // empty polls. This prevents the roster from flickering
+        // connect/disconnect when a single poll drops a payload.
+        if (misses >= PEER_MISS_THRESHOLD) {
           this.knownPeers.delete(userId);
+          this.missCounts.delete(userId);
           this.emit('peerLeft', userId);
         }
       }
@@ -170,6 +189,7 @@ export class SupabaseRelayTransport
     }
     this.openFlag = false;
     this.knownPeers.clear();
+    this.missCounts.clear();
     this.myState = null;
     this.current = null;
   }

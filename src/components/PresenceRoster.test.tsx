@@ -229,4 +229,33 @@ describe('PresenceRoster component', () => {
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /spectate/i })).toBeInTheDocument();
   });
+
+  it('renders a neutral label instead of a raw user-id fallback for remote peers', () => {
+    // The relay falls back to the raw userId (a Discord snowflake) when a
+    // display_name is missing. This must never be rendered verbatim.
+    mockRoster.getEntries.mockReturnValue([
+      {
+        userId: 'remote-number-id',
+        displayName: 'remote-number-id',
+        isPrivate: false,
+        pps: 1.5,
+        isConnected: true,
+        isLocal: false,
+      },
+    ]);
+
+    render(
+      <PresenceRoster
+        roster={mockRoster as unknown as PresenceRosterManager}
+        instanceConfigStore={mockConfigStore}
+        localUserId="local-1"
+        localDisplayName="Me"
+        localPps={0}
+        onSelectParticipant={onSelect}
+      />,
+    );
+
+    expect(screen.queryByText('remote-number-id')).not.toBeInTheDocument();
+    expect(screen.getByText(/Player/)).toBeInTheDocument();
+  });
 });

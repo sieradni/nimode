@@ -20,6 +20,27 @@ export class PresenceRoster {
     this.peerManager = peerManager;
   }
 
+  /**
+   * A display name is "usable" when it is a real, human-readable name rather
+   * than an artifact of a fallback. The relay occasionally emits the raw
+   * `userId` (a Discord snowflake) as the display name when its stored
+   * `display_name` is momentarily missing — that must never clobber a name
+   * discovered through the Discord participant list.
+   */
+  private static isUsableName(name: string | undefined, userId: string): name is string {
+    return name !== undefined && name !== '' && name !== userId;
+  }
+
+  private static pickDisplayName(
+    current: string | undefined,
+    incoming: string | undefined,
+    userId: string,
+  ): string {
+    if (PresenceRoster.isUsableName(current, userId)) return current;
+    if (PresenceRoster.isUsableName(incoming, userId)) return incoming;
+    return incoming ?? current ?? '';
+  }
+
   start(): void {
     this.peerManager.on('peerJoined', this.handlePeerJoined);
     this.peerManager.on('peerLeft', this.handlePeerLeft);
@@ -76,10 +97,19 @@ export class PresenceRoster {
 
   seedEntry(metadata: PeerMetadata, isConnected: boolean): void {
     const existing = this.entries.get(metadata.userId);
-    if (existing?.isConnected) return;
+    if (existing?.isConnected && !isConnected) {
+      // Don't downgrade a known-connected peer to "connecting", but still
+      // adopt a usable display name if the current value is a fallback id.
+      const displayName = PresenceRoster.pickDisplayName(existing.displayName, metadata.displayName, metadata.userId);
+      if (displayName !== existing.displayName) {
+        this.entries.set(metadata.userId, { ...existing, displayName });
+        this.notify();
+      }
+      return;
+    }
     this.entries.set(metadata.userId, {
       userId: metadata.userId,
-      displayName: metadata.displayName,
+      displayName: PresenceRoster.pickDisplayName(existing?.displayName, metadata.displayName, metadata.userId),
       isPrivate: metadata.isPrivate,
       pps: existing?.pps ?? 0,
       isConnected,
@@ -89,11 +119,12 @@ export class PresenceRoster {
   }
 
   private handlePeerJoined = (metadata: PeerMetadata): void => {
+    const existing = this.entries.get(metadata.userId);
     this.entries.set(metadata.userId, {
       userId: metadata.userId,
-      displayName: metadata.displayName,
+      displayName: PresenceRoster.pickDisplayName(existing?.displayName, metadata.displayName, metadata.userId),
       isPrivate: metadata.isPrivate,
-      pps: 0,
+      pps: existing?.pps ?? 0,
       isConnected: true,
       isLocal: false,
     });
@@ -117,11 +148,11 @@ export class PresenceRoster {
     const existing = this.entries.get(metadata.userId);
     this.entries.set(metadata.userId, {
       userId: metadata.userId,
-      displayName: metadata.displayName,
+      displayName: PresenceRoster.pickDisplayName(existing?.displayName, metadata.displayName, metadata.userId),
       isPrivate: metadata.isPrivate,
       pps: existing?.pps ?? 0,
       isConnected: true,
-      isLocal: false,
+      isLocal: existing?.isLocal ?? false,
     });
     this.notify();
   };

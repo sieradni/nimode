@@ -12,6 +12,16 @@ interface PresenceRosterProps {
   onSelectParticipant: (userId: string) => void;
 }
 
+function participantLabel(entry: PresenceEntry): string {
+  if (entry.displayName && entry.displayName !== entry.userId) {
+    return entry.displayName;
+  }
+  // The relay falls back to the raw userId (a Discord snowflake) when a
+  // display_name is missing. Never render that bare number — show a neutral
+  // placeholder instead.
+  return `Player ${entry.userId.slice(-5)}`;
+}
+
 export function PresenceRoster({
   roster,
   instanceConfigStore,
@@ -62,7 +72,7 @@ export function PresenceRoster({
             className="flex items-center justify-between p-2 rounded bg-slate-800"
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-200">{entry.displayName}</span>
+              <span className="text-sm text-slate-200">{participantLabel(entry)}</span>
               {entry.isLocal && (
                 <span className="text-xs text-slate-400">(You)</span>
               )}
