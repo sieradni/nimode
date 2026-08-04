@@ -1,6 +1,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { sign } from 'https://esm.sh/jsonwebtoken@9.0.2';
 import { mapPeers } from './relayMapping.ts';
+import { buildPresenceWriteValues, buildStateWriteValues } from './relayWrites.ts';
 
 interface DiscordUser {
   id: string;
@@ -117,21 +118,9 @@ Deno.serve(async (req: Request) => {
         const now = new Date(relayMsg.timestamp ?? Date.now()).toISOString();
 
         if (relayMsg.type === 'presence') {
-          const metadata = relayMsg.metadata ?? {
-            userId: relayMsg.userId,
-            displayName: relayMsg.displayName,
-            isPrivate: false,
-          };
           const { error } = await supabase
             .from('relay_states')
-            .upsert({
-              instance_id: relayMsg.instanceId,
-              user_id: relayMsg.userId,
-              display_name: metadata.displayName ?? relayMsg.displayName,
-              is_private: metadata.isPrivate ?? false,
-              payload: relayMsg.metadata ?? {},
-              updated_at: now,
-            }, { onConflict: 'instance_id,user_id' });
+            .upsert(buildPresenceWriteValues(relayMsg, now), { onConflict: 'instance_id,user_id' });
           if (error) {
             console.error('presence upsert error:', error.message);
           }
@@ -147,14 +136,10 @@ Deno.serve(async (req: Request) => {
 
         const { error } = await supabase
           .from('relay_states')
-          .upsert({
-            instance_id: relayMsg.instanceId,
-            user_id: relayMsg.userId,
-            display_name: existing?.display_name ?? relayMsg.displayName,
-            is_private: existing?.is_private ?? false,
-            payload: relayMsg.payload ?? {},
-            updated_at: now,
-          }, { onConflict: 'instance_id,user_id' });
+          .upsert(
+            buildStateWriteValues(relayMsg, existing as { display_name: string | null; is_private: boolean | null } | null, now),
+            { onConflict: 'instance_id,user_id' },
+          );
         if (error) {
           console.error('state upsert error:', error.message);
         }
