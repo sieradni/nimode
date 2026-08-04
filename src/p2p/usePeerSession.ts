@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { IEngineCore } from '../engine/interfaces/IEngineCore';
 import type { SpectatorPayload } from '../engine/types/instance';
-import type { ConnectedParticipant } from '../discord/types';
+import type { ConnectedParticipant, DiscordSdkWrapper } from '../discord/types';
 import type { InstanceConfigStore } from './InstanceConfigStore';
 import type { PresenceTransport, PresenceTransportOptions } from './transport';
 import type { PeerMetadata } from './types';
@@ -17,6 +17,8 @@ export interface UsePeerSessionOptions {
   instanceId: string | null;
   userId: string;
   displayName: string;
+  guildId: string | null;
+  channelId: string | null;
   engine: IEngineCore;
   configStore: InstanceConfigStore;
   /**
@@ -25,6 +27,11 @@ export interface UsePeerSessionOptions {
    * mode with no transport.
    */
   discordAccessToken: string | null;
+  /**
+   * The Discord SDK wrapper, used to discover activity participants. When null
+   * (standalone/dev), the hook runs in local-single-player mode.
+   */
+  discordSdk: DiscordSdkWrapper | null;
   /** Optional override for tests to inject a fake transport. */
   createTransport?: () => PresenceTransport;
 }
@@ -41,7 +48,17 @@ export interface PeerSession {
 }
 
 export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
-  const { instanceId, userId, displayName, engine, configStore, discordAccessToken } = options;
+  const {
+    instanceId,
+    userId,
+    displayName,
+    guildId,
+    channelId,
+    engine,
+    configStore,
+    discordAccessToken,
+    discordSdk,
+  } = options;
   const createTransportOverride = options.createTransport;
   const [peerManager, setPeerManager] = useState<PresenceTransport | null>(null);
   const [spectatorBuffer, setSpectatorBuffer] = useState<SpectatorBuffer | null>(null);
@@ -66,6 +83,8 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
           instanceId,
           userId,
           discordAccessToken,
+          guildId: guildId ?? '',
+          channelId: channelId ?? '',
         }));
 
     const transport = createTransport();
@@ -181,7 +200,53 @@ export function usePeerSession(options: UsePeerSessionOptions): PeerSession {
       managerRef.current = null;
       rosterRef.current = null;
     };
-  }, [instanceId, userId, displayName, engine, configStore, discordAccessToken, createTransportOverride]);
+  }, [instanceId, userId, displayName, guildId, channelId, engine, configStore, discordAccessToken, createTransportOverride]);
+
+  useEffect(() => {
+    if (!discordSdk || !roster) return;
+
+    let cancelled = false;
+
+    const syncFromDiscord = async (): Promise<void> => {
+      try {
+        const participants = await discordSdk.getInstanceConnectedParticipants();
+        if (cancelled) return;
+        applyDiscordParticipants(participants);
+      } catch (e) {
+        if (!cancelled) console.error('Failed to fetch Discord participants:', e);
+      }
+    };
+
+    const applyDiscordParticipants = (participants: ConnectedParticipant[]): void => {
+      if (!rosterRef.current) return;
+      const ids = new Set<string>();
+      for (const p of participants) {
+        if (p.id === userId) continue;
+        ids.add(p.id);
+        rosterRef.current.seedEntry(
+          {
+            userId: p.id,
+            displayName: p.displayName ?? p.username,
+            isPrivate: false,
+          },
+          false,
+        );
+      }
+      rosterRef.current.reconcile(ids);
+    };
+
+    syncFromDiscord();
+
+    const unsubscribe = discordSdk.onParticipantsUpdate((participants) => {
+      if (cancelled) return;
+      applyDiscordParticipants(participants);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [discordSdk, roster, userId]);
 
   return {
     peerManager,

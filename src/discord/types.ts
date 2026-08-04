@@ -1,5 +1,7 @@
 export interface DiscordAuth {
   userId: string;
+  username: string;
+  globalName: string | null;
   guildId: string;
   channelId: string;
   instanceId: string;

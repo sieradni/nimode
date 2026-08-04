@@ -33,16 +33,23 @@ function App() {
   const instanceId = discordAuth.status === 'authenticated' ? discordAuth.auth.instanceId : null;
   const userId = discordAuth.status === 'authenticated' ? discordAuth.auth.userId : 'local-player';
   const displayName =
-    discordAuth.status === 'authenticated' ? discordAuth.auth.userId : 'local-player';
+    discordAuth.status === 'authenticated'
+      ? discordAuth.auth.globalName ?? discordAuth.auth.username
+      : 'local-player';
+  const guildId = discordAuth.status === 'authenticated' ? discordAuth.auth.guildId : null;
+  const channelId = discordAuth.status === 'authenticated' ? discordAuth.auth.channelId : null;
   const discordAccessToken =
     discordAuth.status === 'authenticated' ? discordAuth.auth.accessToken : null;
   const peerSession = usePeerSession({
     instanceId,
     userId,
     displayName,
+    guildId,
+    channelId,
     engine,
     configStore: instanceConfigStore,
     discordAccessToken,
+    discordSdk: discordAuth.status === 'authenticated' ? sdk : null,
   });
 
   const [gameState, setGameState] = useState<EngineState>(() => engine.getState());

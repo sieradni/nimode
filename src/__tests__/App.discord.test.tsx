@@ -10,6 +10,8 @@ vi.mock('../discord/sdk', () => ({
   createDiscordSdk: vi.fn(() => ({
     clientId: 'test-client-id',
     init: mockInit,
+    getInstanceConnectedParticipants: vi.fn(async () => []),
+    onParticipantsUpdate: vi.fn(() => () => {}),
   })),
 }));
 
@@ -35,6 +37,8 @@ import App from '../App';
 
 const AUTH: DiscordAuth = {
   userId: 'user-123',
+  username: 'testuser',
+  globalName: 'Test User',
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',

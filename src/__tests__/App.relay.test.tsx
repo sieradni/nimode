@@ -87,18 +87,25 @@ vi.mock('../p2p/relayAuth', () => ({
 
 const AUTH: DiscordAuth = {
   userId: 'user-123',
+  username: 'testuser',
+  globalName: 'Test User',
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',
   accessToken: 'test-access-token',
 };
 
+import type { ConnectedParticipant } from '../discord/types';
+
+const mockGetInstanceConnectedParticipants = vi.fn(async (): Promise<ConnectedParticipant[]> => []);
+const mockOnParticipantsUpdate = vi.fn(() => () => {});
+
 vi.mock('../discord/sdk', () => ({
   createDiscordSdk: vi.fn(() => ({
     clientId: 'test-client-id',
     init: vi.fn(async () => AUTH),
-    getInstanceConnectedParticipants: vi.fn(async () => []),
-    onParticipantsUpdate: vi.fn(() => () => {}),
+    getInstanceConnectedParticipants: mockGetInstanceConnectedParticipants,
+    onParticipantsUpdate: mockOnParticipantsUpdate,
   })),
 }));
 
@@ -191,5 +198,41 @@ describe('App relay integration', () => {
     });
 
     expect(mockTransport.broadcast).toHaveBeenCalled();
+  });
+
+  it('shows Discord activity participants as connecting in the roster', async () => {
+    mockGetInstanceConnectedParticipants.mockResolvedValue([
+      { id: 'discord-user-2', username: 'alice', displayName: 'Alice' },
+    ]);
+
+    await act(async () => {
+      render(<App />);
+    });
+    await screen.findByTestId('board-canvas');
+
+    expect(await screen.findByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Connecting…')).toBeInTheDocument();
+    expect(screen.queryByText(/Spectate/i)).not.toBeInTheDocument();
+  });
+
+  it('shows spectate button when a connecting participant joins the relay', async () => {
+    mockGetInstanceConnectedParticipants.mockResolvedValue([
+      { id: 'discord-user-2', username: 'alice', displayName: 'Alice' },
+    ]);
+
+    await act(async () => {
+      render(<App />);
+    });
+    await screen.findByTestId('board-canvas');
+
+    expect(await screen.findByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Connecting…')).toBeInTheDocument();
+
+    act(() => {
+      mockTransport.emit('peerJoined', { userId: 'discord-user-2', displayName: 'Alice', isPrivate: false });
+    });
+
+    expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /spectate/i })).toBeInTheDocument();
   });
 });

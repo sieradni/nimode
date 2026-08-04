@@ -6,16 +6,20 @@ export interface RelayTransportFactoryDeps {
   instanceId: string;
   userId: string;
   discordAccessToken: string;
+  guildId?: string;
+  channelId?: string;
 }
 
 export function createRelayTransport(deps: RelayTransportFactoryDeps): SupabaseRelayTransport {
-  const { instanceId, userId, discordAccessToken } = deps;
+  const { instanceId, userId, discordAccessToken, guildId = '', channelId = '' } = deps;
 
   const getJwt = async (): Promise<string | null> => {
     const auth: DiscordAuth = {
       userId,
-      guildId: '',
-      channelId: '',
+      username: '',
+      globalName: null,
+      guildId,
+      channelId,
       instanceId,
       accessToken: discordAccessToken,
     };

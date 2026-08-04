@@ -188,4 +188,45 @@ describe('PresenceRoster component', () => {
 
     expect(screen.queryByRole('button', { name: /spectate/i })).not.toBeInTheDocument();
   });
+
+  it('shows "Connecting…" indicator for unconnected remote participants', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'Alice', isPrivate: false, pps: 0, isConnected: false, isLocal: false },
+    ]);
+
+    render(
+      <PresenceRoster
+        roster={mockRoster as unknown as PresenceRosterManager}
+        instanceConfigStore={mockConfigStore}
+        localUserId="local-1"
+        localDisplayName="Me"
+        localPps={0}
+        onSelectParticipant={onSelect}
+      />,
+    );
+
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Connecting…')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /spectate/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Spectate button once an unconnected participant becomes connected', () => {
+    mockRoster.getEntries.mockReturnValue([
+      { userId: 'remote-1', displayName: 'Alice', isPrivate: false, pps: 1.5, isConnected: true, isLocal: false },
+    ]);
+
+    render(
+      <PresenceRoster
+        roster={mockRoster as unknown as PresenceRosterManager}
+        instanceConfigStore={mockConfigStore}
+        localUserId="local-1"
+        localDisplayName="Me"
+        localPps={0}
+        onSelectParticipant={onSelect}
+      />,
+    );
+
+    expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /spectate/i })).toBeInTheDocument();
+  });
 });

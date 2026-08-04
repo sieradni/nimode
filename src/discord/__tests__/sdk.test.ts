@@ -52,7 +52,7 @@ describe('DiscordSdkWrapper', () => {
     mockReady.mockResolvedValue(undefined);
     mockAuthorize.mockResolvedValue({ code: 'auth-code-123' });
     mockAuthenticate.mockResolvedValue({
-      user: { id: 'user-123', username: 'testuser', discriminator: '0', public_flags: 0 },
+      user: { id: 'user-123', username: 'testuser', discriminator: '0', global_name: 'Test User', public_flags: 0 },
       scopes: [],
       access_token: 'mock-token',
       expires: '2100-01-01T00:00:00.000Z',
@@ -74,6 +74,8 @@ describe('DiscordSdkWrapper', () => {
     const auth = await wrapper.init();
 
     expect(auth.userId).toBe('user-123');
+    expect(auth.username).toBe('testuser');
+    expect(auth.globalName).toBe('Test User');
     expect(auth.guildId).toBe('test-guild-id');
     expect(auth.channelId).toBe('test-channel-id');
     expect(auth.instanceId).toBe('test-instance-id');
@@ -99,6 +101,20 @@ describe('DiscordSdkWrapper', () => {
     expect(body.get('code')).toBe('auth-code-123');
     expect(body.get('client_id')).toBe('test-client-id');
     expect(body.has('code_verifier')).toBe(true);
+  });
+
+  it('should return globalName as null when user has no global name', async () => {
+    mockAuthenticate.mockResolvedValue({
+      user: { id: 'user-123', username: 'testuser', discriminator: '0', global_name: null, public_flags: 0 },
+      scopes: [],
+      access_token: 'mock-token',
+      expires: '2100-01-01T00:00:00.000Z',
+      application: { id: 'app-1', description: '', name: 'test' },
+    });
+    const wrapper = createDiscordSdk('test-client-id');
+    const auth = await wrapper.init();
+    expect(auth.globalName).toBeNull();
+    expect(auth.username).toBe('testuser');
   });
 
   it('should throw if SDK ready fails', async () => {

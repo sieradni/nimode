@@ -5,6 +5,8 @@ import type { DiscordAuth, DiscordSdkWrapper } from '../types';
 
 const AUTH: DiscordAuth = {
   userId: 'user-123',
+  username: 'testuser',
+  globalName: 'Test User',
   guildId: 'guild-1',
   channelId: 'channel-1',
   instanceId: 'instance-1',

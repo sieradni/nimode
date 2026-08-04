@@ -69,12 +69,15 @@ export function PresenceRoster({
               {entry.isPrivate && (
                 <span className="text-xs text-slate-400">Private</span>
               )}
+              {!entry.isConnected && !entry.isLocal && (
+                <span className="text-xs text-slate-400">Connecting…</span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-300 font-mono">
                 {entry.pps.toFixed(2)}
               </span>
-              {!entry.isLocal && !entry.isPrivate && (
+              {!entry.isLocal && !entry.isPrivate && entry.isConnected && (
                 <button
                   onClick={() => onSelectParticipant(entry.userId)}
                   className="px-2 py-0.5 text-xs rounded bg-slate-600 hover:bg-slate-500 text-white"

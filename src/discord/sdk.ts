@@ -95,6 +95,8 @@ export function createDiscordSdk(clientId: string): DiscordSdkWrapper {
 
       return {
         userId: auth.user.id,
+        username: auth.user.username,
+        globalName: auth.user.global_name ?? null,
         guildId: sdk.guildId ?? '',
         channelId: sdk.channelId ?? '',
         instanceId: sdk.instanceId ?? generateInstanceId(),
