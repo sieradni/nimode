@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { sign } from 'https://esm.sh/jsonwebtoken@9.0.2';
+import { mapPeers } from './relayMapping.ts';
 
 interface DiscordUser {
   id: string;
@@ -187,13 +188,9 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ error: 'internal error' }), { status: 500 });
       }
 
-      const peers = (data ?? []).map((row) => ({
-        userId: row.user_id,
-        displayName: row.display_name ?? row.user_id,
-        isPrivate: row.is_private ?? false,
-        payload: row.payload,
-        timestamp: new Date(row.updated_at).getTime(),
-      }));
+      // Shape rows through a pure, tested helper so the GET never leaks a raw
+      // user_id (Discord snowflake) as a display name.
+      const peers = mapPeers(data ?? []);
 
       return new Response(
         JSON.stringify({ peers }),
