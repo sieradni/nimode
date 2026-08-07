@@ -18,6 +18,7 @@ import { ActiveView } from './components/ActiveView';
 import { AnnotationToolbar, AnnotationTool } from './components/AnnotationToolbar';
 import { DEFAULT_ANNOTATION_COLOR } from './render/annotationColors';
 import { EditMode } from './engine/types';
+import { useTopChromeInset } from './components/useTopChromeInset';
 
 function App() {
   const [engine] = useState(
@@ -59,6 +60,7 @@ function App() {
   const [annotationColor, setAnnotationColor] = useState<string>(DEFAULT_ANNOTATION_COLOR);
   const [editMode, setEditMode] = useState<EditMode>('annotations');
   const [autoColor, setAutoColor] = useState(() => configStore.getConfig().autoColor);
+  const topChromeInset = useTopChromeInset();
 
   const rosterEntries = usePresenceRoster({
     roster: peerSession.roster,
@@ -146,7 +148,10 @@ function App() {
         </div>
       )}
 
-      <main className="flex h-full w-full items-center justify-center p-4">
+      <main
+        className="flex h-full w-full items-center justify-center p-4"
+        style={{ paddingTop: topChromeInset + 16 }}
+      >
         <ActiveView
           isLocal={peerSession.view === 'LOCAL_ACTIVE'}
           state={gameState}

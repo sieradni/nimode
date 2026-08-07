@@ -83,6 +83,7 @@ describe('GameCanvas', () => {
     expect(screen.getByTestId('board-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('hold-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('queue-canvas')).toBeInTheDocument();
+    expect(screen.getByTestId('stats-panel')).toBeInTheDocument();
   });
 
   it('sizes the board canvas to the visible playfield', () => {

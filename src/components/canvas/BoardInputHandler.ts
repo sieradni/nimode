@@ -2,6 +2,8 @@ import { RefObject, useState, useRef } from 'react';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
 import { walkLineCells } from '../../utils/walkLineCells';
 import { getCanvasCoordinates, isRightButton, type BoardCoord } from './boardPointerTools';
+import type { EngineState } from '../../engine/interfaces/IEngineCore';
+import type { EditMode } from '../../engine/types';
 
 export { getCanvasCoordinates };
 export type { BoardCoord };
@@ -21,11 +23,23 @@ export interface BoardInputCallbacks {
   /** Reports each cell painted by the current stroke, for stroke auto-color. */
   onStrokeCell?: (x: number, y: number) => void;
   cellSize?: number;
+  /** Live engine state, so the press can tell an occupied cell from a blank one. */
+  state?: EngineState;
+  /** Which layer the pointer mutates: 'blocks' or 'annotations'. */
+  editMode?: EditMode;
 }
 
 type PointerEvt =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
+
+/** True when the active layer already has content at (x, y). */
+function isCellOccupied(callbacks: BoardInputCallbacks, x: number, y: number): boolean {
+  if (!callbacks.state) return false;
+  const layer = callbacks.editMode === 'blocks' ? callbacks.state.board : callbacks.state.annotations;
+  const row = layer[y];
+  return row ? row[x] !== 0 : false;
+}
 
 export function useBoardInput(
   canvasRef: RefObject<HTMLCanvasElement>,
@@ -33,9 +47,13 @@ export function useBoardInput(
 ) {
   const [rectStart, setRectStart] = useState<BoardCoord | null>(null);
   const lastCell = useRef<BoardCoord | null>(null);
-  // Right-drag erases regardless of the selected tool; latched on press so the
-  // whole drag keeps erasing even though mousemove reports no button.
+  // Right-drag (and tap-on-occupied) erase regardless of the selected tool;
+  // latched on press so the whole drag keeps erasing even though mousemove
+  // reports no button.
   const erasing = useRef(false);
+  // Right-drag on the rect tool floods the connected blob instead of stroking
+  // single cells, so the fill tool can also undo whole regions at once.
+  const floodErasing = useRef(false);
 
   const cellSize = callbacks.cellSize ?? BOARD_CELL_SIZE;
 
@@ -56,11 +74,29 @@ export function useBoardInput(
     const coords = coordsOf(e);
     if (!coords) return;
     lastCell.current = coords;
-    erasing.current = isRightButton(e);
 
     // Begin the stroke before the first paint so the stroke recorder never
     // loses the origin cell.
     callbacks.onDrawingStart?.();
+
+    if (isRightButton(e) && callbacks.annotationTool === 'rect') {
+      // Rect fill is a carving tool; right-clicking it floods the blob under
+      // the cursor instead of erasing a single cell.
+      floodErasing.current = true;
+      onFloodErase?.(coords.x, coords.y);
+      return;
+    }
+
+    erasing.current = isRightButton(e);
+
+    // Starting a pen stroke on an occupied cell removes it instead of painting
+    // over it. Touch screens have no right button, so this is the only way to
+    // carve existing content (matches fourtris).
+    if (!erasing.current && callbacks.annotationTool === 'pen' && isCellOccupied(callbacks, coords.x, coords.y)) {
+      erasing.current = true;
+      onErase?.(coords.x, coords.y);
+      return;
+    }
 
     if (erasing.current) {
       onErase?.(coords.x, coords.y);
@@ -91,7 +127,9 @@ export function useBoardInput(
       }
     };
 
-    if (erasing.current && callbacks.onErase) {
+    if (floodErasing.current && callbacks.onFloodErase) {
+      eraseAlong(callbacks.onFloodErase);
+    } else if (erasing.current && callbacks.onErase) {
       eraseAlong(callbacks.onErase);
     } else if (annotationTool === 'pen' && callbacks.onPen) {
       eraseAlong(paint);
@@ -120,6 +158,7 @@ export function useBoardInput(
     }
     lastCell.current = null;
     erasing.current = false;
+    floodErasing.current = false;
     callbacks.onDrawingEnd?.();
   };
 

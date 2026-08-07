@@ -17,11 +17,23 @@ const MIN_PREVIEW_CELL_SIZE = 4;
 export const LAYOUT_GAP_PX = 16;
 
 /**
- * Width each flanking column consumes, expressed in board-cell units so the
- * cell-size fit can be solved in closed form (no measure/resize feedback loop).
- * Two columns, each a 4-wide preview slot scaled by the preview factor.
+ * When the container is at least this much taller than it is wide (a phone in
+ * portrait), the flanking panels collapse: the stats are hidden and the hold
+ * moves above the queue so only one side column reserves horizontal space.
  */
-const FLANK_CELL_COEFFICIENT = 2 * 4 * PREVIEW_SCALE_FACTOR;
+export const COMPACT_ASPECT_THRESHOLD = 1.5;
+
+/**
+ * A tall, narrow container leaves little horizontal room for two side columns
+ * and the board alike, so the layout drops into the compact single-column
+ * variant.
+ */
+export function shouldUseCompactLayout(availableWidth: number, availableHeight: number): boolean {
+  return availableWidth > 0 && availableHeight / availableWidth >= COMPACT_ASPECT_THRESHOLD;
+}
+
+/** Width a single flanking column consumes, in board-cell units (see useBoardScale). */
+const SINGLE_FLANK_CELL_COEFFICIENT = 4 * PREVIEW_SCALE_FACTOR;
 const RESERVED_GAPS_PX = 2 * LAYOUT_GAP_PX;
 
 /** Largest whole-pixel cell size that fits the board inside the given box. */
@@ -35,12 +47,19 @@ export function computeCellSize(availableWidth: number, availableHeight: number)
 }
 
 /**
- * Like {@link computeCellSize} but reserves horizontal room for the two flanking
- * panels (hold/stats on the left, queue on the right) so the whole layout -
- * board plus panels - fits the viewport instead of overflowing it.
+ * Like {@link computeCellSize} but reserves horizontal room for the flanking
+ * panels (hold/stats + queue, or just the queue in compact mode) so the whole
+ * layout - board plus panels - fits the viewport instead of overflowing it.
  */
-export function computeLayoutCellSize(availableWidth: number, availableHeight: number): number {
-  const byWidth = (availableWidth - RESERVED_GAPS_PX) / (BOARD_WIDTH + FLANK_CELL_COEFFICIENT);
+export function computeLayoutCellSize(
+  availableWidth: number,
+  availableHeight: number,
+  compact = false,
+): number {
+  const flankColumns = compact ? 1 : 2;
+  const reservedGapsPx = compact ? LAYOUT_GAP_PX : RESERVED_GAPS_PX;
+  const byWidth =
+    (availableWidth - reservedGapsPx) / (BOARD_WIDTH + flankColumns * SINGLE_FLANK_CELL_COEFFICIENT);
   const byHeight = availableHeight / RENDER_HEIGHT;
   const fitted = Math.floor(Math.min(byWidth, byHeight));
 
@@ -53,12 +72,20 @@ export function computePreviewCellSize(boardCellSize: number): number {
   return Math.max(MIN_PREVIEW_CELL_SIZE, Math.round(boardCellSize * PREVIEW_SCALE_FACTOR));
 }
 
+export interface BoardLayout {
+  /** Whole-pixel cell size the board should use. */
+  cellSize: number;
+  /** True when the container is tall enough for the compact single-column layout. */
+  compact: boolean;
+}
+
 /**
  * Tracks the layout container's size and reports the cell size the board should
- * use, reserving space for the flanking panels so everything scales together.
+ * use and whether the compact layout should be active, reserving flanking space
+ * (one column in compact mode, two otherwise) so everything scales together.
  */
-export function useBoardScale(containerRef: RefObject<HTMLElement | null>): number {
-  const [cellSize, setCellSize] = useState<number>(MIN_CELL_SIZE);
+export function useBoardScale(containerRef: RefObject<HTMLElement | null>): BoardLayout {
+  const [layout, setLayout] = useState<BoardLayout>({ cellSize: MIN_CELL_SIZE, compact: false });
 
   useEffect(() => {
     const element = containerRef.current;
@@ -66,7 +93,11 @@ export function useBoardScale(containerRef: RefObject<HTMLElement | null>): numb
 
     const measure = () => {
       const { width, height } = element.getBoundingClientRect();
-      setCellSize(computeLayoutCellSize(width, height));
+      const compact = shouldUseCompactLayout(width, height);
+      setLayout({
+        cellSize: computeLayoutCellSize(width, height, compact),
+        compact,
+      });
     };
 
     measure();
@@ -81,5 +112,5 @@ export function useBoardScale(containerRef: RefObject<HTMLElement | null>): numb
     return () => observer.disconnect();
   }, [containerRef]);
 
-  return cellSize;
+  return layout;
 }

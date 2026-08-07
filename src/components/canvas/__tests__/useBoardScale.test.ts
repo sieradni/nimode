@@ -3,6 +3,7 @@ import {
   computeCellSize,
   computeLayoutCellSize,
   computePreviewCellSize,
+  shouldUseCompactLayout,
 } from '../useBoardScale';
 
 describe('computeCellSize', () => {
@@ -52,6 +53,31 @@ describe('computeLayoutCellSize', () => {
     const size = computeLayoutCellSize(10, 10);
     expect(Number.isFinite(size)).toBe(true);
     expect(size).toBeGreaterThan(0);
+  });
+
+  it('reserves only one flanking column in compact mode', () => {
+    // 800px wide, very tall: the full layout splits spare width with two side
+    // columns; the compact layout keeps just one side column, so the board
+    // gets a larger cell size.
+    const regular = computeLayoutCellSize(800, 8000);
+    const compact = computeLayoutCellSize(800, 8000, true);
+    expect(compact).toBeGreaterThan(regular);
+  });
+});
+
+describe('shouldUseCompactLayout', () => {
+  it('enables compact mode on tall, narrow containers', () => {
+    expect(shouldUseCompactLayout(375, 844)).toBe(true);
+    expect(shouldUseCompactLayout(390, 700)).toBe(true);
+  });
+
+  it('stays in the two-column layout on wide or square containers', () => {
+    expect(shouldUseCompactLayout(2000, 800)).toBe(false);
+    expect(shouldUseCompactLayout(1024, 1024)).toBe(false);
+  });
+
+  it('returns false when there is no usable width', () => {
+    expect(shouldUseCompactLayout(0, 700)).toBe(false);
   });
 });
 

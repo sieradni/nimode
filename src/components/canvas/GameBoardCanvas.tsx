@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BOARD_WIDTH, RENDER_HEIGHT } from '../../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT, EditMode } from '../../engine/types';
 import { EngineState } from '../../engine/interfaces/IEngineCore';
 import { renderBoard } from '../../render/BoardRenderer';
 import { BOARD_CELL_SIZE, type AnnotationTool } from './canvasConstants';
@@ -22,6 +22,7 @@ interface GameBoardCanvasProps {
   onDrawingEnd?: () => void;
   onStrokeCell?: (x: number, y: number) => void;
   cellSize?: number;
+  editMode?: EditMode;
 }
 
 export function GameBoardCanvas({
@@ -37,6 +38,7 @@ export function GameBoardCanvas({
   onDrawingEnd,
   onStrokeCell,
   cellSize = BOARD_CELL_SIZE,
+  editMode = 'annotations',
 }: GameBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useBoardInput(canvasRef, {
@@ -51,6 +53,8 @@ export function GameBoardCanvas({
     onDrawingEnd,
     onStrokeCell,
     cellSize,
+    state,
+    editMode,
   });
 
   const width = BOARD_WIDTH * cellSize;

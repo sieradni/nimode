@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { PenLine, Settings } from 'lucide-react';
 import { DiscordAuthStatus } from '../discord/useDiscordAuth';
 import { useUiScale } from './useUiScale';
+import { useTopChromeInset } from './useTopChromeInset';
 
 interface FloatingControlsProps {
   discordAuth: DiscordAuthStatus;
@@ -29,6 +30,7 @@ export function FloatingControls({
 }: FloatingControlsProps) {
   const label = connectionLabel(discordAuth);
   const scale = useUiScale();
+  const topInset = useTopChromeInset();
 
   return (
     <>
@@ -40,7 +42,7 @@ export function FloatingControls({
 
       <div
         className="fixed right-4 top-4 z-30 flex items-center gap-1"
-        style={{ transform: `scale(${scale})`, transformOrigin: 'top right' }}
+        style={{ top: topInset + 16, transform: `scale(${scale})`, transformOrigin: 'top right' }}
       >
         {children}
         <button

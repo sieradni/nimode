@@ -32,7 +32,7 @@ export function GameCanvas({
   const [isDrawing, setIsDrawing] = useState(false);
   const [queueModalOpen, setQueueModalOpen] = useState(false);
   const layoutRef = useRef<HTMLDivElement>(null);
-  const cellSize = useBoardScale(layoutRef);
+  const { cellSize, compact } = useBoardScale(layoutRef);
   const previewCellSize = computePreviewCellSize(cellSize);
   const stroke = useAnnotationStroke();
 
@@ -125,11 +125,14 @@ const handlePen = useCallback((x: number, y: number, color: string) => {
       className="relative flex h-full w-full items-center justify-center gap-3"
       style={{ gap: `${gap}px` }}
     >
-      {/* Left column: Hold (top) + Stats (bottom) */}
-      <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px`, marginTop: panelTopOffset }}>
-        <HoldCanvas state={state} cellSize={previewCellSize} onClearHold={handleClearHold} />
-        <StatsPanel stats={state.stats} cellSize={previewCellSize} />
-      </div>
+      {/* Left column: Hold (top) + Stats (bottom). Hidden in compact mode so the
+          board expands into the space (see useBoardScale compact layouts). */}
+      {!compact && (
+        <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px`, marginTop: panelTopOffset }}>
+          <HoldCanvas state={state} cellSize={previewCellSize} onClearHold={handleClearHold} />
+          <StatsPanel stats={state.stats} cellSize={previewCellSize} />
+        </div>
+      )}
 
       {/* Center: Board */}
       <div className="flex items-center justify-center">
@@ -137,6 +140,7 @@ const handlePen = useCallback((x: number, y: number, color: string) => {
           state={state}
           cellSize={cellSize}
           annotationColor={annotationColor}
+          editMode={editMode}
           onPen={handlePen}
           onErase={handleErase}
           onFloodErase={handleFloodErase}
@@ -149,8 +153,9 @@ const handlePen = useCallback((x: number, y: number, color: string) => {
         />
       </div>
 
-      {/* Right column: Queue (top-right adjacent) */}
-      <div className="flex flex-col items-center self-start" style={{ width: previewColumnWidth, marginTop: panelTopOffset }}>
+      {/* Right column: Hold (compact only, stacked above) + Queue */}
+      <div className="flex flex-col items-center gap-3 self-start" style={{ width: previewColumnWidth, gap: `${gap}px`, marginTop: panelTopOffset }}>
+        {compact && <HoldCanvas state={state} cellSize={previewCellSize} onClearHold={handleClearHold} />}
         <QueueCanvas state={state} cellSize={previewCellSize} onClick={handleQueueOpen} />
       </div>
 

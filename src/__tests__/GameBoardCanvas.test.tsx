@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
-import { BOARD_WIDTH, RENDER_HEIGHT } from '../engine/types';
+import { BOARD_WIDTH, RENDER_HEIGHT, RENDER_TOP_Y } from '../engine/types';
 import { GameBoardCanvas, BOARD_CELL_SIZE } from '../components/canvas/GameBoardCanvas';
 import type { EngineState } from '../engine/interfaces/IEngineCore';
 
@@ -112,5 +112,139 @@ describe('GameBoardCanvas', () => {
     setupCanvas(canvas);
     fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
     expect(onPen).not.toHaveBeenCalled();
+  });
+
+  describe('tap-to-erase on occupied cells (pen)', () => {
+    function stateWithBoard(y: number, x: number): EngineState {
+      const board = baseState.board.map((row) => [...row]);
+      const row = board[y];
+      if (row) row[x] = 1;
+      return { ...baseState, board };
+    }
+
+    it('erases a placed block instead of painting when a pen stroke starts on it', () => {
+      const onPen = vi.fn();
+      const onErase = vi.fn();
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={stateWithBoard(RENDER_TOP_Y, 0)}
+          onPen={onPen}
+          onErase={onErase}
+          annotationTool="pen"
+          editMode="blocks"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { clientX: 5, clientY: 5 });
+      expect(onErase).toHaveBeenCalledWith(0, RENDER_TOP_Y);
+      expect(onPen).not.toHaveBeenCalled();
+    });
+
+    it('erases a drawn annotation when a pen stroke starts on it', () => {
+      const onPen = vi.fn();
+      const onErase = vi.fn();
+      const annotations = baseState.annotations.map((row) => [...row]);
+      const row = annotations[RENDER_TOP_Y];
+      if (row) row[0] = 1;
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={{ ...baseState, annotations }}
+          onPen={onPen}
+          onErase={onErase}
+          annotationTool="pen"
+          editMode="annotations"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { clientX: 5, clientY: 5 });
+      expect(onErase).toHaveBeenCalledWith(0, RENDER_TOP_Y);
+      expect(onPen).not.toHaveBeenCalled();
+    });
+
+    it('still paints when a pen stroke starts on an empty cell', () => {
+      const onPen = vi.fn();
+      const onErase = vi.fn();
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={baseState}
+          onPen={onPen}
+          onErase={onErase}
+          annotationTool="pen"
+          editMode="blocks"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { clientX: 5, clientY: 5 });
+      expect(onPen).toHaveBeenCalled();
+      expect(onErase).not.toHaveBeenCalled();
+    });
+
+    it('does not tap-erase for the rect tool', () => {
+      const onPen = vi.fn();
+      const onErase = vi.fn();
+      const onFloodErase = vi.fn();
+      const onRectFill = vi.fn();
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={stateWithBoard(RENDER_TOP_Y, 0)}
+          onPen={onPen}
+          onErase={onErase}
+          onFloodErase={onFloodErase}
+          onRectFill={onRectFill}
+          annotationTool="rect"
+          editMode="blocks"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { clientX: 5, clientY: 5 });
+      expect(onErase).not.toHaveBeenCalled();
+      expect(onFloodErase).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rect fill right-click', () => {
+    it('flood-erases the blob under the cursor', () => {
+      const onFloodErase = vi.fn();
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={baseState}
+          onFloodErase={onFloodErase}
+          annotationTool="rect"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { button: 2, clientX: 5, clientY: 5 });
+      expect(onFloodErase).toHaveBeenCalledWith(0, RENDER_TOP_Y);
+    });
+
+    it('flood-erases along the drag path', () => {
+      const onFloodErase = vi.fn();
+      const { getByTestId } = render(
+        <GameBoardCanvas
+          state={baseState}
+          onFloodErase={onFloodErase}
+          annotationTool="rect"
+          isDrawing
+        />,
+      );
+      const canvas = getByTestId('board-canvas') as HTMLCanvasElement;
+      setupCanvas(canvas);
+      fireEvent.mouseDown(canvas, { button: 2, clientX: 5, clientY: 5 });
+      onFloodErase.mockClear();
+      fireEvent.mouseMove(canvas, { clientX: 3 * BOARD_CELL_SIZE + 5, clientY: 5 });
+      expect(onFloodErase).toHaveBeenCalled();
+      const xs = new Set(onFloodErase.mock.calls.map((c) => c[0]));
+      expect(xs.size).toBeGreaterThan(1);
+    });
   });
 });
